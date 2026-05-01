@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "S": {
+      "item": "minecraft:smooth_stone_slab"
+    }
+  },
+  "pattern": [
+    "SSS",
+    "I I",
+    "SSS"
+  ],
+  "result": {
+    "item": "place_mats:storage_rack"
+  },
+  "show_notification": true
+}

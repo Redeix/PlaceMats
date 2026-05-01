@@ -1,0 +1,42 @@
+### Package Files ###
+*.war
+*.ear
+*.txt
+
+# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+hs_err_pid*
+
+### Java ###
+
+*.class
+### Windows ###
+
+thumbs.db
+*.db
+
+### Intellij IDEA ###
+
+*.iml
+*.ipr
+*.iws
+
+
+.idea
+.idea_modules
+!.idea/icon.png
+classes
+out
+build
+.gradle
+gradle-local.properties
+
+### VS Code ###
+.vs
+.vscode
+
+# other
+run
+runs
+libs
+*.jar
+src/generated/resources/.cache

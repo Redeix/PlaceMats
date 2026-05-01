@@ -1,0 +1,37 @@
+repositories {
+    mavenLocal()
+    mavenCentral()
+    maven {
+        name "Tterrag"
+        url "https://modmaven.dev/"
+        content {
+            includeGroup("com.tterrag.registrate")
+        }
+    }
+    maven {
+        name "TerraformersMC"
+        url "https://maven.terraformersmc.com/"
+    }
+    maven { // Mixin²
+        url "https://maven.bawnorton.com/releases"
+        content {
+            includeGroup "com.github.bawnorton.mixinsquared"
+        }
+    }
+    // Mirror
+    maven {
+        name 'CurseMaven'
+        url 'https://cursemaven.com'
+        content {
+            includeGroup "curse.maven"
+        }
+    }
+    maven {
+        name 'Modrinth'
+        url 'https://api.modrinth.com/maven'
+        content {
+            includeGroup 'maven.modrinth'
+        }
+    }
+
+}

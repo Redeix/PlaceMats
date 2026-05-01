@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "place_mats:block/place_mats/storage_racks/storage_rack"
+    }
+  }
+}

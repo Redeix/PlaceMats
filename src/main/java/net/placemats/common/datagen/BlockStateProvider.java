@@ -1,0 +1,18 @@
+package net.placemats.common.datagen;
+
+import net.minecraft.data.PackOutput;
+import net.minecraftforge.common.data.ExistingFileHelper;
+
+import net.placemats.PlaceMatMain;
+import net.placemats.common.data.blocks.PlaceMatBlocks;
+
+public class BlockStateProvider extends net.minecraftforge.client.model.generators.BlockStateProvider {
+    public BlockStateProvider(PackOutput output, ExistingFileHelper exFileHelper) {
+        super(output, PlaceMatMain.MOD_ID, exFileHelper);
+    }
+
+    @Override
+    protected void registerStatesAndModels() {
+        simpleBlock(PlaceMatBlocks.STORAGE_RACK.get(), models().getExistingFile(modLoc("block/place_mats/storage_racks/storage_rack")));
+    }
+}

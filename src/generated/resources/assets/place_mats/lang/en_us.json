@@ -1,0 +1,17 @@
+{
+  "block.place_mats.storage_rack": "Storage Rack",
+  "config.jade.plugin_place_mats.placemat.title": "Place Mat",
+  "emi.category.place_mats.place_mat": "Place Mat Interaction",
+  "place_mats.creative_tab.place_mats": "Place Mats",
+  "place_mats.emi.placemat.offhand": "Offhand",
+  "place_mats.emi.placemat.zone": "Zone",
+  "place_mats.tooltip.placemat.elevation": "§3Shift+Space/ Shift+Ctrl+Space§r to Raise/Lower. ",
+  "place_mats.tooltip.placemat.full": "§l§c⚠ Container Full!§r§r Max Stacks:§6 %s§r",
+  "place_mats.tooltip.placemat.hold_alt_for_nutrition_info": "Hold (Alt) for Detailed Info",
+  "place_mats.tooltip.placemat.instructions": "§3Shift+Scroll§r for Yaw. §3Shift+Ctrl+Scroll§r for Tilt. §3Shift+Alt+Scroll§r for Roll. §3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ",
+  "place_mats.tooltip.placemat.interacting": "§3RMB§r to remove. §3Shift+RMB§r to remove stack. §3LMB§r to use.",
+  "place_mats.tooltip.placemat.pitch": "§3Shift+Ctrl+Scroll§r for Tilt. ",
+  "place_mats.tooltip.placemat.placing": "Hold an item and §3RMB§r to display.",
+  "place_mats.tooltip.placemat.roll": "§3Shift+Alt+Scroll§r for Roll. ",
+  "place_mats.tooltip.placemat.yaw": "§3Shift+Scroll§r for Yaw. "
+}
