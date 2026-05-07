@@ -12,14 +12,15 @@ import net.placemats.PlaceMatMain;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.compat.firmalife.FirmaLifeCompat;
 
 public class PlaceMatBlockEntities {
 
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, PlaceMatMain.MOD_ID);
 
     public static final RegistryObject<BlockEntityType<PlaceMatBlockEntity>> PLACE_MAT = BLOCK_ENTITIES.register("place_mat",
-            () -> BlockEntityType.Builder.of((pos, state) -> new PlaceMatBlockEntity(PlaceMatBlockEntities.PLACE_MAT.get(), pos, state),
-                    ForgeRegistries.BLOCKS.getValues().stream().filter(b -> b instanceof PlaceMatBlock).toArray(Block[]::new)).build(null));
+            () -> BlockEntityType.Builder.of(FirmaLifeCompat.INSTANCE::createPlaceMatBE,
+                    PlaceMatBlocks.STORAGE_RACK.get()).build(null));
 
     public static void init() {
     }

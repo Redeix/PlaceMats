@@ -5,8 +5,6 @@ import java.util.List;
 
 import org.jetbrains.annotations.Nullable;
 
-import net.dries007.tfc.common.blocks.ExtendedProperties;
-import net.dries007.tfc.common.blocks.IForgeBlockExtension;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -43,12 +41,11 @@ import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatTags;
 
 @SuppressWarnings({ "deprecation", "UnusedReturnValue", "unused" })
-public class PlaceMatBlock extends Block implements IForgeBlockExtension, EntityBlock {
+public class PlaceMatBlock extends Block implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     // Defines the bounding box where items can be placed.
 
-    private final ExtendedProperties properties;
     @Getter
     private int containerSize = 12;
     @Getter
@@ -79,12 +76,7 @@ public class PlaceMatBlock extends Block implements IForgeBlockExtension, Entity
     private ResourceLocation foodTrait = null;
 
     public PlaceMatBlock(Properties properties) {
-        this(ExtendedProperties.of(properties));
-    }
-
-    public PlaceMatBlock(ExtendedProperties properties) {
-        super(properties.properties());
-        this.properties = properties;
+        super(properties);
         BlockState defaultState = getStateDefinition().any();
         if (defaultState.hasProperty(FACING)) {
             defaultState = defaultState.setValue(FACING, Direction.NORTH);
@@ -328,10 +320,6 @@ public class PlaceMatBlock extends Block implements IForgeBlockExtension, Entity
             super(properties);
         }
 
-        public Cardinal(ExtendedProperties properties) {
-            super(properties);
-        }
-
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
             builder.add(FACING);
@@ -348,10 +336,6 @@ public class PlaceMatBlock extends Block implements IForgeBlockExtension, Entity
         return state;
     }
 
-    @Override
-    public ExtendedProperties getExtendedProperties() {
-        return properties;
-    }
 
     // Method for pick-block item cloning when looking at placed items.
     @Override

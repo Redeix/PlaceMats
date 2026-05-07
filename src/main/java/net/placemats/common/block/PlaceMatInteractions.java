@@ -6,9 +6,7 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import net.dries007.tfc.common.capabilities.food.FoodCapability;
-import net.dries007.tfc.common.capabilities.food.IFood;
-import net.dries007.tfc.common.recipes.RecipeHelpers;
+import net.placemats.compat.tfc.TFCCompat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
@@ -233,9 +231,9 @@ public class PlaceMatInteractions {
             else
                 ctx.add(ItemStack.EMPTY);
 
-            RecipeHelpers.setCraftingInput(new SimulatedCraftingContainer(ctx));
-            ItemStack result = recipe.getResultProvider().getStack(ctx.get(0));
-            RecipeHelpers.clearCraftingInput();
+            TFCCompat.INSTANCE.setCraftingInput(ctx);
+            ItemStack result = TFCCompat.INSTANCE.getStackFromProvider(recipe.getResultProvider(), ctx.get(0));
+            TFCCompat.INSTANCE.clearCraftingInput();
 
             // Consume/Damage input item
             if (inputCount > 0) {
@@ -296,88 +294,9 @@ public class PlaceMatInteractions {
     }
 
     private static boolean isRotten(ItemStack stack) {
-        return stack.getCapability(FoodCapability.CAPABILITY).map(IFood::isRotten).orElse(false);
+        return TFCCompat.INSTANCE.isRotten(stack);
     }
 
-    private static class SimulatedCraftingContainer implements CraftingContainer {
-
-        private final List<ItemStack> _items = new ArrayList<>();
-
-        public SimulatedCraftingContainer(List<ItemStack> items) {
-            // TFC expects each ItemStack to only have one item
-            for (ItemStack itemStack : items) {
-                if (itemStack.isEmpty()) {
-                    _items.add(ItemStack.EMPTY);
-                } else {
-                    for (int i = 0; i < itemStack.getCount(); i++) {
-                        _items.add(itemStack.copyWithCount(1));
-                    }
-                }
-            }
-        }
-
-        @Override
-        public int getContainerSize() {
-            return _items.size();
-        }
-
-        @Override
-        public boolean isEmpty() {
-            return _items.isEmpty();
-        }
-
-        @Override
-        public @NotNull ItemStack getItem(int pSlot) {
-            return pSlot >= _items.size() ? ItemStack.EMPTY : _items.get(pSlot);
-        }
-
-        @Override
-        public @NotNull ItemStack removeItem(int pSlot, int pAmount) {
-            return pSlot >= _items.size() ? ItemStack.EMPTY : _items.get(pSlot);
-        }
-
-        @Override
-        public @NotNull ItemStack removeItemNoUpdate(int pSlot) {
-            return ItemStack.EMPTY;
-        }
-
-        @Override
-        public void setItem(int pSlot, @NotNull ItemStack pStack) {
-        }
-
-        @Override
-        public void setChanged() {
-        }
-
-        @Override
-        public boolean stillValid(@NotNull Player pPlayer) {
-            return false;
-        }
-
-        @Override
-        public void clearContent() {
-        }
-
-        @Override
-        public void fillStackedContents(@NotNull StackedContents pContents) {
-        }
-
-        @Override
-        public int getWidth() {
-            return 1;
-        }
-
-        @Override
-        public int getHeight() {
-            return 1;
-        }
-
-        @Override
-        public @NotNull List<ItemStack> getItems() {
-            return _items;
-        }
-
-    }
 
     public static InteractionResult onPickup(PlaceMatBlockEntity be, Player player, PlacedItem item) {
         assert be.getLevel() != null;
@@ -406,7 +325,7 @@ public class PlaceMatInteractions {
         int countBefore = stack.getCount();
 
         UseAnim anim = stack.getUseAnimation();
-        boolean isEdible = stack.getItem().isEdible() || FoodCapability.has(stack);
+        boolean isEdible = stack.getItem().isEdible() || TFCCompat.INSTANCE.hasFoodCapability(stack);
         boolean isDrinkable = anim == UseAnim.DRINK;
 
         if (isEdible || isDrinkable) {

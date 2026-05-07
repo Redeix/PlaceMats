@@ -6,7 +6,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
-import net.dries007.tfc.common.capabilities.food.FoodCapability;
+import net.placemats.compat.tfc.TFCCompat;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -81,7 +81,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             poseStack.scale(effectiveScale, effectiveScale, effectiveScale);
 
             BakedModel model;
-            if (!disableCustomModels && def.modelRotten() != null && FoodCapability.isRotten(stackToRender)) {
+            if (!disableCustomModels && def.modelRotten() != null && TFCCompat.INSTANCE.isRotten(stackToRender)) {
                 model = itemRenderer.getItemModelShaper().getModelManager().getModel(def.modelRotten());
                 if (model == itemRenderer.getItemModelShaper().getModelManager().getMissingModel()) {
                     model = itemRenderer.getModel(stackToRender, be.getLevel(), null, (int) be.getBlockPos().asLong());
@@ -159,7 +159,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         }
 
         BakedModel model;
-        if (!disableCustomModels && def.modelRotten() != null && FoodCapability.isRotten(stack)) {
+        if (!disableCustomModels && def.modelRotten() != null && TFCCompat.INSTANCE.isRotten(stack)) {
             model = itemRenderer.getItemModelShaper().getModelManager().getModel(def.modelRotten());
             if (model == itemRenderer.getItemModelShaper().getModelManager().getMissingModel()) {
                 model = itemRenderer.getModel(stack, null, null, 0);

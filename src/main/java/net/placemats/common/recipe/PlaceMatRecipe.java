@@ -6,8 +6,9 @@ import org.jetbrains.annotations.Nullable;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import net.dries007.tfc.common.recipes.RecipeSerializerImpl;
-import net.dries007.tfc.common.recipes.outputs.ItemStackProvider;
+import net.placemats.common.data.RecipeSerializers;
+import net.placemats.common.data.PlaceMatRecipeTypes;
+import net.placemats.compat.tfc.TFCCompat;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -26,9 +27,6 @@ import net.minecraft.world.level.block.Block;
 
 import lombok.Getter;
 
-import net.placemats.common.data.RecipeSerializers;
-import net.placemats.common.data.PlaceMatRecipeTypes;
-
 public class PlaceMatRecipe implements Recipe<Container> {
     private final ResourceLocation id;
     @Nullable
@@ -45,7 +43,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
     private final Ingredient targetInput;
     @Getter
     private final int targetInputCount;
-    private final ItemStackProvider result;
+    private final Object result;
     @Nullable
     private final ResourceLocation sound;
     @Getter
@@ -55,7 +53,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
 
     public PlaceMatRecipe(ResourceLocation id, @Nullable Block block, @Nullable TagKey<Block> blockTag, @Nullable Integer zoneIndex,
             Ingredient input, int inputCount, Ingredient targetInput, int targetInputCount,
-            ItemStackProvider result, @Nullable ResourceLocation sound, float volume, float pitch) {
+            Object result, @Nullable ResourceLocation sound, float volume, float pitch) {
         this.id = id;
         this.block = block;
         this.blockTag = blockTag;
@@ -82,7 +80,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
         return zoneIndex;
     }
 
-    public ItemStackProvider getResultProvider() {
+    public Object getResultProvider() {
         return result;
     }
 
@@ -107,7 +105,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
 
     @Override
     public @NotNull ItemStack getResultItem(@NotNull RegistryAccess registryAccess) {
-        return result.getStack(ItemStack.EMPTY);
+        return TFCCompat.INSTANCE.getStackFromProvider(result, ItemStack.EMPTY);
     }
 
     @Override
@@ -125,7 +123,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
         return PlaceMatRecipeTypes.PLACE_MAT.get();
     }
 
-    public static class Serializer extends RecipeSerializerImpl<PlaceMatRecipe> {
+    public static class Serializer implements RecipeSerializer<PlaceMatRecipe> {
         @Override
         public @NotNull PlaceMatRecipe fromJson(@NotNull ResourceLocation recipeId, @NotNull JsonObject json) {
             Block block = null;
@@ -144,15 +142,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
             Ingredient targetInput = json.has("target_input") ? Ingredient.fromJson(json.get("target_input")) : Ingredient.EMPTY;
             int targetInputCount = json.has("target_input_count") ? GsonHelper.getAsInt(json, "target_input_count") : 1;
 
-            JsonElement resultElement = json.get("result");
-            ItemStackProvider result;
-            if (resultElement.isJsonObject()) {
-                result = ItemStackProvider.fromJson(resultElement.getAsJsonObject());
-            } else {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("stack", resultElement.getAsString());
-                result = ItemStackProvider.fromJson(obj);
-            }
+            Object result = TFCCompat.INSTANCE.readResultFromJson(json.get("result"));
 
             ResourceLocation sound = json.has("sound") ? ResourceLocation.parse(GsonHelper.getAsString(json, "sound")) : null;
             float volume = GsonHelper.getAsFloat(json, "volume", 1.0f);
@@ -176,7 +166,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
             int inputCount = buffer.readVarInt();
             Ingredient targetInput = Ingredient.fromNetwork(buffer);
             int targetInputCount = buffer.readVarInt();
-            ItemStackProvider result = ItemStackProvider.fromNetwork(buffer);
+            Object result = TFCCompat.INSTANCE.readResultFromNetwork(buffer);
             ResourceLocation sound = buffer.readBoolean() ? buffer.readResourceLocation() : null;
             float volume = buffer.readFloat();
             float pitch = buffer.readFloat();
@@ -185,7 +175,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
         }
 
         @Override
-        public void toNetwork(@NotNull FriendlyByteBuf buffer, PlaceMatRecipe recipe) {
+        public void toNetwork(@NotNull FriendlyByteBuf buffer, @NotNull PlaceMatRecipe recipe) {
             if (recipe.block != null) {
                 buffer.writeByte(1);
                 buffer.writeResourceLocation(BuiltInRegistries.BLOCK.getKey(recipe.block));
@@ -202,7 +192,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
             buffer.writeVarInt(recipe.inputCount);
             recipe.targetInput.toNetwork(buffer);
             buffer.writeVarInt(recipe.targetInputCount);
-            recipe.result.toNetwork(buffer);
+            TFCCompat.INSTANCE.writeResultToNetwork(buffer, recipe.result);
             buffer.writeBoolean(recipe.sound != null);
             if (recipe.sound != null)
                 buffer.writeResourceLocation(recipe.sound);

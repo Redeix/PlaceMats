@@ -12,6 +12,7 @@ import net.minecraftforge.registries.RegistryObject;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings({ "unused" })
 public final class PlaceMatBlocks {
@@ -23,7 +24,7 @@ public final class PlaceMatBlocks {
     }
 
     public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> {
-        PlaceMatBlock.Cardinal block = new PlaceMatBlock.Cardinal(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion());
+        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion(), true);
         block.containerSize(10);
         block.addRange(new PlaceMatBlock.PlacementRange(
                 new AABB(1 / 16D, 0 / 16D, 1 / 16D, 15 / 16D, 7 / 16D, 15 / 16D),

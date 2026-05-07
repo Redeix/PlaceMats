@@ -17,6 +17,7 @@ import dev.emi.emi.api.widget.WidgetHolder;
 
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.recipe.PlaceMatRecipe;
+import net.placemats.compat.tfc.TFCCompat;
 
 public class PlaceMatEmiRecipe implements EmiRecipe {
     private final PlaceMatRecipe recipe;
@@ -29,7 +30,7 @@ public class PlaceMatEmiRecipe implements EmiRecipe {
         ItemStack targetInputStack = recipe.getTargetInput().isEmpty() ? ItemStack.EMPTY : recipe.getTargetInput().getItems()[0].copy();
         targetInputStack.setCount(recipe.getTargetInputCount());
 
-        ItemStack resultStack = recipe.getResultProvider().getStack(targetInputStack);
+        ItemStack resultStack = TFCCompat.INSTANCE.getStackFromProvider(recipe.getResultProvider(), targetInputStack);
         if (resultStack.isEmpty()) {
             resultStack = recipe.getResultItem(RegistryAccess.EMPTY);
         }

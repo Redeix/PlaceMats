@@ -6,14 +6,6 @@ import java.util.List;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import com.eerussianguy.firmalife.common.blockentities.ClimateReceiver;
-import com.eerussianguy.firmalife.common.blockentities.ClimateType;
-import com.eerussianguy.firmalife.common.items.FLFoodTraits;
-import com.eerussianguy.firmalife.config.FLConfig;
-
-import net.dries007.tfc.common.capabilities.food.FoodCapability;
-import net.dries007.tfc.common.capabilities.food.FoodTrait;
-import net.dries007.tfc.util.climate.Climate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -47,11 +39,12 @@ import lombok.Setter;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
+import net.placemats.compat.firmalife.FirmaLifeCompat;
+import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
 @Getter
-public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver {
-    private static final FoodTrait[] POSSIBLE_SHELVED_TRAITS = { FLFoodTraits.SHELVED, FLFoodTraits.SHELVED_2, FLFoodTraits.SHELVED_3 };
+public class PlaceMatBlockEntity extends BlockEntity {
 
     private final List<PlacedItem> placedItems = new ArrayList<>();
     @Setter
@@ -488,27 +481,26 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
             DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(stack.getItem());
             // Clamp position within target box if provided.
             Vec2 effectivePos = pos;
-            float effectiveHeight = height;
+            float manualHeight = height;
             AABB targetBox = targetRange != null ? targetRange.box() : null;
             if (targetRange != null) {
+                DefinitionManager.PlaceMatDefinition defEffective = getEffectiveDefinition(stack, targetRange);
+                float multiplier = getScaleMultiplier(targetRange);
+
                 if (targetRange.restricted()) {
                     float centerX = (float) (targetBox.minX + targetBox.maxX) / 2f;
                     float centerZ = (float) (targetBox.minZ + targetBox.maxZ) / 2f;
-                    float multiplier = getScaleMultiplier(targetRange);
-                    DefinitionManager.PlaceMatDefinition defEffective = getEffectiveDefinition(stack, targetRange);
 
                     effectivePos = new Vec2(centerX - defEffective.size().x * multiplier / 2f, centerZ - defEffective.size().y * multiplier / 2f);
                     if (targetRange.snapToCenter()) {
                         float centerY = (float) (targetBox.minY + targetBox.maxY) / 2f;
                         float itemHalfHeight = (defEffective.getItemHeight() * multiplier) / 2f;
-                        effectiveHeight = centerY - (float) targetBox.minY - itemHalfHeight;
+                        manualHeight = centerY - (float) targetBox.minY - itemHalfHeight;
                     } else {
-                        effectiveHeight = 0;
+                        manualHeight = 0;
                     }
                 } else {
                     float minX = (float) targetBox.minX;
-                    float multiplier = getScaleMultiplier(targetRange);
-                    DefinitionManager.PlaceMatDefinition defEffective = getEffectiveDefinition(stack, targetRange);
                     float maxX = (float) targetBox.maxX - defEffective.size().x * multiplier;
                     float minZ = (float) targetBox.minZ;
                     float maxZ = (float) targetBox.maxZ - defEffective.size().y * multiplier;
@@ -516,10 +508,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
                     float clampedX = Math.max(minX, Math.min(maxX, pos.x));
                     float clampedZ = Math.max(minZ, Math.min(maxZ, pos.y));
                     effectivePos = new Vec2(clampedX, clampedZ);
-                    effectiveHeight = calculateEffectiveHeight(stack, effectivePos, height, targetRange);
                 }
-            } else {
-                effectiveHeight = calculateEffectiveHeight(stack, effectivePos, height, null);
             }
 
             if (targetRange != null && targetRange.restricted()) {
@@ -554,7 +543,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
             ItemStack toPlace = stack.copy();
             applyTraits(toPlace, targetRange);
             float baseHeight = targetBox != null ? (float) targetBox.minY : 0.0625f;
-            placedItems.add(new PlacedItem(this, toPlace, effectivePos, finalRotation, finalPitch, finalRoll, effectiveHeight, baseHeight));
+            placedItems.add(new PlacedItem(this, toPlace, effectivePos, finalRotation, finalPitch, finalRoll, manualHeight, baseHeight));
             updateTargetHeights();
             lastPlacementTick = level != null ? level.getGameTime() : -1;
             setChanged();
@@ -622,42 +611,43 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
         }
     }
 
-    public FoodTrait getFoodTrait() {
+    public Object getFoodTrait() {
         if (level != null) {
-            final float temp = Climate.getAverageTemperature(level, getBlockPos());
-            if (temp < FLConfig.SERVER.cellarLevel3Temperature.get()) {
-                return FLFoodTraits.SHELVED_3;
+            final float temp = TFCCompat.INSTANCE.getAverageTemperature(level, getBlockPos());
+            if (temp < FirmaLifeCompat.INSTANCE.getCellarLevel3Temperature()) {
+                return FirmaLifeCompat.INSTANCE.getShelved3Trait();
             }
-            if (temp < FLConfig.SERVER.cellarLevel2Temperature.get()) {
-                return FLFoodTraits.SHELVED_2;
+            if (temp < FirmaLifeCompat.INSTANCE.getCellarLevel2Temperature()) {
+                return FirmaLifeCompat.INSTANCE.getShelved2Trait();
             }
         }
-        return FLFoodTraits.SHELVED;
+        return FirmaLifeCompat.INSTANCE.getShelvedTrait();
     }
 
-    public FoodTrait[] getPossibleTraits() {
-        return POSSIBLE_SHELVED_TRAITS;
+    public Object[] getPossibleTraits() {
+        return FirmaLifeCompat.INSTANCE.getPossibleShelvedTraits();
     }
 
     public void updatePreservation(boolean preserved) {
         for (PlacedItem placed : placedItems) {
             if (preserved) {
-                FoodCapability.applyTrait(placed.stack, getFoodTrait());
+                TFCCompat.INSTANCE.applyTrait(placed.stack, getFoodTrait());
             } else {
-                for (FoodTrait trait : getPossibleTraits()) {
-                    FoodCapability.removeTrait(placed.stack, trait);
+                for (Object trait : getPossibleTraits()) {
+                    TFCCompat.INSTANCE.removeTrait(placed.stack, trait);
                 }
             }
         }
     }
 
-    @Override
-    public void setValid(@NotNull Level level, @NotNull BlockPos pos, boolean valid, int tier, @NotNull ClimateType climate) {
-        if (climate == ClimateType.CELLAR) {
+    public void setClimateValid(boolean valid, boolean isCellar) {
+        if (isCellar) {
             this.climateValid = valid;
             updatePreservation(valid);
             setChanged();
-            level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            if (level != null) {
+                level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+            }
         }
     }
 
@@ -682,24 +672,18 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
         }
 
         if (climateValid) {
-            FoodCapability.applyTrait(stack, getFoodTrait());
+            TFCCompat.INSTANCE.applyTrait(stack, getFoodTrait());
         }
 
         ResourceLocation blockTraitId = pmb.getFoodTrait();
         if (blockTraitId != null) {
-            FoodTrait trait = FoodTrait.getTrait(blockTraitId);
-            if (trait != null) {
-                FoodCapability.applyTrait(stack, trait);
-            }
+            TFCCompat.INSTANCE.applyTrait(stack, blockTraitId);
         }
 
         if (range != null) {
             ResourceLocation rangeTraitId = range.foodTrait();
             if (rangeTraitId != null) {
-                FoodTrait trait = FoodTrait.getTrait(rangeTraitId);
-                if (trait != null) {
-                    FoodCapability.applyTrait(stack, trait);
-                }
+                TFCCompat.INSTANCE.applyTrait(stack, rangeTraitId);
             }
         }
     }
@@ -712,24 +696,24 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
             return;
         }
 
-        for (FoodTrait trait : getPossibleTraits()) {
-            FoodCapability.removeTrait(stack, trait);
+        for (Object trait : getPossibleTraits()) {
+            TFCCompat.INSTANCE.removeTrait(stack, trait);
         }
 
         ResourceLocation blockTraitId = pmb.getFoodTrait();
         if (blockTraitId != null) {
-            FoodTrait trait = FoodTrait.getTrait(blockTraitId);
+            Object trait = TFCCompat.INSTANCE.getTrait(blockTraitId);
             if (trait != null) {
-                FoodCapability.removeTrait(stack, trait);
+                TFCCompat.INSTANCE.removeTrait(stack, trait);
             }
         }
 
         if (range != null) {
             ResourceLocation rangeTraitId = range.foodTrait();
             if (rangeTraitId != null) {
-                FoodTrait trait = FoodTrait.getTrait(rangeTraitId);
+                Object trait = TFCCompat.INSTANCE.getTrait(rangeTraitId);
                 if (trait != null) {
-                    FoodCapability.removeTrait(stack, trait);
+                    TFCCompat.INSTANCE.removeTrait(stack, trait);
                 }
             }
         }
@@ -923,11 +907,6 @@ public class PlaceMatBlockEntity extends BlockEntity implements ClimateReceiver 
             placedItems.add(newItem);
         }
         updateTargetHeights();
-        if (level != null && level.isClientSide) {
-            for (PlacedItem placed : placedItems) {
-                placed.setVisualHeight(placed.targetHeight);
-            }
-        }
     }
 
     @Override

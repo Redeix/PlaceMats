@@ -64,24 +64,17 @@ description='''${mod_description}'''
 
 [[dependencies."${mod_id}"]]
 modId = "tfc"
-mandatory = true
+mandatory = false
 versionRange = "3.2.14"
 ordering = "AFTER"
 side = "BOTH"
 
-#[[dependencies."${mod_id}"]]
-#modId = "create"
-#mandatory = true
-#versionRange = "0.5.1.h"
-#ordering = "AFTER"
-#side = "BOTH"
-#
-#[[dependencies."${mod_id}"]]
-#modId = "firmalife"
-#mandatory = true
-#versionRange = "2.1.10"
-#ordering = "AFTER"
-#side = "BOTH"
+[[dependencies."${mod_id}"]]
+modId = "firmalife"
+mandatory = false
+versionRange = "2.1.10"
+ordering = "AFTER"
+side = "BOTH"
 #
 #[[dependencies."${mod_id}"]]
 #modId = "beneath"

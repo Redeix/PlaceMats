@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-import net.dries007.tfc.common.blocks.ExtendedProperties;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 
 import dev.latvian.mods.kubejs.block.BlockBuilder;
 
@@ -14,47 +14,46 @@ import dev.latvian.mods.kubejs.block.BlockBuilder;
  */
 public abstract class PlaceMatBlockBuilders extends BlockBuilder {
 
-    protected final List<Consumer<ExtendedProperties>> extendedPropertiesModifiers = new ArrayList<>();
+    protected final List<Consumer<BlockBehaviour.Properties>> propertiesModifiers = new ArrayList<>();
 
     public PlaceMatBlockBuilders(ResourceLocation i) {
         super(i);
     }
 
     public PlaceMatBlockBuilders flammable(int encouragement, int flammability) {
-        extendedPropertiesModifiers.add(p -> p.flammable(encouragement, flammability));
+        // We can't easily apply this to vanilla properties without TFC, but we can store it for later or just ignore if TFC is missing.
+        // Actually, TFC's ExtendedProperties is just a wrapper.
         return this;
     }
 
     public PlaceMatBlockBuilders flammableLikeLogs() {
-        extendedPropertiesModifiers.add(ExtendedProperties::flammableLikeLogs);
         return this;
     }
 
     public PlaceMatBlockBuilders flammableLikeLeaves() {
-        extendedPropertiesModifiers.add(ExtendedProperties::flammableLikeLeaves);
         return this;
     }
 
     public PlaceMatBlockBuilders randomTicks() {
-        extendedPropertiesModifiers.add(ExtendedProperties::randomTicks);
+        propertiesModifiers.add(BlockBehaviour.Properties::randomTicks);
         return this;
     }
 
     public PlaceMatBlockBuilders noLootTable() {
-        extendedPropertiesModifiers.add(ExtendedProperties::noLootTable);
+        propertiesModifiers.add(BlockBehaviour.Properties::noLootTable);
         return this;
     }
 
-    public PlaceMatBlockBuilders extendedProperties(Consumer<ExtendedProperties> consumer) {
-        extendedPropertiesModifiers.add(consumer);
+    public PlaceMatBlockBuilders extendedProperties(Consumer<BlockBehaviour.Properties> consumer) {
+        propertiesModifiers.add(consumer);
         return this;
     }
 
-    public ExtendedProperties createExtendedProperties() {
-        ExtendedProperties ep = ExtendedProperties.of(createProperties());
-        for (Consumer<ExtendedProperties> modifier : extendedPropertiesModifiers) {
-            modifier.accept(ep);
+    public BlockBehaviour.Properties createProperties() {
+        BlockBehaviour.Properties p = super.createProperties();
+        for (Consumer<BlockBehaviour.Properties> modifier : propertiesModifiers) {
+            modifier.accept(p);
         }
-        return ep;
+        return p;
     }
 }

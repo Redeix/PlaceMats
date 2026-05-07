@@ -15,6 +15,7 @@ import dev.latvian.mods.kubejs.typings.Info;
 
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.data.PlaceMatBlockEntities;
+import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
 public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
@@ -125,8 +126,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
 
     @Override
     public PlaceMatBlock createObject() {
-        var ep = createExtendedProperties();
-        PlaceMatBlock block = cardinal ? new PlaceMatBlock.Cardinal(ep) : new PlaceMatBlock(ep);
+        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(createProperties(), cardinal);
         block.containerSize(containerSize);
         block.maxStackSize(maxStackSize);
         if (disableExtraction) {
