@@ -8,7 +8,7 @@ import dev.latvian.mods.kubejs.event.EventJS;
 import dev.latvian.mods.kubejs.level.BlockContainerJS;
 import lombok.Getter;
 
-import net.placemats.common.block.PlaceMatInteractions;
+import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
 

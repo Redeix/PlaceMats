@@ -15,6 +15,8 @@ public class PlaceMatLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         addBlock(PlaceMatBlocks.STORAGE_RACK, "Storage Rack");
+        addBlock(PlaceMatBlocks.OAK_STORAGE_RACK, "Oak Storage Rack");
+
         add("place_mats.creative_tab.place_mats", "Place Mats");
 
         add("place_mats.tooltip.placemat.placing", "Hold an item and §3RMB§r to display.");

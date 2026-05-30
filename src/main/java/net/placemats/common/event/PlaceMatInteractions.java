@@ -1,9 +1,9 @@
-package net.placemats.common.block;
+package net.placemats.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import org.jetbrains.annotations.NotNull;
+import net.placemats.common.block.PlaceMatBlock;
 import org.jetbrains.annotations.Nullable;
 
 import net.placemats.compat.tfc.TFCCompat;
@@ -16,9 +16,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.world.food.FoodProperties;
-import net.minecraft.world.inventory.CraftingContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.item.crafting.Ingredient;
@@ -33,8 +31,7 @@ import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.recipe.PlaceMatRecipe;
-import net.placemats.compat.kjs.events.PlaceMatInteractionEventJS;
-import net.placemats.compat.kjs.events.PlaceMatKJSServerEvents;
+import net.placemats.compat.kjs.KJSCompat;
 
 public class PlaceMatInteractions {
 
@@ -67,10 +64,9 @@ public class PlaceMatInteractions {
         if (targeted != null) {
             int zoneIndex = getZoneIndex(placeMat, targeted);
 
-            PlaceMatInteractionEventJS event = new PlaceMatInteractionEventJS(player, targeted, zoneIndex, placeMat);
-            PlaceMatKJSServerEvents.PLACEMAT_INTERACTION.post(event);
-            if (event.isInteractionHandled()) {
-                return InteractionResult.sidedSuccess(level.isClientSide);
+            InteractionResult result = KJSCompat.INSTANCE.onInteraction(player, targeted, zoneIndex, placeMat);
+            if (result != InteractionResult.PASS) {
+                return result;
             }
 
             if (held.isEmpty()) {
@@ -129,9 +125,8 @@ public class PlaceMatInteractions {
 
                     int zoneIndex = getZoneIndex(placeMat, targeted);
 
-                    PlaceMatInteractionEventJS event = new PlaceMatInteractionEventJS(player, targeted, zoneIndex, placeMat);
-                    PlaceMatKJSServerEvents.PLACEMAT_INTERACTION.post(event);
-                    if (event.isInteractionHandled()) {
+                    InteractionResult result = KJSCompat.INSTANCE.onInteraction(player, targeted, zoneIndex, placeMat);
+                    if (result != InteractionResult.PASS) {
                         placeMat.markInteracted();
                         return true;
                     }
@@ -232,7 +227,15 @@ public class PlaceMatInteractions {
                 ctx.add(ItemStack.EMPTY);
 
             TFCCompat.INSTANCE.setCraftingInput(ctx);
-            ItemStack result = TFCCompat.INSTANCE.getStackFromProvider(recipe.getResultProvider(), ctx.get(0));
+            java.util.List<ItemStack> results = new java.util.ArrayList<>();
+            for (int i = 0; i < recipe.getResultProviders().size(); i++) {
+                Object provider = recipe.getResultProviders().get(i);
+                if (i == 0) {
+                    results.add(TFCCompat.INSTANCE.getStackFromProvider(provider, ctx.get(0)));
+                } else {
+                    results.add(((ItemStack) provider).copy());
+                }
+            }
             TFCCompat.INSTANCE.clearCraftingInput();
 
             // Consume/Damage input item
@@ -258,7 +261,8 @@ public class PlaceMatInteractions {
                 }
             }
 
-            if (!result.isEmpty()) {
+            for (ItemStack result : results) {
+                if (result.isEmpty()) continue;
                 if (targeted != null && targetDepleted) {
                     // Try to put it back on the mat
                     PlaceMatBlock.PlacementRange range = placeMat.getRangeForItem(targeted);

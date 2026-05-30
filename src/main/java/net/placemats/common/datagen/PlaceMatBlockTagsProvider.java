@@ -20,10 +20,10 @@ public class PlaceMatBlockTagsProvider extends BlockTagsProvider {
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        tag(PlaceMatTags.Blocks.PLACE_MATS)
-                .add(PlaceMatBlocks.STORAGE_RACK.get());
-
-        tag(BlockTags.MINEABLE_WITH_PICKAXE)
-                .add(PlaceMatBlocks.STORAGE_RACK.get());
+        tag(PlaceMatTags.Blocks.PLACE_MATS).add(PlaceMatBlocks.STORAGE_RACK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(PlaceMatBlocks.STORAGE_RACK.get());
+        
+        tag(PlaceMatTags.Blocks.PLACE_MATS).add(PlaceMatBlocks.OAK_STORAGE_RACK.get());
+        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(PlaceMatBlocks.OAK_STORAGE_RACK.get());
     }
 }

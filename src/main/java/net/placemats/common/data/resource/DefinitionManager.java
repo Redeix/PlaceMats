@@ -23,10 +23,9 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import net.placemats.compat.kjs.events.RegisterPlaceMatDefinitionsEventJS;
-import net.placemats.compat.kjs.events.PlaceMatKJSStartupEvents;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.SyncPlaceMatDefinitionsPacket;
+import net.placemats.compat.kjs.KJSCompat;
 
 public class DefinitionManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
@@ -200,13 +199,10 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
     }
 
     public static void postKjsEvent(boolean isClient) {
-        var event = new RegisterPlaceMatDefinitionsEventJS();
-        PlaceMatKJSStartupEvents.PLACE_MAT_DEFINITIONS.post(event);
-
         Map<Item, PlaceMatDefinition> definitions = isClient ? CLIENT_DEFINITIONS : SERVER_DEFINITIONS;
         Map<TagKey<Item>, PlaceMatDefinition> tagDefinitions = isClient ? CLIENT_TAG_DEFINITIONS : SERVER_TAG_DEFINITIONS;
 
-        event.apply(definitions, tagDefinitions);
+        KJSCompat.INSTANCE.postEvent(definitions, tagDefinitions);
 
         // Sync to all clients if we are on the server side.
         if (!isClient && net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer() != null) {

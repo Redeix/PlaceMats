@@ -43,7 +43,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
     private final Ingredient targetInput;
     @Getter
     private final int targetInputCount;
-    private final Object result;
+    private final java.util.List<Object> results;
     @Nullable
     private final ResourceLocation sound;
     @Getter
@@ -53,7 +53,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
 
     public PlaceMatRecipe(ResourceLocation id, @Nullable Block block, @Nullable TagKey<Block> blockTag, @Nullable Integer zoneIndex,
             Ingredient input, int inputCount, Ingredient targetInput, int targetInputCount,
-            Object result, @Nullable ResourceLocation sound, float volume, float pitch) {
+            java.util.List<Object> results, @Nullable ResourceLocation sound, float volume, float pitch) {
         this.id = id;
         this.block = block;
         this.blockTag = blockTag;
@@ -62,7 +62,7 @@ public class PlaceMatRecipe implements Recipe<Container> {
         this.inputCount = inputCount;
         this.targetInput = targetInput;
         this.targetInputCount = targetInputCount;
-        this.result = result;
+        this.results = results;
         this.sound = sound;
         this.volume = volume;
         this.pitch = pitch;
@@ -80,8 +80,8 @@ public class PlaceMatRecipe implements Recipe<Container> {
         return zoneIndex;
     }
 
-    public Object getResultProvider() {
-        return result;
+    public java.util.List<Object> getResultProviders() {
+        return results;
     }
 
     public @Nullable ResourceLocation getSound() {
@@ -105,7 +105,10 @@ public class PlaceMatRecipe implements Recipe<Container> {
 
     @Override
     public @NotNull ItemStack getResultItem(@NotNull RegistryAccess registryAccess) {
-        return TFCCompat.INSTANCE.getStackFromProvider(result, ItemStack.EMPTY);
+        if (results.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        return TFCCompat.INSTANCE.getStackFromProvider(results.get(0), ItemStack.EMPTY);
     }
 
     @Override
@@ -142,13 +145,32 @@ public class PlaceMatRecipe implements Recipe<Container> {
             Ingredient targetInput = json.has("target_input") ? Ingredient.fromJson(json.get("target_input")) : Ingredient.EMPTY;
             int targetInputCount = json.has("target_input_count") ? GsonHelper.getAsInt(json, "target_input_count") : 1;
 
-            Object result = TFCCompat.INSTANCE.readResultFromJson(json.get("result"));
+            java.util.List<Object> results = new java.util.ArrayList<>();
+            JsonElement resultElement = json.get("result");
+            if (resultElement != null && resultElement.isJsonArray()) {
+                com.google.gson.JsonArray array = resultElement.getAsJsonArray();
+                for (int i = 0; i < array.size(); i++) {
+                    JsonElement e = array.get(i);
+                    if (i == 0) {
+                        results.add(TFCCompat.INSTANCE.readResultFromJson(e));
+                    } else {
+                        if (e.isJsonObject()) {
+                            results.add(net.minecraft.world.item.crafting.ShapedRecipe.itemStackFromJson(e.getAsJsonObject()));
+                        } else {
+                            net.minecraft.world.item.Item item = net.minecraft.core.registries.BuiltInRegistries.ITEM.get(ResourceLocation.parse(e.getAsString()));
+                            results.add(new net.minecraft.world.item.ItemStack(item));
+                        }
+                    }
+                }
+            } else {
+                results.add(TFCCompat.INSTANCE.readResultFromJson(resultElement));
+            }
 
             ResourceLocation sound = json.has("sound") ? ResourceLocation.parse(GsonHelper.getAsString(json, "sound")) : null;
             float volume = GsonHelper.getAsFloat(json, "volume", 1.0f);
             float pitch = GsonHelper.getAsFloat(json, "pitch", 1.0f);
 
-            return new PlaceMatRecipe(recipeId, block, blockTag, zoneIndex, input, inputCount, targetInput, targetInputCount, result, sound, volume, pitch);
+            return new PlaceMatRecipe(recipeId, block, blockTag, zoneIndex, input, inputCount, targetInput, targetInputCount, results, sound, volume, pitch);
         }
 
         @Override
@@ -166,12 +188,22 @@ public class PlaceMatRecipe implements Recipe<Container> {
             int inputCount = buffer.readVarInt();
             Ingredient targetInput = Ingredient.fromNetwork(buffer);
             int targetInputCount = buffer.readVarInt();
-            Object result = TFCCompat.INSTANCE.readResultFromNetwork(buffer);
+
+            int resultSize = buffer.readVarInt();
+            java.util.List<Object> results = new java.util.ArrayList<>(resultSize);
+            for (int i = 0; i < resultSize; i++) {
+                if (i == 0) {
+                    results.add(TFCCompat.INSTANCE.readResultFromNetwork(buffer));
+                } else {
+                    results.add(buffer.readItem());
+                }
+            }
+
             ResourceLocation sound = buffer.readBoolean() ? buffer.readResourceLocation() : null;
             float volume = buffer.readFloat();
             float pitch = buffer.readFloat();
 
-            return new PlaceMatRecipe(recipeId, block, blockTag, zoneIndex, input, inputCount, targetInput, targetInputCount, result, sound, volume, pitch);
+            return new PlaceMatRecipe(recipeId, block, blockTag, zoneIndex, input, inputCount, targetInput, targetInputCount, results, sound, volume, pitch);
         }
 
         @Override
@@ -192,7 +224,17 @@ public class PlaceMatRecipe implements Recipe<Container> {
             buffer.writeVarInt(recipe.inputCount);
             recipe.targetInput.toNetwork(buffer);
             buffer.writeVarInt(recipe.targetInputCount);
-            TFCCompat.INSTANCE.writeResultToNetwork(buffer, recipe.result);
+
+            buffer.writeVarInt(recipe.results.size());
+            for (int i = 0; i < recipe.results.size(); i++) {
+                Object res = recipe.results.get(i);
+                if (i == 0) {
+                    TFCCompat.INSTANCE.writeResultToNetwork(buffer, res);
+                } else {
+                    buffer.writeItem((ItemStack) res);
+                }
+            }
+
             buffer.writeBoolean(recipe.sound != null);
             if (recipe.sound != null)
                 buffer.writeResourceLocation(recipe.sound);

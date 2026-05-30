@@ -1,4 +1,5 @@
 {
+  "block.place_mats.oak_storage_rack": "Oak Storage Rack",
   "block.place_mats.storage_rack": "Storage Rack",
   "config.jade.plugin_place_mats.placemat.title": "Place Mat",
   "emi.category.place_mats.place_mat": "Place Mat Interaction",

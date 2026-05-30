@@ -28,5 +28,9 @@ dependencies {
 
     // Jade
     modImplementation "maven.modrinth:jade:11.13.2+forge"
+    
+    // Every Compat & Moonlight
+    modImplementation "maven.modrinth:moonlight:${moonlight_version}"
+    modImplementation "maven.modrinth:every-compat:${every_compat_version}"
 
 }

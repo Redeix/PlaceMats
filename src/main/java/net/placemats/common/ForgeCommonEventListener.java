@@ -9,7 +9,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.block.PlaceMatInteractions;
+import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.resource.DefinitionManager;
 

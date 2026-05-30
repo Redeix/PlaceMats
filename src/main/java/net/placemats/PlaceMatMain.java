@@ -19,6 +19,7 @@ import net.placemats.common.data.PlaceMatCreativeTab;
 import net.placemats.common.data.RecipeSerializers;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.compat.everycompat.EveryCompatCompat;
 
 @Mod(PlaceMatMain.MOD_ID)
 public final class PlaceMatMain {
@@ -41,6 +42,8 @@ public final class PlaceMatMain {
         PlaceMatCreativeTab.CREATIVE_MODE_TABS.register(bus);
         PlaceMatRecipeTypes.RECIPE_TYPES.register(bus);
         RecipeSerializers.RECIPE_SERIALIZERS.register(bus);
+
+        EveryCompatCompat.INSTANCE.init();
 
         setupFixForGlobalServerConfig();
 

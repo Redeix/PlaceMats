@@ -3,6 +3,7 @@ package net.placemats.common.block;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.placemats.common.event.PlaceMatInteractions;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;

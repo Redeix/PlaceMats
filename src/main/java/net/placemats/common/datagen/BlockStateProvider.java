@@ -13,6 +13,7 @@ public class BlockStateProvider extends net.minecraftforge.client.model.generato
 
     @Override
     protected void registerStatesAndModels() {
-        simpleBlock(PlaceMatBlocks.STORAGE_RACK.get(), models().getExistingFile(modLoc("block/place_mats/storage_racks/storage_rack")));
+        horizontalBlock(PlaceMatBlocks.STORAGE_RACK.get(), models().getExistingFile(modLoc("block/place_mats/storage_racks/storage_rack")));
+        horizontalBlock(PlaceMatBlocks.OAK_STORAGE_RACK.get(), models().getExistingFile(modLoc("block/place_mats/storage_racks/oak_storage_rack")));
     }
 }

@@ -20,7 +20,8 @@ public class PlaceMatBlockEntities {
 
     public static final RegistryObject<BlockEntityType<PlaceMatBlockEntity>> PLACE_MAT = BLOCK_ENTITIES.register("place_mat",
             () -> BlockEntityType.Builder.of(FirmaLifeCompat.INSTANCE::createPlaceMatBE,
-                    PlaceMatBlocks.STORAGE_RACK.get()).build(null));
+                    PlaceMatBlocks.STORAGE_RACK.get(),
+                    PlaceMatBlocks.OAK_STORAGE_RACK.get()).build(null));
 
     public static void init() {
     }

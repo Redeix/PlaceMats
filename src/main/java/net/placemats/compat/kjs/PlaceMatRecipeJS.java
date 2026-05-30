@@ -66,6 +66,23 @@ public class PlaceMatRecipeJS extends RecipeJS {
     }
 
     public PlaceMatRecipeJS result(Object result) {
+        if (result instanceof java.util.List<?> list) {
+            com.google.gson.JsonArray array = new com.google.gson.JsonArray();
+            for (Object o : list) {
+                array.add(parseJson(o));
+            }
+            json.add("result", array);
+            return this;
+        } else if (result != null && result.getClass().isArray()) {
+            com.google.gson.JsonArray array = new com.google.gson.JsonArray();
+            int len = java.lang.reflect.Array.getLength(result);
+            for (int i = 0; i < len; i++) {
+                array.add(parseJson(java.lang.reflect.Array.get(result, i)));
+            }
+            json.add("result", array);
+            return this;
+        }
+
         if (result instanceof String s) {
             Matcher matcher = Pattern.compile("^(\\d+)\\s*x\\s*(.*)$").matcher(s);
             if (matcher.matches()) {

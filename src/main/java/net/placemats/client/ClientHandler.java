@@ -35,7 +35,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
 import net.placemats.common.block.PlaceMatBlock;
-import net.placemats.common.block.PlaceMatInteractions;
+import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;

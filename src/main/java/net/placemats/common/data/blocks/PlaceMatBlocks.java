@@ -23,8 +23,14 @@ public final class PlaceMatBlocks {
     public static void init() {
     }
 
-    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> {
-        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion(), true);
+    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion()));
+    public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack", () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties()));
+
+    public static final RegistryObject<Block> OAK_STORAGE_RACK = BLOCKS.register("oak_storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion()));
+    public static final RegistryObject<Item> OAK_STORAGE_RACK_ITEM = ITEMS.register("oak_storage_rack", () -> new BlockItem(OAK_STORAGE_RACK.get(), new Item.Properties()));
+
+    public static PlaceMatBlock createStorageRack(BlockBehaviour.Properties properties) {
+        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(properties, true);
         block.containerSize(10);
         block.addRange(new PlaceMatBlock.PlacementRange(
                 new AABB(1 / 16D, 0 / 16D, 1 / 16D, 15 / 16D, 7 / 16D, 15 / 16D),
@@ -33,8 +39,6 @@ public final class PlaceMatBlocks {
                 new AABB(1 / 16D, 8 / 16D, 1 / 16D, 7 / 16D, 15 / 16D, 7 / 16D),
                 15 / 16F, false, false, false, false, true, false, null, true, true, 16, null, true, false, false, false, 1.0f, 0, 0, 0, 0));
         return block;
-    });
-
-    public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack", () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties()));
+    }
 
 }

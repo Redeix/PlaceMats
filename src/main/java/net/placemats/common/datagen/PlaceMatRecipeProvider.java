@@ -27,5 +27,14 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                 .define('I', Tags.Items.INGOTS_IRON)
                 .unlockedBy("has_ingot", has(Tags.Items.INGOTS_IRON))
                 .save(consumer);
+
+        ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.get())
+                .pattern("SSS")
+                .pattern("I I")
+                .pattern("SSS")
+                .define('S', Items.STICK)
+                .define('I', Tags.Items.INGOTS_IRON)
+                .unlockedBy("has_ingot", has(Tags.Items.INGOTS_IRON))
+                .save(consumer);
     }
 }

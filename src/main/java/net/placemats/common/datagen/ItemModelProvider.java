@@ -14,5 +14,6 @@ public class ItemModelProvider extends net.minecraftforge.client.model.generator
     @Override
     protected void registerModels() {
         withExistingParent(PlaceMatBlocks.STORAGE_RACK_ITEM.getId().getPath(), modLoc("block/place_mats/storage_racks/storage_rack"));
+        withExistingParent(PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.getId().getPath(), modLoc("block/place_mats/storage_racks/oak_storage_rack"));
     }
 }

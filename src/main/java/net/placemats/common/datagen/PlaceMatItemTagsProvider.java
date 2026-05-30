@@ -22,5 +22,6 @@ public class PlaceMatItemTagsProvider extends ItemTagsProvider {
     protected void addTags(HolderLookup.Provider provider) {
         copy(PlaceMatTags.Blocks.PLACE_MATS, PlaceMatTags.Items.PLACE_MATS);
         tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.STORAGE_RACK_ITEM.get());
+        tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.get());
     }
 }

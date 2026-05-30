@@ -30,9 +30,18 @@ public class PlaceMatEmiRecipe implements EmiRecipe {
         ItemStack targetInputStack = recipe.getTargetInput().isEmpty() ? ItemStack.EMPTY : recipe.getTargetInput().getItems()[0].copy();
         targetInputStack.setCount(recipe.getTargetInputCount());
 
-        ItemStack resultStack = TFCCompat.INSTANCE.getStackFromProvider(recipe.getResultProvider(), targetInputStack);
-        if (resultStack.isEmpty()) {
-            resultStack = recipe.getResultItem(RegistryAccess.EMPTY);
+        java.util.List<ItemStack> resultStacks = new java.util.ArrayList<>();
+        for (int i = 0; i < recipe.getResultProviders().size(); i++) {
+            Object provider = recipe.getResultProviders().get(i);
+            if (i == 0) {
+                ItemStack resultStack = TFCCompat.INSTANCE.getStackFromProvider(provider, targetInputStack);
+                if (resultStack.isEmpty()) {
+                    resultStack = recipe.getResultItem(RegistryAccess.EMPTY);
+                }
+                resultStacks.add(resultStack);
+            } else {
+                resultStacks.add(((ItemStack) provider).copy());
+            }
         }
 
         this.inputs = List.of(
@@ -46,7 +55,7 @@ public class PlaceMatEmiRecipe implements EmiRecipe {
                     copy.setCount(recipe.getTargetInputCount());
                     return EmiStack.of(copy);
                 }).toList()));
-        this.outputs = List.of(EmiStack.of(resultStack));
+        this.outputs = resultStacks.stream().map(EmiStack::of).toList();
     }
 
     @Override
@@ -123,6 +132,9 @@ public class PlaceMatEmiRecipe implements EmiRecipe {
         x += 30;
 
         // Result.
-        holder.addSlot(outputs.get(0), x, y - 1).recipeContext(this);
+        for (EmiStack output : outputs) {
+            holder.addSlot(output, x, y - 1).recipeContext(this);
+            x += 18;
+        }
     }
 }
