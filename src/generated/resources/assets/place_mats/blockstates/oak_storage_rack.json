@@ -1,18 +1,18 @@
 {
   "variants": {
     "facing=east": {
-      "model": "place_mats:block/place_mats/storage_racks/oak_storage_rack",
+      "model": "place_mats:block/oak_storage_rack",
       "y": 90
     },
     "facing=north": {
-      "model": "place_mats:block/place_mats/storage_racks/oak_storage_rack"
+      "model": "place_mats:block/oak_storage_rack"
     },
     "facing=south": {
-      "model": "place_mats:block/place_mats/storage_racks/oak_storage_rack",
+      "model": "place_mats:block/oak_storage_rack",
       "y": 180
     },
     "facing=west": {
-      "model": "place_mats:block/place_mats/storage_racks/oak_storage_rack",
+      "model": "place_mats:block/oak_storage_rack",
       "y": 270
     }
   }

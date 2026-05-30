@@ -20,16 +20,15 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
     public PlaceMatEveryCompatModule(String modId) {
         super(modId, "pm");
         this.addEntry(SimpleEntrySet.builder(WoodType.class, "storage_rack",
-                PlaceMatBlocks.STORAGE_RACK, () -> VanillaWoodTypes.OAK,
+                PlaceMatBlocks.OAK_STORAGE_RACK, () -> VanillaWoodTypes.OAK,
                 w -> new PlaceMatBlock(Utils.copyPropertySafe(w.planks).noOcclusion())
                 )
                 .addTag(BlockTags.MINEABLE_WITH_AXE, Registries.BLOCK)
                 .addTile(PlaceMatBlockEntities.PLACE_MAT)
                 .setTabKey(PlaceMatCreativeTab.PLACE_MATS.getId())
-                .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/place_mats/storage_racks/storage_rack_base"))
-                .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "place_mats/storage_racks/storage_rack"))
-                .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "place_mats/storage_racks/storage_rack"))
-                //.addModelTransform(t -> t.replaceWithTextureFromChild(PlaceMatMain.MOD_ID + ":block/place_mats/storage_racks/storage_rack_base", "planks"))
+                .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_racks/storage_rack_oak"))
+                .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack"))
+                .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/storage_rack"))
                 .defaultRecipe()
                 .build());
     }
