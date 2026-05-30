@@ -1,8 +1,8 @@
 {
     "format_version": "1.9.0",
     "textures": {
-        "0": "place_mats:block/place_mats/storage_racks/storage_rack_oak",
-        "particle": "place_mats:block/place_mats/storage_racks/storage_rack_oak"
+        "0": "place_mats:block/place_mats/storage_rack_oak",
+        "particle": "place_mats:block/place_mats/storage_rack_oak"
     },
     "elements": [
         {

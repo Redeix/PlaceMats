@@ -26,7 +26,7 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
                 .addTag(BlockTags.MINEABLE_WITH_AXE, Registries.BLOCK)
                 .addTile(PlaceMatBlockEntities.PLACE_MAT)
                 .setTabKey(PlaceMatCreativeTab.PLACE_MATS.getId())
-                .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_racks/storage_rack_oak"))
+                .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_oak"))
                 .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack"))
                 .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/storage_rack"))
                 .defaultRecipe()
