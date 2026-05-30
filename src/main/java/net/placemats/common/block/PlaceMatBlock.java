@@ -296,22 +296,6 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     }
 
     @Override
-    public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
-        if (state.hasProperty(FACING)) {
-            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-        }
-        return state;
-    }
-
-    @Override
-    public BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) {
-        if (state.hasProperty(FACING)) {
-            return state.rotate(mirror.getRotation(state.getValue(FACING)));
-        }
-        return state;
-    }
-
-    @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
     }
 
@@ -319,22 +303,29 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
         public Cardinal(Properties properties) {
             super(properties);
+            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
             builder.add(FACING);
         }
-    }
 
-    @Nullable
-    @Override
-    public BlockState getStateForPlacement(BlockPlaceContext context) {
-        BlockState state = defaultBlockState();
-        if (state.hasProperty(FACING)) {
-            return state.setValue(FACING, context.getHorizontalDirection().getOpposite());
+        @Override
+        public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
         }
-        return state;
+
+        @Override
+        public BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) {
+            return state.rotate(mirror.getRotation(state.getValue(FACING)));
+        }
+
+        @Nullable
+        @Override
+        public BlockState getStateForPlacement(BlockPlaceContext context) {
+            return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        }
     }
 
 

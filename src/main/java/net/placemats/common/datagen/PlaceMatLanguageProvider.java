@@ -4,7 +4,6 @@ import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.PlaceMatCreativeTab;
 import net.placemats.common.data.blocks.PlaceMatBlocks;
 
 public class PlaceMatLanguageProvider extends LanguageProvider {
@@ -16,6 +15,7 @@ public class PlaceMatLanguageProvider extends LanguageProvider {
     protected void addTranslations() {
         addBlock(PlaceMatBlocks.STORAGE_RACK, "Storage Rack");
         addBlock(PlaceMatBlocks.OAK_STORAGE_RACK, "Oak Storage Rack");
+        add("block_type.pm.storage_rack", "%s Storage Rack");
 
         add("place_mats.creative_tab.place_mats", "Place Mats");
 

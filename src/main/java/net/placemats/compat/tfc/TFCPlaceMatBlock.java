@@ -40,10 +40,5 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         public ExtendedProperties getExtendedProperties() {
             return extendedProperties;
         }
-
-        @Override
-        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-            builder.add(FACING);
-        }
     }
 }
