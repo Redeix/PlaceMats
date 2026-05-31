@@ -1,21 +1,62 @@
 {
-  "type": "minecraft:crafting_shaped",
-  "category": "misc",
-  "key": {
-    "I": {
-      "tag": "forge:ingots/iron"
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "tfc"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "tfc:metal/bars/wrought_iron"
+          },
+          "S": {
+            "item": "minecraft:dark_oak_slab"
+          }
+        },
+        "pattern": [
+          "SSS",
+          "I I",
+          "ISI"
+        ],
+        "result": {
+          "item": "place_mats:dark_oak_storage_rack"
+        },
+        "show_notification": true
+      }
     },
-    "S": {
-      "item": "minecraft:dark_oak_slab"
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "minecraft:iron_bars"
+          },
+          "S": {
+            "item": "minecraft:dark_oak_slab"
+          }
+        },
+        "pattern": [
+          "SSS",
+          "I I",
+          "ISI"
+        ],
+        "result": {
+          "item": "place_mats:dark_oak_storage_rack"
+        },
+        "show_notification": true
+      }
     }
-  },
-  "pattern": [
-    "SSS",
-    "I I",
-    "SSS"
-  ],
-  "result": {
-    "item": "place_mats:dark_oak_storage_rack"
-  },
-  "show_notification": true
+  ]
 }

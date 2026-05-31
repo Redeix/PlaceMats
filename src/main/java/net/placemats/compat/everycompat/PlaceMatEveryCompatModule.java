@@ -19,7 +19,7 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
     public PlaceMatEveryCompatModule(String modId) {
         super(modId, "pm");
         this.addEntry(SimpleEntrySet.builder(WoodType.class, "storage_rack",
-            PlaceMatBlocks.WOOD_STORAGE_RACKS.stream().filter(r -> r.getId().getPath().contains("oak")).findFirst().get(), () -> VanillaWoodTypes.OAK,
+            () -> PlaceMatBlocks.WOOD_STORAGE_RACKS.stream().filter(r -> r.getId().getPath().contains("oak")).findFirst().get().get(), () -> VanillaWoodTypes.OAK,
             w -> PlaceMatBlocks.createStorageRack(Utils.copyPropertySafe(w.planks).noOcclusion().isViewBlocking((state, level, pos) -> false))
             )
             .addTag(BlockTags.MINEABLE_WITH_AXE, Registries.BLOCK)
