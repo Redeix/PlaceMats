@@ -335,9 +335,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         if (target instanceof BlockHitResult blockHit && level.getBlockEntity(pos) instanceof PlaceMatBlockEntity foodPlacer) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
-            Vec3 location = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
-            PlacementRange targetedRange = getTargetedPlacementRange(state, location);
-            PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, pos, targetedRange);
+            PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
             if (targeted != null) {
                 return targeted.stack.copy();
             }
@@ -361,7 +359,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity foodPlacer) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
-            if (foodPlacer.getTargetedItem(eyePos, lookVec, pos, null) != null) {
+            if (foodPlacer.getTargetedItem(eyePos, lookVec, pos) != null) {
                 return 0.0f;
             }
         }

@@ -218,7 +218,7 @@ public class ClientHandler {
                 targetedRange = pmb.getTargetedPlacementRange(state, location);
             }
 
-            if (foodPlacer.getTargetedItem(eyePos, lookVec, event.getPos(), targetedRange) != null) {
+            if (foodPlacer.getTargetedItem(eyePos, lookVec, event.getPos()) != null) {
                 if (held.isEmpty()) {
                     return;
                 }
@@ -316,7 +316,10 @@ public class ClientHandler {
                     BlockState state = blockEntity.getBlockState();
                     targetedRange = pmb.getTargetedPlacementRange(state, location);
                 }
-                PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, blockHit.getBlockPos(), targetedRange);
+                PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, blockHit.getBlockPos());
+                if (targeted != null) {
+                    targetedRange = foodPlacer.getRangeForItem(targeted);
+                }
                 ItemStack held = player.getMainHandItem();
 
                 if (targeted != null) {

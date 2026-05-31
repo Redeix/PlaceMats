@@ -48,14 +48,8 @@ public class PlaceMatInteractions {
 
         Vec3 eyePos = player.getEyePosition(1.0f);
         Vec3 lookVec = player.getViewVector(1.0f);
-        Vec3 location = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
 
-        PlaceMatBlock.PlacementRange targetedRange = null;
-        if (placeMat.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-            targetedRange = pmb.getTargetedPlacementRange(placeMat.getBlockState(), location);
-        }
-
-        PlacedItem targeted = placeMat.getTargetedItem(eyePos, lookVec, pos, targetedRange);
+        PlacedItem targeted = placeMat.getTargetedItem(eyePos, lookVec, pos);
 
         if (tryRecipe(placeMat, player, hand, targeted)) {
             return InteractionResult.sidedSuccess(level.isClientSide);
@@ -100,13 +94,7 @@ public class PlaceMatInteractions {
             }
         }
 
-        PlaceMatBlock.PlacementRange targetedRange = null;
-        if (hit != null && placeMat.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-            Vec3 location = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
-            targetedRange = pmb.getTargetedPlacementRange(placeMat.getBlockState(), location);
-        }
-
-        PlacedItem targeted = placeMat.getTargetedItem(eyePos, lookVec, pos, targetedRange);
+        PlacedItem targeted = placeMat.getTargetedItem(eyePos, lookVec, pos);
 
         if (targeted != null) {
             if (!level.isClientSide) {

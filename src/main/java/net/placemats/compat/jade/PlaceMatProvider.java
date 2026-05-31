@@ -41,12 +41,14 @@ public enum PlaceMatProvider implements IBlockComponentProvider {
             Vec3 eyePos = accessor.getPlayer().getEyePosition(1.0f);
             Vec3 lookVec = accessor.getPlayer().getViewVector(1.0f);
 
+            PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, accessor.getPosition());
+
             PlaceMatBlock.PlacementRange targetedRange = null;
-            if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+            if (targetedItem != null) {
+                targetedRange = foodPlacer.getRangeForItem(targetedItem);
+            } else if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                 targetedRange = pmb.getTargetedPlacementRange(foodPlacer.getBlockState(), hitVec);
             }
-
-            PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, accessor.getPosition(), targetedRange);
             boolean containsItems = !foodPlacer.getPlacedItems().isEmpty();
 
             for (PlaceMatBlockEntity.PlacedItem placed : foodPlacer.getPlacedItems()) {
