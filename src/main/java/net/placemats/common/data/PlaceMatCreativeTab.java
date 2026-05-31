@@ -23,7 +23,7 @@ public class PlaceMatCreativeTab {
                     .icon(() -> new ItemStack(PlaceMatBlocks.STORAGE_RACK_ITEM.get()))
                     .displayItems((parameters, output) -> {
                         output.accept(PlaceMatBlocks.STORAGE_RACK_ITEM.get());
-                        output.accept(PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.get());
+                        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> output.accept(blockReg.get()));
                     })
                     .build());
 }

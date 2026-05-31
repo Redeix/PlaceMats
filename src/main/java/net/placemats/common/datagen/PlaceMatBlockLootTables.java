@@ -17,7 +17,7 @@ public class PlaceMatBlockLootTables extends BlockLootSubProvider {
     @Override
     protected void generate() {
         dropSelf(PlaceMatBlocks.STORAGE_RACK.get());
-        dropSelf(PlaceMatBlocks.OAK_STORAGE_RACK.get());
+        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> dropSelf(blockReg.get()));
     }
 
     @Override

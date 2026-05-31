@@ -2,7 +2,15 @@
   "values": [
     "place_mats:storage_rack",
     "place_mats:oak_storage_rack",
-    "place_mats:storage_rack",
-    "place_mats:oak_storage_rack"
+    "place_mats:spruce_storage_rack",
+    "place_mats:birch_storage_rack",
+    "place_mats:acacia_storage_rack",
+    "place_mats:cherry_storage_rack",
+    "place_mats:jungle_storage_rack",
+    "place_mats:dark_oak_storage_rack",
+    "place_mats:crimson_storage_rack",
+    "place_mats:warped_storage_rack",
+    "place_mats:mangrove_storage_rack",
+    "place_mats:bamboo_storage_rack"
   ]
 }

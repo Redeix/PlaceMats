@@ -1,0 +1,6 @@
+{
+  "parent": "place_mats:block/storage_rack_parent",
+  "textures": {
+    "1": "place_mats:block/jungle_storage_rack"
+  }
+}

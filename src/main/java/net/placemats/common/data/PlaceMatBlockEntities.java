@@ -9,7 +9,6 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.blocks.PlaceMatBlocks;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
@@ -19,11 +18,12 @@ public class PlaceMatBlockEntities {
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, PlaceMatMain.MOD_ID);
 
     public static final RegistryObject<BlockEntityType<PlaceMatBlockEntity>> PLACE_MAT = BLOCK_ENTITIES.register("place_mat",
-            () -> BlockEntityType.Builder.of(FirmaLifeCompat.INSTANCE::createPlaceMatBE,
-                    PlaceMatBlocks.STORAGE_RACK.get(),
-                    PlaceMatBlocks.OAK_STORAGE_RACK.get()).build(null));
+            () -> BlockEntityType.Builder.of(FirmaLifeCompat.INSTANCE::createPlaceMatBE, PlaceMatBlocks.STORAGE_RACK.get()).build(null));
 
     public static void init() {
+        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
+            addValidBEBlock(PLACE_MAT, blockReg.get());
+        });
     }
 
     public static void addValidBEBlock(Supplier<?> type, Block block) {
@@ -45,5 +45,4 @@ public class PlaceMatBlockEntities {
             }
         }
     }
-
 }

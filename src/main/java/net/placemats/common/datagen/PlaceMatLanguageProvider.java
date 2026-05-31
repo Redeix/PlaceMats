@@ -14,7 +14,15 @@ public class PlaceMatLanguageProvider extends LanguageProvider {
     @Override
     protected void addTranslations() {
         addBlock(PlaceMatBlocks.STORAGE_RACK, "Storage Rack");
-        addBlock(PlaceMatBlocks.OAK_STORAGE_RACK, "Oak Storage Rack");
+        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
+            String name = blockReg.getId().getPath().replace("_", " ");
+            String[] words = name.split(" ");
+            StringBuilder sb = new StringBuilder();
+            for (String word : words) {
+                sb.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1)).append(" ");
+            }
+            addBlock(blockReg, sb.toString().trim());
+        });
         add("block_type.pm.storage_rack", "%s Storage Rack");
 
         add("place_mats.creative_tab.place_mats", "Place Mats");

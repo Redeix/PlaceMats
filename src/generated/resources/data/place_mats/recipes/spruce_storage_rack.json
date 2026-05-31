@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "I": {
+      "tag": "forge:ingots/iron"
+    },
+    "S": {
+      "item": "minecraft:spruce_slab"
+    }
+  },
+  "pattern": [
+    "SSS",
+    "I I",
+    "SSS"
+  ],
+  "result": {
+    "item": "place_mats:spruce_storage_rack"
+  },
+  "show_notification": true
+}

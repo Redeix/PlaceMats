@@ -5,6 +5,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -14,20 +15,48 @@ import net.placemats.PlaceMatMain;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Function;
+
 @SuppressWarnings({ "unused" })
 public final class PlaceMatBlocks {
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, PlaceMatMain.MOD_ID);
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, PlaceMatMain.MOD_ID);
 
+    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack",
+            () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+    );
+    public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack",
+            () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties())
+    );
+
+    public static final List<RegistryObject<Block>> WOOD_STORAGE_RACKS = registerWoodVariants("storage_rack",
+            BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false),
+            PlaceMatBlocks::createStorageRack);
+
     public static void init() {
     }
 
-    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false)));
-    public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack", () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties()));
+    private static List<RegistryObject<Block>> registerWoodVariants(
+            String suffix,
+            BlockBehaviour.Properties properties,
+            Function<BlockBehaviour.Properties, Block> blockFactory) {
 
-    public static final RegistryObject<Block> OAK_STORAGE_RACK = BLOCKS.register("oak_storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false)));
-    public static final RegistryObject<Item> OAK_STORAGE_RACK_ITEM = ITEMS.register("oak_storage_rack", () -> new BlockItem(OAK_STORAGE_RACK.get(), new Item.Properties()));
+        List<RegistryObject<Block>> list = new ArrayList<>();
+
+        WoodType.values().forEach(woodType -> {
+            String name = woodType.name() + "_" + suffix;
+
+            RegistryObject<Block> blockReg = BLOCKS.register(name, () -> blockFactory.apply(properties));
+            ITEMS.register(name, () -> new BlockItem(blockReg.get(), new Item.Properties()));
+
+            list.add(blockReg);
+        });
+
+        return list;
+    }
 
     public static PlaceMatBlock createStorageRack(BlockBehaviour.Properties properties) {
         PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(properties, true);
@@ -40,5 +69,4 @@ public final class PlaceMatBlocks {
                 15 / 16F, false, false, false, false, true, false, null, true, true, 16, null, true, false, false, false, 1.0f, 0, 0, 0, 0));
         return block;
     }
-
 }

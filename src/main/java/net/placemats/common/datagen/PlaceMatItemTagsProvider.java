@@ -22,7 +22,8 @@ public class PlaceMatItemTagsProvider extends ItemTagsProvider {
     @Override
     protected void addTags(HolderLookup.@NotNull Provider provider) {
         copy(PlaceMatTags.Blocks.PLACE_MATS, PlaceMatTags.Items.PLACE_MATS);
-        tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.STORAGE_RACK_ITEM.get());
-        tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.get());
+        copy(PlaceMatTags.Blocks.STORAGE_RACKS, PlaceMatTags.Items.STORAGE_RACKS);
+
+        tag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST).addTag(PlaceMatTags.Items.PLACE_MATS);
     }
 }

@@ -22,8 +22,12 @@ public class PlaceMatBlockTagsProvider extends BlockTagsProvider {
     protected void addTags(HolderLookup.Provider provider) {
         tag(PlaceMatTags.Blocks.PLACE_MATS).add(PlaceMatBlocks.STORAGE_RACK.get());
         tag(BlockTags.MINEABLE_WITH_PICKAXE).add(PlaceMatBlocks.STORAGE_RACK.get());
-        
-        tag(PlaceMatTags.Blocks.PLACE_MATS).add(PlaceMatBlocks.OAK_STORAGE_RACK.get());
-        tag(BlockTags.MINEABLE_WITH_PICKAXE).add(PlaceMatBlocks.OAK_STORAGE_RACK.get());
+        tag(PlaceMatTags.Blocks.STORAGE_RACKS).add(PlaceMatBlocks.STORAGE_RACK.get());
+
+        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
+            tag(PlaceMatTags.Blocks.PLACE_MATS).add(blockReg.get());
+            tag(BlockTags.MINEABLE_WITH_AXE).add(blockReg.get());
+            tag(PlaceMatTags.Blocks.STORAGE_RACKS).add(blockReg.get());
+        });
     }
 }

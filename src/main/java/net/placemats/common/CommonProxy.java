@@ -1,6 +1,7 @@
 package net.placemats.common;
 
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 
 import net.placemats.common.data.PlaceMatBlockEntities;
@@ -14,11 +15,15 @@ public class CommonProxy {
     public CommonProxy() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
         bus.register(this);
+        bus.addListener(this::setup);
 
         PlaceMatsNetworkHandler.init();
         PlaceMatBlocks.init();
-        PlaceMatBlockEntities.init();
         PlaceMatCreativeTab.init();
+    }
+
+    public void setup(FMLCommonSetupEvent event) {
+        PlaceMatBlockEntities.init();
     }
 
 }
