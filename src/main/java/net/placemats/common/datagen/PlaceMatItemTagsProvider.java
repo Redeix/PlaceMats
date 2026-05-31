@@ -7,6 +7,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraft.data.tags.ItemTagsProvider;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.data.ExistingFileHelper;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import net.placemats.PlaceMatMain;
@@ -19,7 +20,7 @@ public class PlaceMatItemTagsProvider extends ItemTagsProvider {
     }
 
     @Override
-    protected void addTags(HolderLookup.Provider provider) {
+    protected void addTags(HolderLookup.@NotNull Provider provider) {
         copy(PlaceMatTags.Blocks.PLACE_MATS, PlaceMatTags.Items.PLACE_MATS);
         tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.STORAGE_RACK_ITEM.get());
         tag(PlaceMatTags.Items.PLACE_MATS).add(PlaceMatBlocks.OAK_STORAGE_RACK_ITEM.get());

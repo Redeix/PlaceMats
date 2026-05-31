@@ -11,6 +11,7 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.common.Tags;
 
 import net.placemats.common.data.blocks.PlaceMatBlocks;
+import org.jetbrains.annotations.NotNull;
 
 public class PlaceMatRecipeProvider extends RecipeProvider {
     public PlaceMatRecipeProvider(PackOutput packOutput) {
@@ -18,7 +19,7 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
     }
 
     @Override
-    protected void buildRecipes(Consumer<FinishedRecipe> consumer) {
+    protected void buildRecipes(@NotNull Consumer<FinishedRecipe> consumer) {
         ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.STORAGE_RACK_ITEM.get())
                 .pattern("SSS")
                 .pattern("I I")
@@ -32,7 +33,7 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                 .pattern("SSS")
                 .pattern("I I")
                 .pattern("SSS")
-                .define('S', Items.STICK)
+                .define('S', Items.OAK_SLAB)
                 .define('I', Tags.Items.INGOTS_IRON)
                 .unlockedBy("has_ingot", has(Tags.Items.INGOTS_IRON))
                 .save(consumer);

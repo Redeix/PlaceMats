@@ -23,10 +23,10 @@ public final class PlaceMatBlocks {
     public static void init() {
     }
 
-    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion()));
+    public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false)));
     public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack", () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties()));
 
-    public static final RegistryObject<Block> OAK_STORAGE_RACK = BLOCKS.register("oak_storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion()));
+    public static final RegistryObject<Block> OAK_STORAGE_RACK = BLOCKS.register("oak_storage_rack", () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false)));
     public static final RegistryObject<Item> OAK_STORAGE_RACK_ITEM = ITEMS.register("oak_storage_rack", () -> new BlockItem(OAK_STORAGE_RACK.get(), new Item.Properties()));
 
     public static PlaceMatBlock createStorageRack(BlockBehaviour.Properties properties) {

@@ -6,7 +6,7 @@
       "tag": "forge:ingots/iron"
     },
     "S": {
-      "item": "minecraft:stick"
+      "item": "minecraft:oak_slab"
     }
   },
   "pattern": [
