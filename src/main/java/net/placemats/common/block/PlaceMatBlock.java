@@ -198,7 +198,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         }
 
         for (PlacementRange range : placementRanges) {
-            double dist = localHitVec.distanceToSqr(range.box.getCenter());
+            double dist = getDistanceToBoxSqr(localHitVec, range.box);
             if (dist < minDistance) {
                 minDistance = dist;
                 best = range;
@@ -206,6 +206,14 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         }
 
         return best;
+    }
+
+    // Okay, this sucks. But otherwise snapping to restricted zones feels very clunky
+    private static double getDistanceToBoxSqr(Vec3 point, AABB box) {
+        double dx = point.x < box.minX ? box.minX - point.x : (point.x > box.maxX ? point.x - box.maxX : 0);
+        double dy = point.y < box.minY ? box.minY - point.y : (point.y > box.maxY ? point.y - box.maxY : 0);
+        double dz = point.z < box.minZ ? box.minZ - point.z : (point.z > box.maxZ ? point.z - box.maxZ : 0);
+        return dx * dx + dy * dy + dz * dz;
     }
 
     public static Vec3 getLocalHitVec(BlockState state, Vec3 relativeHitVec) {
