@@ -1,24 +1,32 @@
 package net.placemats.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import com.mojang.blaze3d.vertex.PoseStack;
 
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec2;
@@ -46,6 +54,13 @@ import net.placemats.network.packet.PlaceMatPacket;
 public class ClientHandler {
     private static boolean wasLookingAtPlacemat = false;
 
+    public static final TextureAtlasSprite LOCKED_OVERLAY = PlaceMatRenderer.getBlockAtlasSprite(
+        ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_locked")
+    );
+    public static final TextureAtlasSprite UNLOCKED_OVERLAY = PlaceMatRenderer.getBlockAtlasSprite(
+        ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_unlocked")
+    );
+
     @SubscribeEvent
     public static void onRenderLevel(RenderLevelStageEvent event) {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS)
@@ -59,19 +74,36 @@ public class ClientHandler {
         ItemStack held = player.getMainHandItem();
 
         HitResult hit = mc.hitResult;
+        PoseStack poseStack = event.getPoseStack();
+        MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
+        Vec3 eyePos = player.getEyePosition(event.getPartialTick());
+        Vec3 lookVec = player.getViewVector(event.getPartialTick());
+
+        // Handles key overlays.
+        boolean holdingAxe = held.is(ItemTags.AXES) || player.getOffhandItem().is(ItemTags.AXES);
+        if (holdingAxe) {
+            BlockPos playerPos = player.blockPosition();
+
+            // Check for placemats in a radius around the player.
+            int radius = 5;
+            List<BlockPos> targetBlocks = getBlocksInRadius(mc.level, playerPos, radius);
+
+            // Render overlays on each block.
+            renderBlockOverlays(poseStack, buffer, eyePos, targetBlocks, LOCKED_OVERLAY, 1.0f, 0.0f, 0.0f, 1.0f);
+
+            buffer.endBatch(RenderType.lines());
+            buffer.endBatch(RenderType.translucent());
+            buffer.endBatch();
+        }
+
         if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = blockHit.getBlockPos();
             BlockEntity be = mc.level.getBlockEntity(pos);
             if (be instanceof PlaceMatBlockEntity foodPlacer) {
-                PoseStack poseStack = event.getPoseStack();
                 poseStack.pushPose();
                 poseStack.translate(pos.getX() - mc.gameRenderer.getMainCamera().getPosition().x,
                         pos.getY() - mc.gameRenderer.getMainCamera().getPosition().y,
                         pos.getZ() - mc.gameRenderer.getMainCamera().getPosition().z);
-
-                MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
-                Vec3 eyePos = player.getEyePosition(event.getPartialTick());
-                Vec3 lookVec = player.getViewVector(event.getPartialTick());
 
                 BlockState state = foodPlacer.getBlockState();
                 Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
@@ -175,6 +207,52 @@ public class ClientHandler {
 
                 poseStack.popPose();
             }
+        }
+    }
+
+    /**
+     * Finds all place mat block positions within a spherical radius.
+     * @param level The level to scan for matching blocks.
+     * @param centerPos The center position of the scan.
+     * @param radius The radius of the spherical scan.
+     * @return A list of matching block positions.
+     */
+    public static List<BlockPos> getBlocksInRadius(Level level, BlockPos centerPos, int radius) {
+        List<BlockPos> matches = new ArrayList<>();
+        int maxDistSqr = radius * radius;
+
+        for (BlockPos pos : BlockPos.betweenClosed(
+            centerPos.offset(-radius, -radius, -radius),
+            centerPos.offset(radius, radius, radius)
+        )) {
+            if (pos.distSqr(centerPos) <= maxDistSqr) {
+                if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity || level.getBlockState(pos).getBlock() instanceof PlaceMatBlock) {
+                    matches.add(pos.immutable());
+                }
+            }
+        }
+        return matches;
+    }
+
+    /**
+     * Generic method for rendering a textured block overlay.
+     * Runs through a list of block positions and renders a textured overlay on each block with a given color.
+     */
+    public static void renderBlockOverlays(
+        PoseStack poseStack,
+        MultiBufferSource.BufferSource buffer,
+        Vec3 camPos,
+        List<BlockPos> positions,
+        TextureAtlasSprite sprite,
+        float r, float g, float b, float a
+    ) {
+        AABB unitBox = new AABB(-0.001, -0.001, -0.001, 1.001, 1.001, 1.001);
+
+        for (BlockPos p : positions) {
+            poseStack.pushPose();
+            poseStack.translate(p.getX() - camPos.x, p.getY() - camPos.y, p.getZ() - camPos.z);
+            PlaceMatRenderer.renderOverlay(poseStack, buffer, unitBox, r, g, b, a, LightTexture.FULL_BRIGHT, sprite);
+            poseStack.popPose();
         }
     }
 

@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 
 import net.placemats.compat.tfc.TFCCompat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
@@ -14,19 +15,26 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.entity.ItemRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.joml.Matrix3f;
+import org.joml.Matrix4f;
 
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
 import net.placemats.common.data.resource.DefinitionManager;
 
+@SuppressWarnings({"deprecation", "unused"})
 public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity> {
     private final ItemRenderer itemRenderer;
 
@@ -34,7 +42,6 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         this.itemRenderer = context.getItemRenderer();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void render(PlaceMatBlockEntity be, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = be.getBlockState();
@@ -207,5 +214,90 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         LevelRenderer.renderLineBox(poseStack, vertexConsumer, snapBox, r, g, b, 0.5f);
 
         poseStack.popPose();
+    }
+
+    public static TextureAtlasSprite getBlockAtlasSprite(ResourceLocation textureLocation) {
+        return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(textureLocation);
+    }
+
+    public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, AABB box, float borderR, float borderG, float borderB, float borderA, int packedLight, TextureAtlasSprite sprite) {
+        renderOverlay(poseStack, buffer, box, borderR, borderG, borderB, borderA, 1.0f, 1.0f, 1.0f, 1.0f, packedLight, sprite);
+    }
+
+    public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, AABB box, float borderR, float borderG, float borderB, float borderA, float faceR, float faceG, float faceB, float faceA, int packedLight, TextureAtlasSprite sprite) {
+        if (borderA > 0.0f) {
+            VertexConsumer lineConsumer = buffer.getBuffer(RenderType.lines());
+            LevelRenderer.renderLineBox(poseStack, lineConsumer, box, borderR, borderG, borderB, borderA);
+        }
+
+        if (sprite != null && faceA > 0.0f) {
+            VertexConsumer faceConsumer = buffer.getBuffer(RenderType.translucent());
+            renderFaces(poseStack, faceConsumer, box, sprite, faceR, faceG, faceB, faceA, packedLight);
+        }
+    }
+
+    public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, AABB box, float borderR, float borderG, float borderB, float borderA, int packedLight, ResourceLocation textureLocation) {
+        TextureAtlasSprite sprite = textureLocation != null ? getBlockAtlasSprite(textureLocation) : null;
+        renderOverlay(poseStack, buffer, box, borderR, borderG, borderB, borderA, packedLight, sprite);
+    }
+
+    public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, VoxelShape shape, float borderR, float borderG, float borderB, float borderA, int packedLight, TextureAtlasSprite sprite) {
+        for (AABB box : shape.toAabbs()) {
+            renderOverlay(poseStack, buffer, box, borderR, borderG, borderB, borderA, packedLight, sprite);
+        }
+    }
+
+    public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, VoxelShape shape, float borderR, float borderG, float borderB, float borderA, int packedLight, ResourceLocation textureLocation) {
+        for (AABB box : shape.toAabbs()) {
+            renderOverlay(poseStack, buffer, box, borderR, borderG, borderB, borderA, packedLight, textureLocation);
+        }
+    }
+
+    public static void renderFaces(PoseStack poseStack, VertexConsumer consumer, AABB box, TextureAtlasSprite sprite, float r, float g, float b, float a, int packedLight) {
+        Matrix4f pose = poseStack.last().pose();
+        Matrix3f normal = poseStack.last().normal();
+
+        float minX = (float) box.minX;
+        float minY = (float) box.minY;
+        float minZ = (float) box.minZ;
+        float maxX = (float) box.maxX;
+        float maxY = (float) box.maxY;
+        float maxZ = (float) box.maxZ;
+
+        // Down
+        consumer.vertex(pose, minX, minY, minZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV(minZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, -1, 0).endVertex();
+        consumer.vertex(pose, maxX, minY, minZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV(minZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, -1, 0).endVertex();
+        consumer.vertex(pose, maxX, minY, maxZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV(maxZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, -1, 0).endVertex();
+        consumer.vertex(pose, minX, minY, maxZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV(maxZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, -1, 0).endVertex();
+
+        // Up
+        consumer.vertex(pose, minX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV(maxZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        consumer.vertex(pose, maxX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV(maxZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        consumer.vertex(pose, maxX, maxY, minZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV(minZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+        consumer.vertex(pose, minX, maxY, minZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV(minZ * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 1, 0).endVertex();
+
+        // North
+        consumer.vertex(pose, minX, maxY, minZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, -1).endVertex();
+        consumer.vertex(pose, maxX, maxY, minZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, -1).endVertex();
+        consumer.vertex(pose, maxX, minY, minZ).color(r, g, b, a).uv(sprite.getU(maxX * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, -1).endVertex();
+        consumer.vertex(pose, minX, minY, minZ).color(r, g, b, a).uv(sprite.getU(minX * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, -1).endVertex();
+
+        // South
+        consumer.vertex(pose, maxX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - maxX) * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, 1).endVertex();
+        consumer.vertex(pose, minX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - minX) * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, 1).endVertex();
+        consumer.vertex(pose, minX, minY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - minX) * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, 1).endVertex();
+        consumer.vertex(pose, maxX, minY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - maxX) * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 0, 0, 1).endVertex();
+
+        // West
+        consumer.vertex(pose, minX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - maxZ) * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, -1, 0, 0).endVertex();
+        consumer.vertex(pose, minX, maxY, minZ).color(r, g, b, a).uv(sprite.getU((1.0 - minZ) * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, -1, 0, 0).endVertex();
+        consumer.vertex(pose, minX, minY, minZ).color(r, g, b, a).uv(sprite.getU((1.0 - minZ) * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, -1, 0, 0).endVertex();
+        consumer.vertex(pose, minX, minY, maxZ).color(r, g, b, a).uv(sprite.getU((1.0 - maxZ) * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, -1, 0, 0).endVertex();
+
+        // East
+        consumer.vertex(pose, maxX, maxY, minZ).color(r, g, b, a).uv(sprite.getU(minZ * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 1, 0, 0).endVertex();
+        consumer.vertex(pose, maxX, maxY, maxZ).color(r, g, b, a).uv(sprite.getU(maxZ * 16.0), sprite.getV((1.0 - maxY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 1, 0, 0).endVertex();
+        consumer.vertex(pose, maxX, minY, maxZ).color(r, g, b, a).uv(sprite.getU(maxZ * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 1, 0, 0).endVertex();
+        consumer.vertex(pose, maxX, minY, minZ).color(r, g, b, a).uv(sprite.getU(minZ * 16.0), sprite.getV((1.0 - minY) * 16.0)).overlayCoords(OverlayTexture.NO_OVERLAY).uv2(packedLight).normal(normal, 1, 0, 0).endVertex();
     }
 }
