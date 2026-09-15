@@ -1,5 +1,6 @@
 package net.placemats;
 
+import net.placemats.common.data.PlaceMatRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,11 +15,6 @@ import net.minecraftforge.network.NetworkConstants;
 
 import net.placemats.client.ClientProxy;
 import net.placemats.common.CommonProxy;
-import net.placemats.common.data.PlaceMatBlockEntities;
-import net.placemats.common.data.PlaceMatCreativeTab;
-import net.placemats.common.data.RecipeSerializers;
-import net.placemats.common.data.PlaceMatRecipeTypes;
-import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.compat.everycompat.EveryCompatCompat;
 
 @Mod(PlaceMatMain.MOD_ID)
@@ -36,12 +32,7 @@ public final class PlaceMatMain {
     public PlaceMatMain() {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
-        PlaceMatBlocks.BLOCKS.register(bus);
-        PlaceMatBlocks.ITEMS.register(bus);
-        PlaceMatBlockEntities.BLOCK_ENTITIES.register(bus);
-        PlaceMatCreativeTab.CREATIVE_MODE_TABS.register(bus);
-        PlaceMatRecipeTypes.RECIPE_TYPES.register(bus);
-        RecipeSerializers.RECIPE_SERIALIZERS.register(bus);
+        PlaceMatRegistries.REGISTRATE.register(bus);
 
         EveryCompatCompat.INSTANCE.init();
 

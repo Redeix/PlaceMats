@@ -43,11 +43,11 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                         ? Items.SMOOTH_STONE_SLAB : Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(tfcAlabaster))
         ));
 
-        assert PlaceMatBlocks.STORAGE_RACK_ITEM.getId() != null;
+        assert PlaceMatBlocks.STORAGE_RACK.getId() != null;
         ConditionalRecipe.builder()
                 // TFC version.
                 .addCondition(new ModLoadedCondition("tfc"))
-                .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.STORAGE_RACK_ITEM.get())
+                .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.STORAGE_RACK.get())
                         .pattern("SSS")
                         .pattern("I I")
                         .pattern("ISI")
@@ -57,7 +57,7 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                         .save(consumer1))
                 // Regular version.
                 .addCondition(TrueCondition.INSTANCE)
-                .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.STORAGE_RACK_ITEM.get())
+                .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.STORAGE_RACK.get())
                         .pattern("SSS")
                         .pattern("I I")
                         .pattern("ISI")
@@ -66,7 +66,7 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                         .unlockedBy("has_iron_bars", has(Blocks.IRON_BARS))
                         .save(consumer1))
                 .generateAdvancement()
-                .build(consumer, PlaceMatBlocks.STORAGE_RACK_ITEM.getId());
+                .build(consumer, PlaceMatBlocks.STORAGE_RACK.getId());
 
         PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
             assert blockReg.getId() != null;
