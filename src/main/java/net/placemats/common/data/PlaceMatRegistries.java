@@ -6,6 +6,7 @@ public class PlaceMatRegistries {
     public static final PlaceMatRegistrate REGISTRATE = PlaceMatRegistrate.create("place_mats");
 
     static {
+        PlaceMatTags.addExistingTags(REGISTRATE);
         REGISTRATE.addDataGenerator(ProviderType.LANG, prov -> {
             prov.add("block_type.pm.storage_rack", "%s Storage Rack");
             prov.add("place_mats.creative_tab.place_mats", "Place Mats");

@@ -1,5 +1,6 @@
 package net.placemats.client;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -80,16 +81,25 @@ public class ClientHandler {
         Vec3 lookVec = player.getViewVector(event.getPartialTick());
 
         // Handles key overlays.
-        boolean holdingAxe = held.is(ItemTags.AXES) || player.getOffhandItem().is(ItemTags.AXES);
-        if (holdingAxe) {
+        boolean holdingKey = held.is(PlaceMatTags.Items.KEY) || player.getOffhandItem().is(PlaceMatTags.Items.KEY);
+        if (holdingKey) {
             BlockPos playerPos = player.blockPosition();
 
             // Check for placemats in a radius around the player.
             int radius = 5;
             List<BlockPos> targetBlocks = getBlocksInRadius(mc.level, playerPos, radius);
+            List<BlockPos> lockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
+                BlockState state = mc.level.getBlockState(pos);
+                return state.hasProperty(PlaceMatBlock.LOCKED) && state.getValue(PlaceMatBlock.LOCKED);
+            }).toList());
+            List<BlockPos> unlockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
+                BlockState state = mc.level.getBlockState(pos);
+                return !state.hasProperty(PlaceMatBlock.LOCKED) || !state.getValue(PlaceMatBlock.LOCKED);
+            }).toList());
 
             // Render overlays on each block.
-            renderBlockOverlays(poseStack, buffer, eyePos, targetBlocks, LOCKED_OVERLAY, 1.0f, 0.0f, 0.0f, 1.0f);
+            renderBlockOverlays(poseStack, buffer, eyePos, lockedBlocks, LOCKED_OVERLAY, new Color(0xFFFF0000, true));
+            renderBlockOverlays(poseStack, buffer, eyePos, unlockedBlocks, UNLOCKED_OVERLAY, new Color(0xFF00E1E1, true));
 
             buffer.endBatch(RenderType.lines());
             buffer.endBatch(RenderType.translucent());
@@ -244,9 +254,14 @@ public class ClientHandler {
         Vec3 camPos,
         List<BlockPos> positions,
         TextureAtlasSprite sprite,
-        float r, float g, float b, float a
+        Color color
     ) {
         AABB unitBox = new AABB(-0.001, -0.001, -0.001, 1.001, 1.001, 1.001);
+
+        float r = color.getRed() / 255.0f;
+        float g = color.getGreen() / 255.0f;
+        float b = color.getBlue() / 255.0f;
+        float a = color.getAlpha() / 255.0f;
 
         for (BlockPos p : positions) {
             poseStack.pushPose();

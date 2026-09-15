@@ -6,6 +6,8 @@ import java.util.function.Consumer;
 
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.placemats.common.event.PlaceMatInteractions;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,6 +55,7 @@ import net.placemats.common.data.PlaceMatTags;
 public class PlaceMatBlock extends Block implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    public static final BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
     @Getter
     private int containerSize = 12;
@@ -88,6 +91,9 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         BlockState defaultState = getStateDefinition().any();
         if (defaultState.hasProperty(FACING)) {
             defaultState = defaultState.setValue(FACING, Direction.NORTH);
+        }
+        if (defaultState.hasProperty(LOCKED)) {
+            defaultState = defaultState.setValue(LOCKED, false);
         }
         registerDefaultState(defaultState);
     }
@@ -344,17 +350,19 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(LOCKED);
     }
 
     public static class Cardinal extends PlaceMatBlock {
 
         public Cardinal(Properties properties) {
             super(properties);
-            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH));
+            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(LOCKED, false));
         }
 
         @Override
         protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+            super.createBlockStateDefinition(builder);
             builder.add(FACING);
         }
 

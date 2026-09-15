@@ -1,17 +1,32 @@
 {
   "variants": {
-    "facing=east": {
+    "facing=east,locked=false": {
       "model": "place_mats:block/spruce_storage_rack",
       "y": 90
     },
-    "facing=north": {
+    "facing=east,locked=true": {
+      "model": "place_mats:block/spruce_storage_rack",
+      "y": 90
+    },
+    "facing=north,locked=false": {
       "model": "place_mats:block/spruce_storage_rack"
     },
-    "facing=south": {
+    "facing=north,locked=true": {
+      "model": "place_mats:block/spruce_storage_rack"
+    },
+    "facing=south,locked=false": {
       "model": "place_mats:block/spruce_storage_rack",
       "y": 180
     },
-    "facing=west": {
+    "facing=south,locked=true": {
+      "model": "place_mats:block/spruce_storage_rack",
+      "y": 180
+    },
+    "facing=west,locked=false": {
+      "model": "place_mats:block/spruce_storage_rack",
+      "y": 270
+    },
+    "facing=west,locked=true": {
       "model": "place_mats:block/spruce_storage_rack",
       "y": 270
     }

@@ -1,5 +1,6 @@
 {
   "values": [
+    "minecraft:debug_stick",
     "place_mats:storage_rack",
     "place_mats:oak_storage_rack",
     "place_mats:spruce_storage_rack",
@@ -11,6 +12,7 @@
     "place_mats:crimson_storage_rack",
     "place_mats:warped_storage_rack",
     "place_mats:mangrove_storage_rack",
-    "place_mats:bamboo_storage_rack"
+    "place_mats:bamboo_storage_rack",
+    "place_mats:key"
   ]
 }

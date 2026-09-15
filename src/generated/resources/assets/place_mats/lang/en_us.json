@@ -14,6 +14,7 @@
   "block_type.pm.storage_rack": "%s Storage Rack",
   "config.jade.plugin_place_mats.placemat.title": "Place Mat",
   "emi.category.place_mats.place_mat": "Place Mat Interaction",
+  "item.place_mats.key": "Key",
   "itemGroup.place_mats.place_mats": "Place Mats",
   "place_mats.creative_tab.place_mats": "Place Mats",
   "place_mats.emi.placemat.offhand": "Offhand",
