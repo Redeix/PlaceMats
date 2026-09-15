@@ -1,5 +1,8 @@
 package net.placemats.common.data;
 
+import java.lang.reflect.Field;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 import net.minecraft.world.level.block.Block;
@@ -29,16 +32,16 @@ public class PlaceMatBlockEntities {
     public static void addValidBEBlock(Supplier<?> type, Block block) {
         if (type.get() instanceof BlockEntityType<?> beType) {
             try {
-                java.lang.reflect.Field f = BlockEntityType.class.getDeclaredField("validBlocks");
-                f.setAccessible(true);
+                Field field = BlockEntityType.class.getDeclaredField("validBlocks");
+                field.setAccessible(true);
                 @SuppressWarnings("unchecked")
-                java.util.Set<Block> set = (java.util.Set<Block>) f.get(beType);
+                Set<Block> set = (Set<Block>) field.get(beType);
                 try {
                     set.add(block);
                 } catch (UnsupportedOperationException e) {
-                    java.util.Set<Block> newSet = new java.util.HashSet<>(set);
+                    Set<Block> newSet = new HashSet<>(set);
                     newSet.add(block);
-                    f.set(beType, newSet);
+                    field.set(beType, newSet);
                 }
             } catch (Exception e) {
                 PlaceMatMain.LOGGER.error("Failed to add valid block to BE type: {}", e.getMessage());

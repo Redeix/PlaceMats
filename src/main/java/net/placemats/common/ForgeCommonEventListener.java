@@ -1,6 +1,7 @@
 package net.placemats.common;
 
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -25,7 +26,7 @@ public final class ForgeCommonEventListener {
         if (be instanceof PlaceMatBlockEntity foodPlacer) {
             if (PlaceMatInteractions.handleLeftClick(foodPlacer, event.getEntity(), null)) {
                 event.setCanceled(true);
-                event.setCancellationResult(net.minecraft.world.InteractionResult.SUCCESS);
+                event.setCancellationResult(InteractionResult.SUCCESS);
             }
         }
     }

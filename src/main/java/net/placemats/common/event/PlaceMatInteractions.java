@@ -2,13 +2,14 @@ package net.placemats.common.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.block.PlaceMatBlock;
 import org.jetbrains.annotations.Nullable;
 
 import net.placemats.compat.tfc.TFCCompat;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvents;
@@ -33,6 +34,10 @@ import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.recipe.PlaceMatRecipe;
 import net.placemats.compat.kjs.KJSCompat;
 
+/**
+ * Handles placemat interactions for recipes and events.
+ * TODO: Rewrite this class. A lot of it is redundant.
+ */
 public class PlaceMatInteractions {
 
     public static InteractionResult handleInteraction(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, BlockHitResult hit) {
@@ -87,7 +92,6 @@ public class PlaceMatInteractions {
         Vec3 lookVec = player.getViewVector(1.0f);
 
         if (hit == null) {
-            // Raytrace on server to find the hit point on the block.
             hit = player.pick(5.0, 0, false) instanceof BlockHitResult bhr ? bhr : null;
             if (hit != null && !hit.getBlockPos().equals(pos)) {
                 hit = null;
@@ -99,13 +103,13 @@ public class PlaceMatInteractions {
         if (targeted != null) {
             if (!level.isClientSide) {
                 if (!placeMat.wasPlacedThisTick() && placeMat.canInteract()) {
-                    // Try offhand recipe first
+                    // Try offhand recipe first.
                     if (tryRecipe(placeMat, player, InteractionHand.OFF_HAND, targeted)) {
                         placeMat.markInteracted();
                         return true;
                     }
 
-                    // Then try main hand recipe
+                    // Then try main hand recipe.
                     if (tryRecipe(placeMat, player, InteractionHand.MAIN_HAND, targeted)) {
                         placeMat.markInteracted();
                         return true;
@@ -154,17 +158,17 @@ public class PlaceMatInteractions {
 
         List<PlaceMatRecipe> recipes = level.getRecipeManager().getAllRecipesFor(PlaceMatRecipeTypes.PLACE_MAT.get());
         for (PlaceMatRecipe recipe : recipes) {
-            // Check block/tag
+            // Check block/tag.
             if (recipe.getBlock() != null && recipe.getBlock() != block)
                 continue;
             if (recipe.getBlockTag() != null && !state.is(recipe.getBlockTag()))
                 continue;
 
-            // Check zone index
+            // Check zone index.
             if (recipe.getZoneIndex() != null && recipe.getZoneIndex() != zoneIndex)
                 continue;
 
-            // Check input
+            // Check input.
             Ingredient recipeInput = recipe.getInput();
             if (!recipeInput.test(inputStack))
                 continue;
@@ -180,7 +184,7 @@ public class PlaceMatInteractions {
                     continue;
             }
 
-            // Check target input
+            // Check target input.
             ItemStack targetStack = targeted != null ? targeted.stack : ItemStack.EMPTY;
             Ingredient recipeTarget = recipe.getTargetInput();
             if (!recipeTarget.test(targetStack))
@@ -197,15 +201,13 @@ public class PlaceMatInteractions {
                     continue;
             }
 
-            // Match found!
             if (level.isClientSide)
                 return true;
 
-            // Pre-consumption copies for context
             ItemStack inputCopy = inputStack.copy();
             ItemStack targetCopy = targetStack.copy();
 
-            // Seed TFC context
+            // TFC context.
             List<ItemStack> ctx = new ArrayList<>();
             if (targeted != null && !targetCopy.isEmpty())
                 ctx.add(targetCopy);
@@ -226,7 +228,7 @@ public class PlaceMatInteractions {
             }
             TFCCompat.INSTANCE.clearCraftingInput();
 
-            // Consume/Damage input item
+            // Consume/Damage input item.
             if (inputCount > 0) {
                 if (inputStack.isDamageableItem()) {
                     inputStack.hurtAndBreak(inputCount, player, (p) -> p.broadcastBreakEvent(hand));
@@ -235,7 +237,7 @@ public class PlaceMatInteractions {
                 }
             }
 
-            // Consume/Damage target item
+            // Consume/Damage target item.
             boolean targetDepleted = false;
             if (targeted != null && targetCount > 0) {
                 if (targeted.stack.isDamageableItem()) {
@@ -252,11 +254,11 @@ public class PlaceMatInteractions {
             for (ItemStack result : results) {
                 if (result.isEmpty()) continue;
                 if (targeted != null && targetDepleted) {
-                    // Try to put it back on the mat
+                    // Try to put it back on the mat.
                     PlaceMatBlock.PlacementRange range = placeMat.getRangeForItem(targeted);
                     if (range != null && placeMat.isInsertable(range, result)) {
                         targeted.stack = result;
-                        targetDepleted = false; // Successfully replaced!
+                        targetDepleted = false;
                     } else {
                         ItemHandlerHelper.giveItemToPlayer(player, result);
                     }
@@ -265,11 +267,11 @@ public class PlaceMatInteractions {
                 }
             }
 
-            // Sound
+            // Sound.
             if (recipe.getSound() != null) {
                 level.playSound(null, player.getX(), player.getY(), player.getZ(),
-                        BuiltInRegistries.SOUND_EVENT.get(recipe.getSound()),
-                        SoundSource.PLAYERS, recipe.getVolume(), recipe.getPitch());
+                    Objects.requireNonNull(ForgeRegistries.SOUND_EVENTS.getValue(recipe.getSound())),
+                    SoundSource.PLAYERS, recipe.getVolume(), recipe.getPitch());
             }
 
             if (targetDepleted) {
@@ -340,7 +342,6 @@ public class PlaceMatInteractions {
                     }
 
                     // Handle shrinking of the stack.
-                    // If finishUsingItem didn't shrink the stack, and it's not a multi-use item, shrink it manually.
                     if (stack.getCount() == countBefore && !stack.isEmpty()) {
                         if (result != stack || player.isCreative() || (isEdible && !isDrinkable)) {
                             stack.shrink(1);

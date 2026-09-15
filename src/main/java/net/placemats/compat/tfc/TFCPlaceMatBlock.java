@@ -4,8 +4,7 @@ import net.dries007.tfc.common.blocks.ExtendedProperties;
 import net.dries007.tfc.common.blocks.IForgeBlockExtension;
 import net.placemats.common.block.PlaceMatBlock;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.block.state.StateDefinition;
+import org.jetbrains.annotations.NotNull;
 
 public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtension {
     private final ExtendedProperties extendedProperties;
@@ -20,7 +19,7 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
     }
 
     @Override
-    public ExtendedProperties getExtendedProperties() {
+    public @NotNull ExtendedProperties getExtendedProperties() {
         return extendedProperties;
     }
 
@@ -37,7 +36,7 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         }
 
         @Override
-        public ExtendedProperties getExtendedProperties() {
+        public @NotNull ExtendedProperties getExtendedProperties() {
             return extendedProperties;
         }
     }

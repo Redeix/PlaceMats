@@ -2,6 +2,7 @@ package net.placemats.network.packet;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import net.minecraft.network.FriendlyByteBuf;
@@ -26,7 +27,7 @@ public class SyncPlaceMatDefinitionsPacket {
     public static void encode(SyncPlaceMatDefinitionsPacket packet, FriendlyByteBuf buffer) {
         buffer.writeInt(packet.definitions.size());
         packet.definitions.forEach((item, def) -> {
-            buffer.writeResourceLocation(ForgeRegistries.ITEMS.getKey(item));
+            buffer.writeResourceLocation(Objects.requireNonNull(ForgeRegistries.ITEMS.getKey(item)));
             encodeDefinition(def, buffer);
         });
         buffer.writeInt(packet.tagDefinitions.size());
@@ -67,7 +68,7 @@ public class SyncPlaceMatDefinitionsPacket {
         int tagSize = buffer.readInt();
         Map<TagKey<Item>, DefinitionManager.PlaceMatDefinition> tagDefinitions = new HashMap<>();
         for (int i = 0; i < tagSize; i++) {
-            TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(buffer.readResourceLocation());
+            TagKey<Item> tagKey = Objects.requireNonNull(ForgeRegistries.ITEMS.tags()).createTagKey(buffer.readResourceLocation());
             DefinitionManager.PlaceMatDefinition def = decodeDefinition(buffer);
             tagDefinitions.put(tagKey, def);
         }

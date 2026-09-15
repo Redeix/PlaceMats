@@ -26,23 +26,23 @@ public final class PlaceMatBlocks {
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, PlaceMatMain.MOD_ID);
 
     public static final RegistryObject<Block> STORAGE_RACK = BLOCKS.register("storage_rack",
-            () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        () -> createStorageRack(BlockBehaviour.Properties.of().sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
     );
     public static final RegistryObject<Item> STORAGE_RACK_ITEM = ITEMS.register("storage_rack",
-            () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties())
+        () -> new BlockItem(STORAGE_RACK.get(), new Item.Properties())
     );
 
     public static final List<RegistryObject<Block>> WOOD_STORAGE_RACKS = registerWoodVariants("storage_rack",
-            BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false),
-            PlaceMatBlocks::createStorageRack);
+        BlockBehaviour.Properties.of().sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false),
+        PlaceMatBlocks::createStorageRack);
 
     public static void init() {
     }
 
     private static List<RegistryObject<Block>> registerWoodVariants(
-            String suffix,
-            BlockBehaviour.Properties properties,
-            Function<BlockBehaviour.Properties, Block> blockFactory) {
+        String suffix,
+        BlockBehaviour.Properties properties,
+        Function<BlockBehaviour.Properties, Block> blockFactory) {
 
         List<RegistryObject<Block>> list = new ArrayList<>();
 

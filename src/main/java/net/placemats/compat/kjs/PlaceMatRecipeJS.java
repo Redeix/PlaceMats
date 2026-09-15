@@ -9,6 +9,7 @@ import com.google.gson.JsonObject;
 import dev.latvian.mods.kubejs.recipe.RecipeJS;
 import dev.latvian.mods.kubejs.util.MapJS;
 
+@SuppressWarnings("unused")
 public class PlaceMatRecipeJS extends RecipeJS {
 
     public PlaceMatRecipeJS block(String block) {

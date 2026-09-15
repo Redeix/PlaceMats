@@ -6,6 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec2;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
 
 import net.placemats.common.block.PlaceMatBlock;
@@ -14,14 +15,14 @@ import net.placemats.common.blockentity.PlaceMatBlockEntity;
 public class PlaceMatPacket {
     private final BlockPos pos;
     private final Vec2 placementPos;
-    private final net.minecraft.world.phys.Vec3 hitLocation;
+    private final Vec3 hitLocation;
     private final float rotation;
     private final float pitch;
     private final float roll;
     private final float height;
     private final int count;
 
-    public PlaceMatPacket(BlockPos pos, Vec2 placementPos, net.minecraft.world.phys.Vec3 hitLocation, float rotation, float pitch, float roll, float height, int count) {
+    public PlaceMatPacket(BlockPos pos, Vec2 placementPos, Vec3 hitLocation, float rotation, float pitch, float roll, float height, int count) {
         this.pos = pos;
         this.placementPos = placementPos;
         this.hitLocation = hitLocation;
@@ -50,7 +51,7 @@ public class PlaceMatPacket {
         return new PlaceMatPacket(
                 buffer.readBlockPos(),
                 new Vec2(buffer.readFloat(), buffer.readFloat()),
-                new net.minecraft.world.phys.Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
+                new Vec3(buffer.readDouble(), buffer.readDouble(), buffer.readDouble()),
                 buffer.readFloat(), buffer.readFloat(), buffer.readFloat(), buffer.readFloat(),
                 buffer.readVarInt());
     }
@@ -68,15 +69,14 @@ public class PlaceMatPacket {
                     if (targetedRange[0] != null) {
                         // Project ray onto the box's bottom plane.
                         var player = context.getSender();
-                        net.minecraft.world.phys.Vec3 eyePos = player.getEyePosition(1.0f);
-                        net.minecraft.world.phys.Vec3 lookVec = player.getViewVector(1.0f);
+                        Vec3 eyePos = player.getEyePosition(1.0f);
+                        Vec3 lookVec = player.getViewVector(1.0f);
                         double planeY = message.pos.getY() + targetedRange[0].box().minY;
 
-                        net.minecraft.world.phys.Vec3 intersection = null;
                         if (Math.abs(lookVec.y) > 1e-6) {
                             double t = (planeY - eyePos.y) / lookVec.y;
                             if (t > 0) {
-                                intersection = eyePos.add(lookVec.scale(t));
+                                eyePos.add(lookVec.scale(t));
                             }
                         }
 

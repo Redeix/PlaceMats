@@ -20,6 +20,7 @@ import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.blocks.PlaceMatBlocks;
 import net.placemats.common.recipe.PlaceMatRecipe;
 
+// TODO: Remake EMI compat.
 @EmiEntrypoint
 public class PlaceMatEmiPlugin implements EmiPlugin {
 

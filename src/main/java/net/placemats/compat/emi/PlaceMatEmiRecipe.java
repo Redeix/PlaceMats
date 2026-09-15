@@ -2,11 +2,13 @@ package net.placemats.compat.emi;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
 
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -15,10 +17,13 @@ import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 
+import net.minecraft.world.level.block.Block;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.recipe.PlaceMatRecipe;
 import net.placemats.compat.tfc.TFCCompat;
 
+// TODO: Remake EMI compat.
 public class PlaceMatEmiRecipe implements EmiRecipe {
     private final PlaceMatRecipe recipe;
     private final List<EmiIngredient> inputs;
@@ -108,11 +113,18 @@ public class PlaceMatEmiRecipe implements EmiRecipe {
         if (recipe.getBlock() != null) {
             holder.addSlot(EmiStack.of(recipe.getBlock()), x, y + 10).drawBack(false);
         } else if (recipe.getBlockTag() != null) {
-            var tag = BuiltInRegistries.BLOCK.getOrCreateTag(recipe.getBlockTag());
-            List<EmiStack> items = tag.stream()
-                    .map(holder_ -> EmiStack.of(holder_.value().asItem()))
+            TagKey<Block> blockTagKey = recipe.getBlockTag();
+
+            var forgeTag = Objects.requireNonNull(ForgeRegistries.BLOCKS.tags()).getTag(blockTagKey);
+
+            List<EmiStack> items = List.of();
+            if (forgeTag.isBound()) {
+                items = forgeTag.stream()
+                    .map(block -> EmiStack.of(block.asItem()))
                     .filter(s -> !s.isEmpty())
                     .toList();
+            }
+
             if (!items.isEmpty()) {
                 holder.addSlot(EmiIngredient.of(items), x, y + 10).drawBack(false);
             } else {
