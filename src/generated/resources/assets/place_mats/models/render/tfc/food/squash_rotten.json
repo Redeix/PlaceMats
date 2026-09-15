@@ -1,0 +1,6 @@
+{
+  "parent": "place_mats:render/3x3_food",
+  "textures": {
+    "0": "place_mats:item/render/tfc/food/squash_rotten"
+  }
+}

@@ -31,6 +31,7 @@ public class PlaceMatDefinitionProvider implements DataProvider {
     // Enum registries.
     public PlaceMatDefinitionProvider addAll() {
         add(TFCDefinitions.values());
+        add(MinecraftDefinitions.values());
         return this;
     }
 

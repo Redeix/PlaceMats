@@ -1,0 +1,8 @@
+{
+  "item": "minecraft:apple",
+  "item_depth": 0.19,
+  "item_scale": 1.0,
+  "item_width": 0.19,
+  "lay_flat": false,
+  "model": "place_mats:render/minecraft/food/apple"
+}

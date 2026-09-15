@@ -1,0 +1,23 @@
+{
+    "target_input_count": 4,
+    "result": {
+        "stack": {
+            "item": "tfc:food/barley_grain",
+            "count": 8
+        },
+        "modifiers": [
+            {"type": "tfc:copy_food"},
+            {
+                "trait": "firmalife:smoked",
+                "type": "tfc:add_trait"
+            }
+        ]
+    },
+    "volume": 2,
+    "input": {"tag": "forge:tools/knives"},
+    "input_count": 100,
+    "sound": "minecraft:block.crop.break",
+    "target_input": {"item": "tfc:food/barley"},
+    "pitch": 1.5,
+    "type": "tfg:place_mat"
+}
