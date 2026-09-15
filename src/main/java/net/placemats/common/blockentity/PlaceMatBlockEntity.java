@@ -3,6 +3,8 @@ package net.placemats.common.blockentity;
 import java.util.ArrayList;
 import java.util.List;
 
+import net.minecraft.core.Direction;
+import net.minecraft.network.Connection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +44,13 @@ import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
 import net.placemats.compat.tfc.TFCCompat;
 
+/**
+ * Place mat base block entity class.
+ * Handles logic for stacking, positioning, rotation, and preservation of items on the placemat surface.
+ * Place mats support various logistics, including insertItem, extractItem, events, and recipes.
+ * <p>
+ * I should probably divide this class out more in the future...
+ */
 @SuppressWarnings("unused")
 @Getter
 public class PlaceMatBlockEntity extends BlockEntity {
@@ -79,6 +88,14 @@ public class PlaceMatBlockEntity extends BlockEntity {
             return ItemStack.EMPTY;
         }
 
+        /**
+         * This method allows inserting items into existing stacks within the corresponding slot range or placing
+         * items in a new slot if available. A lot of checks are needed to validate whether the item can be
+         * inserted into the designated range or random position, and whether the stack can be merged with an
+         * existing item or placed as a new item.
+         * I really need to research more into optimal stacking algorithms. This method works fine for small
+         * items, but larger ones fail many attempts which slows down logistics.
+         */
         @Override
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             if (level == null || stack.isEmpty())
@@ -166,6 +183,11 @@ public class PlaceMatBlockEntity extends BlockEntity {
             return stack;
         }
 
+        /**
+         * Who would have guessed that removing an item from a rendered display is easier than
+         * trying to place a new one like a tetris piece.
+         * But we do add a little extra "simulation" for items falling with gravity.
+         */
         @Override
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             if (level == null || amount <= 0)
@@ -227,6 +249,22 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return myIndex > otherIndex;
     }
 
+    /**
+     * Updates the target heights of the placed items on the placemat block.
+     * <p>
+     * This method recalculates the `targetHeight` property for each placed item by considering interactions
+     * between items, their stacking behavior, the placement range definitions, and manual offsets. Items
+     * are processed in the order of their manual heights, with ties broken by index order.
+     * <p>
+     * Preconditions:
+     * - Items in the `placedItems` list are assumed to be associated with valid `manualHeight`, `range`,
+     *   and `definition` properties.
+     * - Placement ranges and definitions are retrieved dynamically for each item.
+     * <p>
+     * Effect:
+     * - Each item's `targetHeight` is updated to the maximum allowable height based on stacking rules
+     *   and interactions with other placed items.
+     */
     public void updateTargetHeights() {
         int n = placedItems.size();
         if (n == 0)
@@ -252,9 +290,6 @@ public class PlaceMatBlockEntity extends BlockEntity {
             float multiplier = getScaleMultiplier(range);
 
             float currentMax = item.manualHeight;
-            if (range != null && range.restricted() && range.snapToCenter()) {
-                currentMax = item.manualHeight; // Manual height already has snapToCenter offset
-            }
 
             boolean stackingEnabled = (range == null || range.stackingEnabled()) && (range == null || !range.restricted());
             boolean collisionDisabled = range != null && range.collisionDisabled();
@@ -291,6 +326,11 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Calculates the effective height at which an item should be placed on the PlaceMatBlock.
+     * The height is determined based on stacking rules, the manual height offset, and any
+     * placement range restrictions or conditions.
+     */
     public float calculateEffectiveHeight(ItemStack stack, Vec2 pos, float manualHeight, @Nullable PlaceMatBlock.PlacementRange targetRange) {
         DefinitionManager.PlaceMatDefinition def = getEffectiveDefinition(stack, targetRange);
         float multiplier = getScaleMultiplier(targetRange);
@@ -350,6 +390,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 pos1.y < pos2.y + size2.y && pos1.y + size1.y > pos2.y;
     }
 
+    /**
+     * Determines whether an item can be placed at a specific position and height on the PlaceMatBlock.
+     */
     public boolean canPlace(ItemStack stack, Vec2 pos, float height, @Nullable PlaceMatBlock.PlacementRange targetRange) {
         if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
             return false;
@@ -460,6 +503,18 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return ok;
     }
 
+    /**
+     * Places an item at a specific position and height on the PlaceMatBlock.
+     * Basic behavior is to check if the item can be placed at the specified position and height,
+     * and if so, add it to the list of placed items while playing a sound effect.
+     * @param stack the {@link ItemStack} to place.
+     * @param pos the 2D position on the place mat where the item is to be placed.
+     * @param rotation the rotation angle of the item.
+     * @param pitch the pitch angle of the item.
+     * @param roll the roll angle of the item.
+     * @param height the height at which the item is to be placed.
+     * @param targetRange an optional {@link PlaceMatBlock.PlacementRange} providing constraints.
+     */
     public void placeItem(ItemStack stack, Vec2 pos, float rotation, float pitch, float roll, float height, @Nullable PlaceMatBlock.PlacementRange targetRange) {
         if (canPlace(stack, pos, height, targetRange)) {
             float finalRotation = rotation;
@@ -554,6 +609,11 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Determines whether the {@code PlacedItem} can be extracted from the PlaceMatBlock.
+     * Checks conditions like the current level state, block type,
+     * extraction settings, and the item's position relative to defined placement ranges.
+     */
     public boolean isExtractable(PlacedItem item) {
         if (level == null)
             return false;
@@ -573,6 +633,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return true;
     }
 
+    /**
+     * Determines whether the {@link ItemStack} can be inserted into the PlaceMatBlock by checking `isInsertionDisabled()`.
+     */
     public boolean isInsertable(PlaceMatBlock.PlacementRange range, ItemStack stack) {
         if (level == null)
             return false;
@@ -585,6 +648,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return range.whitelistTag() == null || stack.is(range.whitelistTag());
     }
 
+    /**
+     * Removes a single item from the PlaceMatBlock.
+     */
     public void removeItem(PlacedItem item) {
         if (placedItems.remove(item)) {
             if (level != null && !level.isClientSide) {
@@ -598,6 +664,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Removes a specified amount of items from the PlaceMatBlock.
+     */
     public void removeItem(PlacedItem item, int amount) {
         if (amount >= item.stack.getCount()) {
             removeItem(item);
@@ -611,6 +680,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
+    /**
+     * Retrieves the food trait for the PlaceMatBlock based on firmalife cellar levels.
+     */
     public Object getFoodTrait() {
         if (level != null) {
             final float temp = TFCCompat.INSTANCE.getAverageTemperature(level, getBlockPos());
@@ -628,6 +700,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return FirmaLifeCompat.INSTANCE.getPossibleShelvedTraits();
     }
 
+    /**
+     * Updates item preservation status based on cellar validation.
+     */
     public void updatePreservation(boolean preserved) {
         for (PlacedItem placed : placedItems) {
             if (preserved) {
@@ -782,13 +857,16 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return new float[] { 0, 0, 0 };
     }
 
+    /**
+     * Retrieves the targeted PlacedItem based on the given eye position/look vector calculation.
+     */
     @Nullable
     public PlacedItem getTargetedItem(Vec3 eyePos, Vec3 lookVec, BlockPos pos, @Nullable PlaceMatBlock.PlacementRange targetedRange) {
         double minDistance = Double.MAX_VALUE;
         PlacedItem targeted = null;
 
         BlockState state = getBlockState();
-        net.minecraft.core.Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : net.minecraft.core.Direction.NORTH;
+        Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
         Vec3 localEyePos = PlaceMatBlock.getLocalHitVec(state, eyePos.subtract(pos.getX(), pos.getY(), pos.getZ()));
         Vec3 localLookVec = PlaceMatBlock.rotateDirectionInverse(facing, lookVec);
 
@@ -813,6 +891,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return targeted;
     }
 
+    /**
+     * Retrieves the targeted PlacedItem based on the given eye position/look vector calculation.
+     */
     @Nullable
     public PlacedItem getTargetedItem(Vec3 eyePos, Vec3 lookVec, BlockPos pos) {
         return getTargetedItem(eyePos, lookVec, pos, null);
@@ -824,6 +905,10 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return new AABB(pos.x, y, pos.y, (double) pos.x + size.x, (double) y + itemHeight, (double) pos.y + size.y);
     }
 
+    /**
+     * Drops all items in the placedItems list.
+     * Used mostly when destroying the PlaceMatBlockEntity.
+     */
     public void dropItems() {
         if (level != null) {
             for (PlacedItem placed : placedItems) {
@@ -834,14 +919,14 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
-    public void tick(net.minecraft.world.level.Level level, BlockPos pos, net.minecraft.world.level.block.state.BlockState state) {
+    public void tick(Level level, BlockPos pos, BlockState state) {
         for (PlacedItem placed : placedItems) {
             placed.tick();
         }
     }
 
     @Override
-    public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable net.minecraft.core.Direction side) {
+    public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
             return itemHandler.cast();
         }
@@ -923,7 +1008,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void onDataPacket(net.minecraft.network.Connection net, net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket pkt) {
+    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt) {
         assert pkt.getTag() != null;
         load(pkt.getTag());
     }

@@ -27,6 +27,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
+import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -407,7 +408,7 @@ public class ClientHandler {
     @Mod.EventBusSubscriber(modid = PlaceMatMain.MOD_ID, value = Dist.CLIENT)
     public static class ClientTickHandler {
         @SubscribeEvent
-        public static void onClientTick(net.minecraftforge.event.TickEvent.ClientTickEvent event) {
+        public static void onClientTick(TickEvent.ClientTickEvent event) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player != null && !mc.player.getMainHandItem().isEmpty()) {
                 HitResult hit = mc.hitResult;
@@ -442,7 +443,7 @@ public class ClientHandler {
                 assert mc.level != null;
                 BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
                 if (be instanceof PlaceMatBlockEntity foodPlacer) {
-                    PlaceMatBlock pmb = null;
+                    PlaceMatBlock pmb;
                     PlaceMatBlock.PlacementRange targetedRange = null;
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock block) {
                         pmb = block;

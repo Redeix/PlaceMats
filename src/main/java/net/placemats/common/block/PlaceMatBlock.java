@@ -2,7 +2,10 @@ package net.placemats.common.block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
+import net.minecraft.world.level.block.Mirror;
+import net.minecraft.world.level.block.Rotation;
 import net.placemats.common.event.PlaceMatInteractions;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +44,15 @@ import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatTags;
 
+/**
+ * Base class for place mats, which are blocks that can hold items.
+ * Provides consumers for individual placement ranges and for the block as a whole.
+ * Settings for the block (such as max stack size) take priority over individual placement range settings.
+ */
 @SuppressWarnings({ "deprecation", "UnusedReturnValue", "unused" })
 public class PlaceMatBlock extends Block implements EntityBlock {
 
     public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
-    // Defines the bounding box where items can be placed.
 
     @Getter
     private int containerSize = 12;
@@ -85,46 +92,75 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         registerDefaultState(defaultState);
     }
 
+    /**
+     * Sets the container size which limits the amount of item stacks within the block's inventory.
+     */
     public PlaceMatBlock containerSize(int size) {
         this.containerSize = size;
         return this;
     }
 
+    /**
+     * Disables the ability to extract item stacks from the block's inventory.
+     */
     public PlaceMatBlock disableExtraction() {
         this.extractionDisabled = true;
         return this;
     }
 
+    /**
+     * Disables the ability to insert item stacks into the block's inventory.
+     */
     public PlaceMatBlock disableInsertion() {
         this.insertionDisabled = true;
         return this;
     }
 
+    /**
+     * Sets the maximum stack size for individual item stacks within the block's inventory.
+     */
     public PlaceMatBlock maxStackSize(int maxStackSize) {
         this.maxStackSize = maxStackSize;
         return this;
     }
 
+    /**
+     * If TFC compat is enabled, applies a specified food trait to all food items placed on the block.
+     */
     public PlaceMatBlock applyFoodTrait(ResourceLocation trait) {
         this.foodTrait = trait;
         return this;
     }
 
+    /**
+     * Default items will render laying flat on the block. This setting will make them upright instead.
+     * Useful when you want to display things like item frames.
+     */
     public PlaceMatBlock disableLayFlat() {
         this.disableLayFlat = true;
         return this;
     }
 
+    /**
+     * Disables rendering for custom models defined with a custom model JSON file.
+     * Useful when you want items to display normally.
+     */
     public PlaceMatBlock disableCustomModels() {
         this.disableCustomModels = true;
         return this;
     }
 
+    /**
+     * Sets a scale multiplier for all rendered models.
+     */
     public PlaceMatBlock scaleMultiplier(float scaleMultiplier) {
         this.scaleMultiplier = scaleMultiplier;
         return this;
     }
 
+    /**
+     * Sets a default rotation for all rendered models.
+     */
     public PlaceMatBlock defaultRotation(float yaw, float pitch, float roll) {
         this.defaultYaw = yaw;
         this.defaultPitch = pitch;
@@ -132,6 +168,9 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return this;
     }
 
+    /**
+     * Sets a default elevation (y-offset) for all rendered models.
+     */
     public PlaceMatBlock defaultElevation(float elevation) {
         this.defaultElevation = elevation;
         return this;
@@ -167,7 +206,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             float defaultElevation) {
     }
 
-    public void addPlacementRanges(BlockState state, java.util.function.Consumer<PlacementRange> consumer) {
+    public void addPlacementRanges(BlockState state, Consumer<PlacementRange> consumer) {
         placementRanges.forEach(consumer);
     }
 
@@ -208,7 +247,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return best;
     }
 
-    // Okay, this sucks. But otherwise snapping to restricted zones feels very clunky
+    // Okay, this sucks. But otherwise snapping to restricted zones feels very clunky.
     private static double getDistanceToBoxSqr(Vec3 point, AABB box) {
         double dx = point.x < box.minX ? box.minX - point.x : (point.x > box.maxX ? point.x - box.maxX : 0);
         double dy = point.y < box.minY ? box.minY - point.y : (point.y > box.maxY ? point.y - box.maxY : 0);
@@ -260,7 +299,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         };
     }
 
-    public static void addPlacementRangesStatic(BlockState state, java.util.function.Consumer<PlacementRange> consumer) {
+    public static void addPlacementRangesStatic(BlockState state, Consumer<PlacementRange> consumer) {
         if (state.getBlock() instanceof PlaceMatBlock fpb) {
             fpb.addPlacementRanges(state, consumer);
         }
@@ -320,12 +359,12 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         }
 
         @Override
-        public BlockState rotate(BlockState state, net.minecraft.world.level.block.Rotation rotation) {
+        public BlockState rotate(BlockState state, Rotation rotation) {
             return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
         }
 
         @Override
-        public BlockState mirror(BlockState state, net.minecraft.world.level.block.Mirror mirror) {
+        public BlockState mirror(BlockState state, Mirror mirror) {
             return state.rotate(mirror.getRotation(state.getValue(FACING)));
         }
 

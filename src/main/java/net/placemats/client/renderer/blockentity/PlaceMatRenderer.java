@@ -34,6 +34,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         this.itemRenderer = context.getItemRenderer();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public void render(PlaceMatBlockEntity be, float partialTick, @NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, int packedLight, int packedOverlay) {
         BlockState state = be.getBlockState();
@@ -129,6 +130,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         LevelRenderer.renderLineBox(poseStack, vertexConsumer, box, r, g, b, 1.0f);
     }
 
+    @SuppressWarnings("deprecation")
     public static void renderPreview(PoseStack poseStack, MultiBufferSource buffer, Vec2 pos, Vec2 size, float scale, float rotation, float pitch, float roll, float height, boolean valid,
             ItemStack stack, ItemRenderer itemRenderer, PlaceMatBlock.PlacementRange targetRange, PlaceMatBlock pmb) {
         poseStack.pushPose();

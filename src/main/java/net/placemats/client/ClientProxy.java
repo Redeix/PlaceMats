@@ -1,5 +1,8 @@
 package net.placemats.client;
 
+import net.minecraft.client.Minecraft;
+import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
+import net.placemats.common.data.PlaceMatBlockEntities;
 import org.jetbrains.annotations.NotNull;
 
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -28,7 +31,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     public void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
-        event.registerBlockEntityRenderer(net.placemats.common.data.PlaceMatBlockEntities.PLACE_MAT.get(), net.placemats.client.renderer.blockentity.PlaceMatRenderer::new);
+        event.registerBlockEntityRenderer(PlaceMatBlockEntities.PLACE_MAT.get(), PlaceMatRenderer::new);
     }
 
     public void registerClientReloadListeners(RegisterClientReloadListenersEvent event) {
@@ -41,7 +44,7 @@ public class ClientProxy extends CommonProxy {
 
     @SubscribeEvent
     public void registerSpecialModels(ModelEvent.RegisterAdditional event) {
-        net.minecraft.client.Minecraft mc = net.minecraft.client.Minecraft.getInstance();
+        Minecraft mc = Minecraft.getInstance();
         DefinitionManager.registerModels(mc.getResourceManager(), event::register);
     }
 }
