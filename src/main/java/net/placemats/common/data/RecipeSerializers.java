@@ -1,16 +1,15 @@
 package net.placemats.common.data;
 
-import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-
-import net.placemats.PlaceMatMain;
+import com.tterrag.registrate.util.entry.RegistryEntry;
+import net.minecraft.core.registries.Registries;
 import net.placemats.common.recipe.PlaceMatRecipe;
 
 public class RecipeSerializers {
 
-    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, PlaceMatMain.MOD_ID);
+    public static void init() {
+    }
 
-    public static final RegistryObject<PlaceMatRecipe.Serializer> PLACE_MAT = RECIPE_SERIALIZERS.register("place_mat", PlaceMatRecipe.Serializer::new);
+    public static final RegistryEntry<PlaceMatRecipe.Serializer> PLACE_MAT = PlaceMatRegistries.REGISTRATE
+            .generic("place_mat", Registries.RECIPE_SERIALIZER, PlaceMatRecipe.Serializer::new)
+            .register();
 }

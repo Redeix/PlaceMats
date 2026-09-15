@@ -17,7 +17,7 @@ import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.compat.tfc.TFCCompat;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "unchecked"})
 public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
 
     private int containerSize = 12;

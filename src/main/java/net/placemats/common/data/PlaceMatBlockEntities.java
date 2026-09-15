@@ -1,36 +1,32 @@
 package net.placemats.common.data;
 
+import com.tterrag.registrate.util.entry.BlockEntityEntry;
+import com.tterrag.registrate.util.entry.BlockEntry;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+
+import net.placemats.PlaceMatMain;
+import net.placemats.common.blockentity.PlaceMatBlockEntity;
+import net.placemats.compat.firmalife.FirmaLifeCompat;
 import java.lang.reflect.Field;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.entity.BlockEntityType;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.RegistryObject;
-
-import net.placemats.PlaceMatMain;
-import net.placemats.common.blockentity.PlaceMatBlockEntity;
-import net.placemats.compat.firmalife.FirmaLifeCompat;
-
+@SuppressWarnings("unchecked")
 public class PlaceMatBlockEntities {
-
-    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, PlaceMatMain.MOD_ID);
-
-    public static final RegistryObject<BlockEntityType<PlaceMatBlockEntity>> PLACE_MAT = BLOCK_ENTITIES.register("place_mat",
-            () -> BlockEntityType.Builder.of(FirmaLifeCompat.INSTANCE::createPlaceMatBE, PlaceMatBlocks.STORAGE_RACK.get()).build(null));
+    public static final BlockEntityEntry<PlaceMatBlockEntity> PLACE_MAT = PlaceMatRegistries.REGISTRATE.<PlaceMatBlockEntity>blockEntity("place_mat", (type, pos, state) -> FirmaLifeCompat.INSTANCE.createPlaceMatBE(pos, state))
+        .validBlock(PlaceMatBlocks.STORAGE_RACK)
+        .validBlocks(PlaceMatBlocks.WOOD_STORAGE_RACKS.toArray(BlockEntry[]::new))
+        .register();
 
     public static void init() {
-        PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
-            addValidBEBlock(PLACE_MAT, blockReg.get());
-        });
     }
 
-    public static void addValidBEBlock(Supplier<?> type, Block block) {
-        if (type.get() instanceof BlockEntityType<?> beType) {
-            try {
+    public static void addValidBEBlock(Supplier<? extends BlockEntityType<?>> type, Block block) {
+        try {
+            BlockEntityType<?> beType = type.get();
+            if (beType != null) {
                 Field field = BlockEntityType.class.getDeclaredField("validBlocks");
                 field.setAccessible(true);
                 @SuppressWarnings("unchecked")
@@ -42,9 +38,9 @@ public class PlaceMatBlockEntities {
                     newSet.add(block);
                     field.set(beType, newSet);
                 }
-            } catch (Exception e) {
-                PlaceMatMain.LOGGER.error("Failed to add valid block to BE type: {}", e.getMessage());
             }
+        } catch (Exception e) {
+            PlaceMatMain.LOGGER.error("Failed to add valid block to BE type: {}", e.getMessage());
         }
     }
 }
