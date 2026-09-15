@@ -1,8 +1,16 @@
 package net.placemats.common.data.resource;
 
+import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
+import net.minecraft.server.packs.resources.Resource;
+import net.minecraft.world.item.BlockItem;
+import net.minecraftforge.fml.util.thread.EffectiveSide;
+import net.minecraftforge.server.ServerLifecycleHooks;
 import net.placemats.PlaceMatMain;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,33 +35,34 @@ import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.SyncPlaceMatDefinitionsPacket;
 import net.placemats.compat.kjs.KJSCompat;
 
+@SuppressWarnings("unused")
 public class DefinitionManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
-    private static final Map<Item, PlaceMatDefinition> CLIENT_DEFINITIONS = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<Item, PlaceMatDefinition> SERVER_DEFINITIONS = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<TagKey<Item>, PlaceMatDefinition> CLIENT_TAG_DEFINITIONS = new java.util.concurrent.ConcurrentHashMap<>();
-    private static final Map<TagKey<Item>, PlaceMatDefinition> SERVER_TAG_DEFINITIONS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<Item, PlaceMatDefinition> CLIENT_DEFINITIONS = new ConcurrentHashMap<>();
+    private static final Map<Item, PlaceMatDefinition> SERVER_DEFINITIONS = new ConcurrentHashMap<>();
+    private static final Map<TagKey<Item>, PlaceMatDefinition> CLIENT_TAG_DEFINITIONS = new ConcurrentHashMap<>();
+    private static final Map<TagKey<Item>, PlaceMatDefinition> SERVER_TAG_DEFINITIONS = new ConcurrentHashMap<>();
 
     private final boolean isClientSide;
     private static DefinitionManager CLIENT_INSTANCE;
     private static DefinitionManager SERVER_INSTANCE;
 
     private static Map<Item, PlaceMatDefinition> getDefinitionsMapInternal() {
-        if (CLIENT_INSTANCE != null && net.minecraftforge.fml.util.thread.EffectiveSide.get().isClient()) {
+        if (CLIENT_INSTANCE != null && EffectiveSide.get().isClient()) {
             return CLIENT_DEFINITIONS;
         }
         return SERVER_DEFINITIONS;
     }
 
     private static Map<TagKey<Item>, PlaceMatDefinition> getTagDefinitionsMapInternal() {
-        if (CLIENT_INSTANCE != null && net.minecraftforge.fml.util.thread.EffectiveSide.get().isClient()) {
+        if (CLIENT_INSTANCE != null && EffectiveSide.get().isClient()) {
             return CLIENT_TAG_DEFINITIONS;
         }
         return SERVER_TAG_DEFINITIONS;
     }
 
     public DefinitionManager() {
-        this(net.minecraftforge.fml.util.thread.EffectiveSide.get().isClient());
+        this(EffectiveSide.get().isClient());
     }
 
     public DefinitionManager(boolean isClientSide) {
@@ -109,7 +118,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         return getTagDefinitionsMapInternal();
     }
 
-    public static void registerModels(ResourceManager resourceManager, java.util.function.Consumer<ResourceLocation> consumer) {
+    public static void registerModels(ResourceManager resourceManager, Consumer<ResourceLocation> consumer) {
         postKjsEvent();
         getDefinitionsMapInternal().values().forEach(def -> {
             if (def.model() != null) {
@@ -129,7 +138,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         });
 
         // Search for definitions in all namespaces.
-        Map<ResourceLocation, net.minecraft.server.packs.resources.Resource> resourcesAssets = new HashMap<>();
+        Map<ResourceLocation, Resource> resourcesAssets = new HashMap<>();
         for (String namespace : resourceManager.getNamespaces()) {
             resourcesAssets.putAll(resourceManager.listResources("place_mat_definitions", (loc) -> loc.getNamespace().equals(namespace) && loc.getPath().endsWith(".json")));
         }
@@ -141,9 +150,9 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         }
     }
 
-    private static void processResource(ResourceLocation location, net.minecraft.server.packs.resources.Resource resource, java.util.function.Consumer<ResourceLocation> consumer) {
+    private static void processResource(ResourceLocation location, Resource resource, Consumer<ResourceLocation> consumer) {
         try (var stream = resource.open()) {
-            JsonObject json = GSON.fromJson(new java.io.InputStreamReader(stream), JsonObject.class);
+            JsonObject json = GSON.fromJson(new InputStreamReader(stream), JsonObject.class);
             if (json.has("model")) {
                 ResourceLocation loc = ResourceLocation.parse(json.get("model").getAsString());
                 consumer.accept(loc);
@@ -183,7 +192,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
                     }
                 } else if (json.has("tag")) {
                     ResourceLocation tagLoc = ResourceLocation.parse(json.get("tag").getAsString());
-                    TagKey<Item> tagKey = ForgeRegistries.ITEMS.tags().createTagKey(tagLoc);
+                    TagKey<Item> tagKey = Objects.requireNonNull(ForgeRegistries.ITEMS.tags()).createTagKey(tagLoc);
                     tagDefinitions.put(tagKey, def);
                 }
             } catch (Exception e) {
@@ -195,7 +204,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
     }
 
     public static void postKjsEvent() {
-        postKjsEvent(net.minecraftforge.fml.util.thread.EffectiveSide.get().isClient());
+        postKjsEvent(EffectiveSide.get().isClient());
     }
 
     public static void postKjsEvent(boolean isClient) {
@@ -205,7 +214,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         KJSCompat.INSTANCE.postEvent(definitions, tagDefinitions);
 
         // Sync to all clients if we are on the server side.
-        if (!isClient && net.minecraftforge.server.ServerLifecycleHooks.getCurrentServer() != null) {
+        if (!isClient && ServerLifecycleHooks.getCurrentServer() != null) {
             PlaceMatsNetworkHandler.INSTANCE.send(PacketDistributor.ALL.noArg(), new SyncPlaceMatDefinitionsPacket(definitions, tagDefinitions));
         }
     }
@@ -225,7 +234,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
     public record PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable,
             boolean allowsStackingOnTop) {
         public static PlaceMatDefinition DEFAULT(Item item) {
-            boolean isBlock = item instanceof net.minecraft.world.item.BlockItem;
+            boolean isBlock = item instanceof BlockItem;
             // Generic render food as items.
             boolean isFood = item.isEdible();
             boolean flat = !isBlock || isFood;

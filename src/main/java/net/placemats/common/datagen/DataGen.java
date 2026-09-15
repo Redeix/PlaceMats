@@ -32,5 +32,6 @@ public class DataGen {
         generator.addProvider(event.includeServer(), new PlaceMatItemTagsProvider(packOutput, lookupProvider, blockTags.contentsGetter(), existingFileHelper));
         generator.addProvider(event.includeServer(), PlaceMatLootTableProvider.create(packOutput));
         generator.addProvider(event.includeServer(), new PlaceMatRecipeProvider(packOutput));
+        generator.addProvider(event.includeServer() || event.includeClient(), new PlaceMatDefinitionProvider(packOutput).addAll());
     }
 }
