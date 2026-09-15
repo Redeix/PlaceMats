@@ -15,9 +15,13 @@ import net.dries007.tfc.util.calendar.Calendars;
 import net.dries007.tfc.util.calendar.ICalendar;
 import net.dries007.tfc.util.climate.Climate;
 import net.dries007.tfc.common.recipes.outputs.ItemStackProvider;
+
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -60,7 +64,7 @@ public class TFCCompatImpl implements TFCCompat {
 
     @Override
     public boolean isRotten(ItemStack stack) {
-        return stack.getCapability(FoodCapability.CAPABILITY).map(net.dries007.tfc.common.capabilities.food.IFood::isRotten).orElse(false);
+        return stack.getCapability(FoodCapability.CAPABILITY).map(IFood::isRotten).orElse(false);
     }
 
     @Override
@@ -164,11 +168,11 @@ public class TFCCompatImpl implements TFCCompat {
     }
 
     @Override
-    public Object readResultFromJson(com.google.gson.JsonElement json) {
+    public Object readResultFromJson(JsonElement json) {
         if (json.isJsonObject()) {
             return ItemStackProvider.fromJson(json.getAsJsonObject());
         } else {
-            com.google.gson.JsonObject obj = new com.google.gson.JsonObject();
+            JsonObject obj = new JsonObject();
             obj.addProperty("stack", json.getAsString());
             return ItemStackProvider.fromJson(obj);
         }
@@ -213,7 +217,7 @@ public class TFCCompatImpl implements TFCCompat {
         @Override public @NotNull ItemStack removeItemNoUpdate(int pSlot) { return ItemStack.EMPTY; }
         @Override public void setItem(int pSlot, @NotNull ItemStack pStack) {}
         @Override public void setChanged() {}
-        @Override public boolean stillValid(@NotNull net.minecraft.world.entity.player.Player pPlayer) { return false; }
+        @Override public boolean stillValid(@NotNull Player pPlayer) { return false; }
         @Override public void clearContent() {}
         @Override public void fillStackedContents(@NotNull StackedContents pContents) {}
         @Override public int getWidth() { return 1; }
