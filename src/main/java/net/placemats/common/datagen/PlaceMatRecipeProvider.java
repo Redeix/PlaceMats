@@ -20,7 +20,7 @@ import net.minecraftforge.common.crafting.conditions.ModLoadedCondition;
 import net.minecraftforge.common.crafting.conditions.TrueCondition;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 import org.jetbrains.annotations.NotNull;
 
 public class PlaceMatRecipeProvider extends RecipeProvider {

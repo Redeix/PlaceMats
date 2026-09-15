@@ -5,7 +5,7 @@ import net.minecraftforge.client.model.generators.ModelFile;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 
 public class ItemModelProvider extends net.minecraftforge.client.model.generators.ItemModelProvider {
     public ItemModelProvider(PackOutput packOutput, ExistingFileHelper existingFileHelper) {

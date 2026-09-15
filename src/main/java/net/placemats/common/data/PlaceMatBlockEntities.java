@@ -13,7 +13,6 @@ import net.minecraftforge.registries.RegistryObject;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
 
 public class PlaceMatBlockEntities {

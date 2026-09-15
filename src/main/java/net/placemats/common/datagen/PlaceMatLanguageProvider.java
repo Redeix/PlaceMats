@@ -4,7 +4,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 
 public class PlaceMatLanguageProvider extends LanguageProvider {
     public PlaceMatLanguageProvider(PackOutput output) {

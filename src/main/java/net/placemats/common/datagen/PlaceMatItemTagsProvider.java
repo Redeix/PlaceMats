@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.common.data.PlaceMatTags;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
 
 public class PlaceMatItemTagsProvider extends ItemTagsProvider {
     public PlaceMatItemTagsProvider(PackOutput output, CompletableFuture<HolderLookup.Provider> lookupProvider, CompletableFuture<TagLookup<Block>> blockTags, @Nullable ExistingFileHelper existingFileHelper) {

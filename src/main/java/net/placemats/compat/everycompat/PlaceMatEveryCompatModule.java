@@ -12,7 +12,7 @@ import net.placemats.PlaceMatMain;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatCreativeTab;
 import net.placemats.common.data.PlaceMatTags;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 
 public class PlaceMatEveryCompatModule extends SimpleModule {
 

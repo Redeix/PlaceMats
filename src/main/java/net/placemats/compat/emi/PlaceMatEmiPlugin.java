@@ -17,7 +17,7 @@ import dev.emi.emi.api.widget.WidgetHolder;
 import net.placemats.PlaceMatMain;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.PlaceMatTags;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.recipe.PlaceMatRecipe;
 
 // TODO: Remake EMI compat.

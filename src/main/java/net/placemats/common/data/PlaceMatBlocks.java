@@ -1,4 +1,4 @@
-package net.placemats.common.data.blocks;
+package net.placemats.common.data;
 
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;

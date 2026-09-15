@@ -8,7 +8,6 @@ import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.RegistryObject;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
 
 public class PlaceMatCreativeTab {
 

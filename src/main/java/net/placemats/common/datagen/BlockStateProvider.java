@@ -4,7 +4,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.ExistingFileHelper;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.blocks.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatBlocks;
 
 public class BlockStateProvider extends net.minecraftforge.client.model.generators.BlockStateProvider {
     public BlockStateProvider(PackOutput output, ExistingFileHelper exFileHelper) {
