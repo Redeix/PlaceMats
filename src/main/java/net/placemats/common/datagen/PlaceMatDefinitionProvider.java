@@ -12,6 +12,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Generates model definitions for place mats using enum registries.
+ */
 public class PlaceMatDefinitionProvider implements DataProvider {
     private final PackOutput output;
     private final List<IPlaceMatDefinition[]> definitionGroups = new ArrayList<>();
@@ -25,6 +28,7 @@ public class PlaceMatDefinitionProvider implements DataProvider {
         return this;
     }
 
+    // Enum registries.
     public PlaceMatDefinitionProvider addAll() {
         add(TFCDefinitions.values());
         return this;
@@ -37,6 +41,20 @@ public class PlaceMatDefinitionProvider implements DataProvider {
         for (IPlaceMatDefinition[] group : definitionGroups) {
             for (IPlaceMatDefinition def : group) {
                 Definition d = def.getDefinition();
+
+                if (d.modelData != null) {
+                    if (d.model == null) {
+                        d.model = inferModelPath(d.id, false);
+                    }
+                    futures.add(saveModel(cache, d.model, d.modelData));
+                }
+                if (d.modelRottenData != null) {
+                    if (d.modelRotten == null) {
+                        d.modelRotten = inferModelPath(d.id, true);
+                    }
+                    futures.add(saveModel(cache, d.modelRotten, d.modelRottenData));
+                }
+
                 JsonObject json = new JsonObject();
 
                 String id = d.id;
@@ -85,5 +103,35 @@ public class PlaceMatDefinitionProvider implements DataProvider {
     @Override
     public @NotNull String getName() {
         return "Place Mat Definitions";
+    }
+
+    private String inferModelPath(String id, boolean rotten) {
+        String path = id.startsWith("#") ? "tag/" + id.substring(1) : id;
+        if (path.contains(":")) {
+            String[] split = path.split(":", 2);
+            path = split[0] + "/" + split[1];
+        }
+        return "place_mats:render/" + path + (rotten ? "_rotten" : "");
+    }
+
+    private CompletableFuture<?> saveModel(CachedOutput cache, String modelLoc, ModelData data) {
+        JsonObject json = new JsonObject();
+        json.addProperty("parent", data.parent());
+        JsonObject textures = new JsonObject();
+        data.textures().forEach(textures::addProperty);
+        json.add("textures", textures);
+
+        String namespace = "minecraft";
+        String path = modelLoc;
+        if (modelLoc.contains(":")) {
+            String[] split = modelLoc.split(":", 2);
+            namespace = split[0];
+            path = split[1];
+        }
+
+        Path modelPath = output.getOutputFolder(PackOutput.Target.RESOURCE_PACK)
+                .resolve(namespace).resolve("models").resolve(path + ".json");
+
+        return DataProvider.saveStable(cache, json, modelPath);
     }
 }

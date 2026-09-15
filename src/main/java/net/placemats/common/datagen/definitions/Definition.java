@@ -1,5 +1,8 @@
 package net.placemats.common.datagen.definitions;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class Definition {
     public final String id;
@@ -7,6 +10,8 @@ public class Definition {
     public float depth = 0.25f;
     public String model;
     public String modelRotten;
+    public ModelData modelData;
+    public ModelData modelRottenData;
     public Float height;
     public Float scale;
     public Boolean flat;
@@ -28,9 +33,39 @@ public class Definition {
         return this;
     }
 
+    public Definition model(ModelData modelData) {
+        this.modelData = modelData;
+        if (modelData.path() != null) {
+            this.model = modelData.path();
+        }
+        return this;
+    }
+
     public Definition modelRotten(String modelRotten) {
         this.modelRotten = modelRotten;
         return this;
+    }
+
+    public Definition modelRotten(ModelData modelRottenData) {
+        this.modelRottenData = modelRottenData;
+        if (modelRottenData.path() != null) {
+            this.modelRotten = modelRottenData.path();
+        }
+        return this;
+    }
+
+    public static ModelData parentModel(String parent, String[]... textures) {
+        return parentModel(null, parent, textures);
+    }
+
+    public static ModelData parentModel(String path, String parent, String[]... textures) {
+        Map<String, String> map = new LinkedHashMap<>();
+        for (String[] pair : textures) {
+            if (pair.length >= 2) {
+                map.put(pair[0], pair[1]);
+            }
+        }
+        return new ModelData(path, parent, map);
     }
 
     public Definition height(float height) {
