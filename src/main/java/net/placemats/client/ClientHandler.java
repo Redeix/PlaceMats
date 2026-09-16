@@ -465,6 +465,10 @@ public class ClientHandler {
         }
     }
 
+    /**
+     * Handles disabling jump when holding shift and looking at a placemat.
+     * `onClientTick` Does not continuously suppress the jump input while modifying height.
+     */
     @SubscribeEvent
     public static void onKeyInput(InputEvent.Key event) {
         Minecraft mc = Minecraft.getInstance();
@@ -475,8 +479,32 @@ public class ClientHandler {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                     assert mc.level != null;
+                    if (mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity) {
+                        mc.options.keyJump.setDown(false);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Handles converting key inputs into place mat transformations.
+     * `onKeyInput` is needed to disable keys without buggy interactions.
+     */
+    @SubscribeEvent
+    public static void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) return;
+
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+
+        if (player != null && mc.options.keyJump.isDown()) {
+            if (Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+                HitResult hit = mc.hitResult;
+                if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
+                    assert mc.level != null;
                     BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
-                    if (be instanceof PlaceMatBlockEntity foodPlacer) {
+                    if (be instanceof PlaceMatBlockEntity pmbe) {
                         if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                             Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
                             PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
@@ -484,13 +512,13 @@ public class ClientHandler {
                                 return;
                         }
 
-                        float height = foodPlacer.getCurrentHeight();
+                        float height = pmbe.getCurrentHeight();
                         if (Screen.hasControlDown()) {
                             height = Math.max(0, height - 0.015625f);
                         } else {
                             height = Math.min(1.0f, height + 0.015625f);
                         }
-                        foodPlacer.setCurrentHeight(height);
+                        pmbe.setCurrentHeight(height);
 
                         mc.options.keyJump.setDown(false);
                     }
