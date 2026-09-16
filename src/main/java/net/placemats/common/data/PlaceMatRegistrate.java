@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlaceMatStairsBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
@@ -58,5 +59,9 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
 
     public BlockBuilder<PlaceMatCardinalBlock, PlaceMatRegistrate> storageRack(String name, boolean cardinal) {
         return placeMatBlock(name, p -> (PlaceMatCardinalBlock) TFCCompat.INSTANCE.createPlaceMatBlock(p, cardinal));
+    }
+
+    public BlockBuilder<PlaceMatStairsBlock, PlaceMatRegistrate> ornateShelf(String name) {
+        return placeMatBlock(name, p -> (PlaceMatStairsBlock) TFCCompat.INSTANCE.createPlaceMatStairsBlock(p));
     }
 }

@@ -2,13 +2,9 @@ package net.placemats.common.block;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 import java.util.function.Consumer;
 
-import net.minecraft.core.particles.BlockParticleOption;
-import net.minecraft.core.particles.ParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
@@ -89,6 +85,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     @Getter
     @Nullable
     private ResourceLocation foodTrait = null;
+    @Getter
+    private VoxelShape shape = Shapes.block();
+    @Getter
+    private VoxelShape collisionShape = Shapes.block();
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
@@ -193,6 +193,26 @@ public class PlaceMatBlock extends Block implements EntityBlock {
      */
     public PlaceMatBlock defaultElevation(float elevation) {
         this.defaultElevation = elevation;
+        return this;
+    }
+
+    public PlaceMatBlock shape(VoxelShape shape) {
+        this.shape = shape;
+        return this;
+    }
+
+    public PlaceMatBlock shape(AABB box) {
+        this.shape = Shapes.create(box);
+        return this;
+    }
+
+    public PlaceMatBlock collisionShape(VoxelShape collisionShape) {
+        this.collisionShape = collisionShape;
+        return this;
+    }
+
+    public PlaceMatBlock collisionShape(AABB box) {
+        this.collisionShape = Shapes.create(box);
         return this;
     }
 
@@ -434,7 +454,12 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return Shapes.block();
+        return this.shape;
+    }
+
+    @Override
+    public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return this.collisionShape;
     }
 
     @Nullable

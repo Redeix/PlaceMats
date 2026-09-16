@@ -1,0 +1,99 @@
+{
+  "variants": {
+    "facing=east,shape=inner_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=east,shape=inner_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true
+    },
+    "facing=east,shape=outer_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=east,shape=outer_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true
+    },
+    "facing=east,shape=straight": {
+      "model": "place_mats:block/crimson_ornate_shelf",
+      "uvlock": true
+    },
+    "facing=north,shape=inner_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=north,shape=inner_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=north,shape=outer_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=north,shape=outer_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=north,shape=straight": {
+      "model": "place_mats:block/crimson_ornate_shelf",
+      "uvlock": true,
+      "y": 270
+    },
+    "facing=south,shape=inner_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true
+    },
+    "facing=south,shape=inner_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=south,shape=outer_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true
+    },
+    "facing=south,shape=outer_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=south,shape=straight": {
+      "model": "place_mats:block/crimson_ornate_shelf",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,shape=inner_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,shape=inner_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_inner",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=west,shape=outer_left": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 90
+    },
+    "facing=west,shape=outer_right": {
+      "model": "place_mats:block/crimson_ornate_shelf_outer",
+      "uvlock": true,
+      "y": 180
+    },
+    "facing=west,shape=straight": {
+      "model": "place_mats:block/crimson_ornate_shelf",
+      "uvlock": true,
+      "y": 180
+    }
+  }
+}

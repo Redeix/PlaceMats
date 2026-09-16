@@ -30,4 +30,5 @@ public interface TFCCompat {
     Object readResultFromNetwork(FriendlyByteBuf buffer);
     void writeResultToNetwork(FriendlyByteBuf buffer, Object provider);
     Block createPlaceMatBlock(Block.Properties properties, boolean cardinal);
+    Block createPlaceMatStairsBlock(Block.Properties properties);
 }

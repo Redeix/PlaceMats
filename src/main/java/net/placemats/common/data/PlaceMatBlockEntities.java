@@ -18,6 +18,7 @@ public class PlaceMatBlockEntities {
     public static final BlockEntityEntry<PlaceMatBlockEntity> PLACE_MAT = PlaceMatRegistries.REGISTRATE.<PlaceMatBlockEntity>blockEntity("place_mat", (type, pos, state) -> FirmaLifeCompat.INSTANCE.createPlaceMatBE(pos, state))
         .validBlock(PlaceMatBlocks.STORAGE_RACK)
         .validBlocks(PlaceMatBlocks.WOOD_STORAGE_RACKS.toArray(BlockEntry[]::new))
+        .validBlocks(PlaceMatBlocks.WOOD_ORNATE_SHELVES.toArray(BlockEntry[]::new))
         .register();
 
     public static void init() {

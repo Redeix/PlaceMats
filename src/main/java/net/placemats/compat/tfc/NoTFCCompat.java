@@ -12,6 +12,7 @@ import net.minecraft.world.level.block.Block;
 import com.google.gson.JsonElement;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlaceMatStairsBlock;
 
 public class NoTFCCompat implements TFCCompat {
     @Override public void applyTrait(ItemStack stack, ResourceLocation traitId) {}
@@ -30,5 +31,8 @@ public class NoTFCCompat implements TFCCompat {
     @Override public void writeResultToNetwork(FriendlyByteBuf buffer, Object provider) {}
     @Override public Block createPlaceMatBlock(Block.Properties properties, boolean cardinal) {
         return cardinal ? new PlaceMatCardinalBlock(properties) : new PlaceMatBlock(properties);
+    }
+    @Override public Block createPlaceMatStairsBlock(Block.Properties properties) {
+        return new PlaceMatStairsBlock(properties);
     }
 }

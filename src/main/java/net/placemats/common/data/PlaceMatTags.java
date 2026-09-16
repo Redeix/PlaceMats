@@ -10,6 +10,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import net.placemats.PlaceMatMain;
 
+@SuppressWarnings("unused")
 public final class PlaceMatTags {
 
     public static final class Items {
@@ -17,6 +18,7 @@ public final class PlaceMatTags {
         public static final TagKey<Item> PLACE_MAT_BLACKLIST = createItemTag("place_mat_blacklist");
         public static final TagKey<Item> PLACE_MATS = createItemTag("place_mats");
         public static final TagKey<Item> STORAGE_RACKS = createItemTag("place_mats/storage_racks");
+        public static final TagKey<Item> ORNATE_SHELVES = createItemTag("place_mats/ornate_shelves");
         public static final TagKey<Item> KEY = createItemTag("key");
 
         private static TagKey<Item> createItemTag(String path) {
@@ -33,6 +35,7 @@ public final class PlaceMatTags {
         public static final TagKey<Block> PLACE_MATS = createBlockTag("place_mats");
         public static final TagKey<Block> PLACE_MAT_BLACKLIST = createBlockTag("place_mat_blacklist");
         public static final TagKey<Block> STORAGE_RACKS = createBlockTag("place_mats/storage_racks");
+        public static final TagKey<Block> ORNATE_SHELVES = createBlockTag("place_mats/ornate_shelves");
 
         private static TagKey<Block> createBlockTag(String path) {
             return createBlockTag(PlaceMatMain.id(path));

@@ -9,6 +9,9 @@ public class PlaceMatRegistries {
         PlaceMatTags.addExistingTags(REGISTRATE);
         REGISTRATE.addDataGenerator(ProviderType.LANG, prov -> {
             prov.add("block_type.pm.storage_rack", "%s Storage Rack");
+            prov.add("block_type.pm.ornate_shelf", "%s Ornate Shelf");
+            prov.add("block_type.place_mats.storage_rack", "%s Storage Rack");
+            prov.add("block_type.place_mats.ornate_shelf", "%s Ornate Shelf");
             prov.add("place_mats.creative_tab.place_mats", "Place Mats");
             prov.add("place_mats.tooltip.placemat.placing", "Hold an item and §3RMB§r to display.");
             prov.add("place_mats.tooltip.placemat.hold_alt_for_nutrition_info", "Hold (Alt) for Detailed Info");

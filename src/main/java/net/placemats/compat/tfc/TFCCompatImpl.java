@@ -195,6 +195,11 @@ public class TFCCompatImpl implements TFCCompat {
         return cardinal ? new TFCPlaceMatBlock.Cardinal(properties) : new TFCPlaceMatBlock(properties);
     }
 
+    @Override
+    public Block createPlaceMatStairsBlock(Block.Properties properties) {
+        return new TFCPlaceMatBlock.Stairs(properties);
+    }
+
     private static class SimulatedCraftingContainer implements CraftingContainer {
         private final List<ItemStack> _items = new ArrayList<>();
 
