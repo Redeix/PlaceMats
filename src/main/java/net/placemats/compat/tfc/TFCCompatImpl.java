@@ -200,6 +200,11 @@ public class TFCCompatImpl implements TFCCompat {
         return new TFCPlaceMatBlock.Stairs(properties);
     }
 
+    @Override
+    public Block createPlaceMatAttachedStairsBlock(Block.Properties properties) {
+        return new TFCPlaceMatBlock.AttachedStairs(properties);
+    }
+
     private static class SimulatedCraftingContainer implements CraftingContainer {
         private final List<ItemStack> _items = new ArrayList<>();
 

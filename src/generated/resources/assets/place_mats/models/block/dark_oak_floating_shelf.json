@@ -1,0 +1,7 @@
+{
+  "parent": "place_mats:block/floating_shelf_parent",
+  "textures": {
+    "0": "place_mats:block/dark_oak_shelf",
+    "1": "minecraft:block/stripped_dark_oak_log"
+  }
+}

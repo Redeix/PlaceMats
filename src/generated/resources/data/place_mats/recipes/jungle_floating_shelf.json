@@ -1,0 +1,34 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "minecraft:jungle_stairs"
+          },
+          "S": {
+            "item": "minecraft:jungle_slab"
+          }
+        },
+        "pattern": [
+          "   ",
+          "SSS",
+          "  I"
+        ],
+        "result": {
+          "count": 2,
+          "item": "place_mats:jungle_floating_shelf"
+        },
+        "show_notification": true
+      }
+    }
+  ]
+}

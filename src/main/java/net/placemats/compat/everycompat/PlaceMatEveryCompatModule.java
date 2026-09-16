@@ -56,5 +56,29 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
             .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_ornate_shelf"))
             .defaultRecipe()
             .build());
+        this.addEntry(SimpleEntrySet.builder(WoodType.class, "floating_shelf",
+            () -> PlaceMatBlocks.WOOD_FLOATING_SHELVES.stream().filter(r -> r.getId().getPath().contains("oak")).findFirst().get().get(), () -> VanillaWoodTypes.OAK,
+            w -> PlaceMatBlocks.createFloatingShelf(Utils.copyPropertySafe(w.planks).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            )
+            .addTag(BlockTags.MINEABLE_WITH_AXE, Registries.BLOCK)
+            .addTag(PlaceMatTags.Blocks.PLACE_MATS, Registries.BLOCK)
+            .addTag(PlaceMatTags.Blocks.FLOATING_SHELVES, Registries.BLOCK)
+            .addTag(PlaceMatTags.Items.PLACE_MATS, Registries.ITEM)
+            .addTag(PlaceMatTags.Items.FLOATING_SHELVES, Registries.ITEM)
+            .addTag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST, Registries.ITEM)
+            .addTile(PlaceMatBlockEntities.PLACE_MAT)
+            .requiresChildren("slab")
+            .setTabKey(PlaceMatCreativeTab.PLACE_MATS.getId())
+            .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_shelf"))
+            .addTexture(ResourceLocation.fromNamespaceAndPath("minecraft", "block/stripped_oak_log"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_attached"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_inner"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_inner_attached"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_outer"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_outer_attached"))
+            .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_floating_shelf"))
+            .defaultRecipe()
+            .build());
     }
 }

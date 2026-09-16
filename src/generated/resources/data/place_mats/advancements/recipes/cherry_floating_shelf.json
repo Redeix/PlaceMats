@@ -1,0 +1,59 @@
+{
+  "advancements": [
+    {
+      "advancement": {
+        "parent": "minecraft:recipes/root",
+        "criteria": {
+          "has_cherry_slab": {
+            "conditions": {
+              "items": [
+                {
+                  "items": [
+                    "minecraft:cherry_slab"
+                  ]
+                }
+              ]
+            },
+            "trigger": "minecraft:inventory_changed"
+          },
+          "has_cherry_stairs": {
+            "conditions": {
+              "items": [
+                {
+                  "items": [
+                    "minecraft:cherry_stairs"
+                  ]
+                }
+              ]
+            },
+            "trigger": "minecraft:inventory_changed"
+          },
+          "has_the_recipe": {
+            "conditions": {
+              "recipe": "place_mats:cherry_floating_shelf"
+            },
+            "trigger": "minecraft:recipe_unlocked"
+          }
+        },
+        "requirements": [
+          [
+            "has_cherry_slab",
+            "has_cherry_stairs",
+            "has_the_recipe"
+          ]
+        ],
+        "rewards": {
+          "recipes": [
+            "place_mats:cherry_floating_shelf"
+          ]
+        },
+        "sends_telemetry_event": false
+      },
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ]
+    }
+  ]
+}

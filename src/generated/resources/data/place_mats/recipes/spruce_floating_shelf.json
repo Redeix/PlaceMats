@@ -1,0 +1,34 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "minecraft:spruce_stairs"
+          },
+          "S": {
+            "item": "minecraft:spruce_slab"
+          }
+        },
+        "pattern": [
+          "   ",
+          "SSS",
+          "  I"
+        ],
+        "result": {
+          "count": 2,
+          "item": "place_mats:spruce_floating_shelf"
+        },
+        "show_notification": true
+      }
+    }
+  ]
+}

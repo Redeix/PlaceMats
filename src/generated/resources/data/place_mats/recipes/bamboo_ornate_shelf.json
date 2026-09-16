@@ -1,0 +1,64 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "tfc"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "tfc:metal/bars/wrought_iron"
+          },
+          "S": {
+            "item": "minecraft:bamboo_slab"
+          }
+        },
+        "pattern": [
+          "   ",
+          "SSS",
+          " II"
+        ],
+        "result": {
+          "count": 2,
+          "item": "place_mats:bamboo_ornate_shelf"
+        },
+        "show_notification": true
+      }
+    },
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "item": "minecraft:iron_bars"
+          },
+          "S": {
+            "item": "minecraft:bamboo_slab"
+          }
+        },
+        "pattern": [
+          "   ",
+          "SSS",
+          " II"
+        ],
+        "result": {
+          "count": 2,
+          "item": "place_mats:bamboo_ornate_shelf"
+        },
+        "show_notification": true
+      }
+    }
+  ]
+}

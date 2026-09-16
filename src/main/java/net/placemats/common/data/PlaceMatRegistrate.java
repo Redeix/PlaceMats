@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
@@ -63,5 +64,9 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
 
     public BlockBuilder<PlaceMatStairsBlock, PlaceMatRegistrate> ornateShelf(String name) {
         return placeMatBlock(name, p -> (PlaceMatStairsBlock) TFCCompat.INSTANCE.createPlaceMatStairsBlock(p));
+    }
+
+    public BlockBuilder<PlaceMatAttachedStairsBlock, PlaceMatRegistrate> floatingShelf(String name) {
+        return placeMatBlock(name, p -> (PlaceMatAttachedStairsBlock) TFCCompat.INSTANCE.createPlaceMatAttachedStairsBlock(p));
     }
 }

@@ -1,0 +1,7 @@
+{
+  "parent": "place_mats:block/floating_shelf_inner_parent",
+  "textures": {
+    "0": "place_mats:block/spruce_shelf",
+    "1": "minecraft:block/stripped_spruce_log"
+  }
+}
