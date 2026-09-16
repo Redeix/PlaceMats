@@ -3,6 +3,7 @@ package net.placemats.compat.tfc;
 import net.dries007.tfc.common.blocks.ExtendedProperties;
 import net.dries007.tfc.common.blocks.IForgeBlockExtension;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         return extendedProperties;
     }
 
-    public static class Cardinal extends PlaceMatBlock.Cardinal implements IForgeBlockExtension {
+    public static class Cardinal extends PlaceMatCardinalBlock implements IForgeBlockExtension {
         private final ExtendedProperties extendedProperties;
 
         public Cardinal(Block.Properties properties) {

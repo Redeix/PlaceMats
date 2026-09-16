@@ -27,6 +27,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     private boolean cardinal = false;
     private boolean disableLayFlat = false;
     private boolean disableCustomModels = false;
+    private boolean rotateZones = true;
     private float scaleMultiplier = 1.0f;
     private float defaultYaw = 0;
     private float defaultPitch = 0;
@@ -66,6 +67,18 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     @Info("Sets if the block can rotate in the cardinal directions. (boolean)")
     public PlaceMatBlockBuilder isCardinal(boolean cardinal) {
         this.cardinal = cardinal;
+        return this;
+    }
+
+    @Info("Sets whether placement zones should rotate with the block facing or stay fixed. (boolean, default: true)")
+    public PlaceMatBlockBuilder rotateZones(boolean rotateZones) {
+        this.rotateZones = rotateZones;
+        return this;
+    }
+
+    @Info("Disables zone rotation with the block facing so zones stay fixed.")
+    public PlaceMatBlockBuilder disableZoneRotation() {
+        this.rotateZones = false;
         return this;
     }
 
@@ -144,6 +157,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         if (disableCustomModels) {
             block.disableCustomModels();
         }
+        block.rotateZones(rotateZones);
         block.scaleMultiplier(scaleMultiplier);
         block.defaultRotation(defaultYaw, defaultPitch, defaultRoll);
         block.defaultElevation(defaultElevation);

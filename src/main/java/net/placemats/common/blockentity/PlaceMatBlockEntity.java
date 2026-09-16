@@ -40,6 +40,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
@@ -877,7 +878,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         PlacedItem targeted = null;
 
         BlockState state = getBlockState();
-        Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
+        Direction facing = (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones()) ? Direction.NORTH : (state.hasProperty(PlaceMatCardinalBlock.FACING) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH);
         Vec3 localEyePos = PlaceMatBlock.getLocalHitVec(state, eyePos.subtract(pos.getX(), pos.getY(), pos.getZ()));
         Vec3 localLookVec = PlaceMatBlock.rotateDirectionInverse(facing, lookVec);
 

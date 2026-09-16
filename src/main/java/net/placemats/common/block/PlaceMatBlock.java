@@ -12,8 +12,6 @@ import net.minecraft.core.particles.SimpleParticleType;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.level.block.Mirror;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.placemats.common.event.PlaceMatInteractions;
@@ -28,18 +26,15 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -62,7 +57,6 @@ import net.placemats.common.data.PlaceMatTags;
 @SuppressWarnings({ "deprecation", "UnusedReturnValue", "unused" })
 public class PlaceMatBlock extends Block implements EntityBlock {
 
-    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
     public static final BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
     @Getter
@@ -81,6 +75,8 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     @Getter
     private boolean disableCustomModels = false;
     @Getter
+    private boolean rotateZones = true;
+    @Getter
     private float scaleMultiplier = 1.0f;
     @Getter
     private float defaultYaw = 0;
@@ -96,14 +92,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
-        BlockState defaultState = getStateDefinition().any();
-        if (defaultState.hasProperty(FACING)) {
-            defaultState = defaultState.setValue(FACING, Direction.NORTH);
-        }
-        if (defaultState.hasProperty(LOCKED)) {
-            defaultState = defaultState.setValue(LOCKED, false);
-        }
-        registerDefaultState(defaultState);
+        registerDefaultState(getStateDefinition().any().setValue(LOCKED, false));
     }
 
     /**
@@ -161,6 +150,23 @@ public class PlaceMatBlock extends Block implements EntityBlock {
      */
     public PlaceMatBlock disableCustomModels() {
         this.disableCustomModels = true;
+        return this;
+    }
+
+    /**
+     * Sets whether placement zones should rotate with the block facing or stay fixed.
+     * Default is true (rotation enabled).
+     */
+    public PlaceMatBlock rotateZones(boolean rotateZones) {
+        this.rotateZones = rotateZones;
+        return this;
+    }
+
+    /**
+     * Disables zone rotation with block facing so placement zones stay fixed.
+     */
+    public PlaceMatBlock disableZoneRotation() {
+        this.rotateZones = false;
         return this;
     }
 
@@ -270,10 +276,13 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     }
 
     public static Vec3 getLocalHitVec(BlockState state, Vec3 relativeHitVec) {
-        if (!state.hasProperty(FACING)) {
+        if (!state.hasProperty(PlaceMatCardinalBlock.FACING)) {
             return relativeHitVec;
         }
-        Direction facing = state.getValue(FACING);
+        if (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones()) {
+            return relativeHitVec;
+        }
+        Direction facing = state.getValue(PlaceMatCardinalBlock.FACING);
         return switch (facing) {
             case SOUTH -> new Vec3(1 - relativeHitVec.x, relativeHitVec.y, 1 - relativeHitVec.z);
             case EAST -> new Vec3(relativeHitVec.z, relativeHitVec.y, 1 - relativeHitVec.x);
@@ -283,10 +292,13 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     }
 
     public static Vec3 getWorldHitVec(BlockState state, Vec3 localHitVec) {
-        if (!state.hasProperty(FACING)) {
+        if (!state.hasProperty(PlaceMatCardinalBlock.FACING)) {
             return localHitVec;
         }
-        Direction facing = state.getValue(FACING);
+        if (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones()) {
+            return localHitVec;
+        }
+        Direction facing = state.getValue(PlaceMatCardinalBlock.FACING);
         return switch (facing) {
             case SOUTH -> new Vec3(1 - localHitVec.x, localHitVec.y, 1 - localHitVec.z);
             case WEST -> new Vec3(localHitVec.z, localHitVec.y, 1 - localHitVec.x);
@@ -382,37 +394,6 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(LOCKED);
     }
-
-    public static class Cardinal extends PlaceMatBlock {
-
-        public Cardinal(Properties properties) {
-            super(properties);
-            registerDefaultState(defaultBlockState().setValue(FACING, Direction.NORTH).setValue(LOCKED, false));
-        }
-
-        @Override
-        protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
-            super.createBlockStateDefinition(builder);
-            builder.add(FACING);
-        }
-
-        @Override
-        public BlockState rotate(BlockState state, Rotation rotation) {
-            return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
-        }
-
-        @Override
-        public BlockState mirror(BlockState state, Mirror mirror) {
-            return state.rotate(mirror.getRotation(state.getValue(FACING)));
-        }
-
-        @Nullable
-        @Override
-        public BlockState getStateForPlacement(BlockPlaceContext context) {
-            return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
-        }
-    }
-
 
     // Method for pick-block item cloning when looking at placed items.
     @Override

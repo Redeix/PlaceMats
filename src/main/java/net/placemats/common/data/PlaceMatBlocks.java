@@ -9,6 +9,7 @@ import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.phys.AABB;
 
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 import java.util.ArrayList;
@@ -17,7 +18,7 @@ import java.util.List;
 @SuppressWarnings({ "unused" })
 public final class PlaceMatBlocks {
 
-    public static final BlockEntry<PlaceMatBlock> STORAGE_RACK = PlaceMatRegistries.REGISTRATE.storageRack("storage_rack", true)
+    public static final BlockEntry<PlaceMatCardinalBlock> STORAGE_RACK = PlaceMatRegistries.REGISTRATE.storageRack("storage_rack", true)
         .properties(p -> p.sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .onRegister(block -> {
             block.containerSize(10);
@@ -41,18 +42,18 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    public static final List<BlockEntry<PlaceMatBlock>> WOOD_STORAGE_RACKS = registerWoodVariants();
+    public static final List<BlockEntry<PlaceMatCardinalBlock>> WOOD_STORAGE_RACKS = registerWoodVariants();
 
     public static void init() {
     }
 
-    private static List<BlockEntry<PlaceMatBlock>> registerWoodVariants() {
-        List<BlockEntry<PlaceMatBlock>> list = new ArrayList<>();
+    private static List<BlockEntry<PlaceMatCardinalBlock>> registerWoodVariants() {
+        List<BlockEntry<PlaceMatCardinalBlock>> list = new ArrayList<>();
 
         WoodType.values().forEach(woodType -> {
             String name = woodType.name() + "_" + "storage_rack";
 
-            BlockEntry<PlaceMatBlock> blockReg = PlaceMatRegistries.REGISTRATE.storageRack(name, true)
+            BlockEntry<PlaceMatCardinalBlock> blockReg = PlaceMatRegistries.REGISTRATE.storageRack(name, true)
                 .properties(p -> p.sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
                 .onRegister(block -> {
                     block.containerSize(10);
@@ -82,8 +83,8 @@ public final class PlaceMatBlocks {
         return list;
     }
 
-    public static PlaceMatBlock createStorageRack(BlockBehaviour.Properties properties) {
-        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(properties, true);
+    public static PlaceMatCardinalBlock createStorageRack(BlockBehaviour.Properties properties) {
+        PlaceMatCardinalBlock block = (PlaceMatCardinalBlock) TFCCompat.INSTANCE.createPlaceMatBlock(properties, true);
         block.containerSize(10);
         block.addRange(new PlaceMatBlock.PlacementRange(
                 new AABB(1 / 16D, 0 / 16D, 1 / 16D, 15 / 16D, 7 / 16D, 15 / 16D),

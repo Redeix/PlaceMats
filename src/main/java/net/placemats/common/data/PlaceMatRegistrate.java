@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
@@ -55,7 +56,7 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
         return block(name, factory);
     }
 
-    public BlockBuilder<PlaceMatBlock, PlaceMatRegistrate> storageRack(String name, boolean cardinal) {
-        return placeMatBlock(name, p -> (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(p, cardinal));
+    public BlockBuilder<PlaceMatCardinalBlock, PlaceMatRegistrate> storageRack(String name, boolean cardinal) {
+        return placeMatBlock(name, p -> (PlaceMatCardinalBlock) TFCCompat.INSTANCE.createPlaceMatBlock(p, cardinal));
     }
 }

@@ -34,6 +34,7 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
+import net.minecraftforge.client.event.MovementInputUpdateEvent;
 import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
@@ -45,6 +46,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatTags;
@@ -119,7 +121,7 @@ public class ClientHandler {
                         pos.getZ() - mc.gameRenderer.getMainCamera().getPosition().z);
 
                 BlockState state = pmbe.getBlockState();
-                Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
+                Direction facing = (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones()) ? Direction.NORTH : (state.hasProperty(PlaceMatCardinalBlock.FACING) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH);
                 poseStack.pushPose();
                 poseStack.translate(0.5, 0, 0.5);
                 if (facing != Direction.NORTH) {
@@ -467,55 +469,52 @@ public class ClientHandler {
     public static void onKeyInput(InputEvent.Key event) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player != null && Screen.hasShiftDown() && !mc.player.getMainHandItem().isEmpty()) {
-            HitResult hit = mc.hitResult;
-            if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
-                assert mc.level != null;
-                BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
-                if (be instanceof PlaceMatBlockEntity foodPlacer) {
-                    if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
-                        Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
-                        PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
-                        if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
-                            return;
-                    }
-                    float height = foodPlacer.getCurrentHeight();
-                    if (mc.options.keyJump.matches(event.getKey(), event.getScanCode())) {
+
+        if (player != null && event.getAction() == 1 && mc.options.keyJump.matches(event.getKey(), event.getScanCode())) {
+            if (Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+                HitResult hit = mc.hitResult;
+                if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
+                    assert mc.level != null;
+                    BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
+                    if (be instanceof PlaceMatBlockEntity foodPlacer) {
+                        if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
+                            Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
+                            PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
+                            if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
+                                return;
+                        }
+
+                        float height = foodPlacer.getCurrentHeight();
                         if (Screen.hasControlDown()) {
                             height = Math.max(0, height - 0.015625f);
                         } else {
                             height = Math.min(1.0f, height + 0.015625f);
                         }
                         foodPlacer.setCurrentHeight(height);
+
+                        mc.options.keyJump.setDown(false);
                     }
                 }
             }
         }
     }
 
-    @Mod.EventBusSubscriber(modid = PlaceMatMain.MOD_ID, value = Dist.CLIENT)
-    public static class ClientTickHandler {
-        @SubscribeEvent
-        public static void onClientTick(TickEvent.ClientTickEvent event) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player != null && !mc.player.getMainHandItem().isEmpty()) {
-                HitResult hit = mc.hitResult;
-                if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
-                    if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity placeMat) {
-                        ItemStack held = mc.player.getMainHandItem();
-                        if (!held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
-                            if (placeMat.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                                Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
-                                PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(placeMat.getBlockState(), location);
-                                TagKey<Item> whitelist = targetedRange != null ? targetedRange.whitelistTag() : null;
-                                if (whitelist != null && !held.is(whitelist)) {
-                                    return;
-                                }
-                            }
-                            mc.options.keyJump.setDown(false);
-                            mc.options.keyShift.setDown(false);
-                        }
+    @SubscribeEvent
+    public static void onMovementInput(MovementInputUpdateEvent event) {
+        Minecraft mc = Minecraft.getInstance();
+        Player player = mc.player;
+
+        if (player != null && Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+            HitResult hit = mc.hitResult;
+            if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
+                if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity) {
+                    if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
+                        Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
+                        PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
+                        if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
+                            return;
                     }
+                    event.getInput().jumping = false;
                 }
             }
         }

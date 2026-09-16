@@ -30,6 +30,7 @@ import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
 import net.placemats.common.data.resource.DefinitionManager;
@@ -47,7 +48,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof PlaceMatBlock pmb))
             return;
-        Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
+        Direction facing = (pmb.isRotateZones() && state.hasProperty(PlaceMatCardinalBlock.FACING)) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH;
 
         poseStack.pushPose();
         poseStack.translate(0.5, 0, 0.5);

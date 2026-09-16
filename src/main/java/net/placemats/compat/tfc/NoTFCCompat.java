@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import com.google.gson.JsonElement;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlaceMatCardinalBlock;
 
 public class NoTFCCompat implements TFCCompat {
     @Override public void applyTrait(ItemStack stack, ResourceLocation traitId) {}
@@ -28,6 +29,6 @@ public class NoTFCCompat implements TFCCompat {
     @Override public Object readResultFromNetwork(FriendlyByteBuf buffer) { return null; }
     @Override public void writeResultToNetwork(FriendlyByteBuf buffer, Object provider) {}
     @Override public Block createPlaceMatBlock(Block.Properties properties, boolean cardinal) {
-        return cardinal ? new PlaceMatBlock.Cardinal(properties) : new PlaceMatBlock(properties);
+        return cardinal ? new PlaceMatCardinalBlock(properties) : new PlaceMatBlock(properties);
     }
 }
