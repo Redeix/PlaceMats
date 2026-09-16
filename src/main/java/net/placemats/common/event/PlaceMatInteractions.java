@@ -34,6 +34,8 @@ import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.recipe.PlaceMatRecipe;
 import net.placemats.compat.kjs.KJSCompat;
 
+import static net.placemats.common.block.PlaceMatBlock.*;
+
 /**
  * Handles placemat interactions for recipes and events.
  * TODO: Rewrite this class. A lot of it is redundant.
@@ -42,6 +44,8 @@ public class PlaceMatInteractions {
 
     public static InteractionResult handleInteraction(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, BlockHitResult hit) {
         Level level = placeMat.getLevel();
+        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
+            return InteractionResult.PASS;
         if (level == null)
             return InteractionResult.PASS;
         BlockPos pos = placeMat.getBlockPos();
@@ -84,6 +88,8 @@ public class PlaceMatInteractions {
 
     public static boolean handleLeftClick(PlaceMatBlockEntity placeMat, Player player, @Nullable BlockHitResult hit) {
         Level level = placeMat.getLevel();
+        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
+            return false;
         if (level == null)
             return false;
         BlockPos pos = placeMat.getBlockPos();
@@ -149,6 +155,8 @@ public class PlaceMatInteractions {
     public static boolean tryRecipe(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, @Nullable PlacedItem targeted) {
         Level level = placeMat.getLevel();
         if (level == null)
+            return false;
+        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
             return false;
 
         ItemStack inputStack = player.getItemInHand(hand);
@@ -322,7 +330,7 @@ public class PlaceMatInteractions {
         boolean isEdible = stack.getItem().isEdible() || TFCCompat.INSTANCE.hasFoodCapability(stack);
         boolean isDrinkable = anim == UseAnim.DRINK;
 
-        if (isEdible || isDrinkable) {
+        if (isEdible || isDrinkable && !foodPlacer.getBlockState().getValue(LOCKED).equals(true)) {
             FoodProperties foodProperties = stack.getFoodProperties(player);
             boolean canAlwaysEat = foodProperties != null && foodProperties.canAlwaysEat();
             if (isDrinkable || player.canEat(canAlwaysEat)) {

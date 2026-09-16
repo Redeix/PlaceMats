@@ -52,6 +52,8 @@ import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.PlaceMatPacket;
 
+import static net.placemats.common.block.PlaceMatBlock.*;
+
 public class ClientHandler {
     private static boolean wasLookingAtPlacemat = false;
 
@@ -91,11 +93,11 @@ public class ClientHandler {
             List<BlockPos> targetBlocks = getBlocksInRadius(mc.level, playerPos, radius);
             List<BlockPos> lockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
                 BlockState state = mc.level.getBlockState(pos);
-                return state.hasProperty(PlaceMatBlock.LOCKED) && state.getValue(PlaceMatBlock.LOCKED);
+                return state.hasProperty(LOCKED) && state.getValue(LOCKED);
             }).toList());
             List<BlockPos> unlockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
                 BlockState state = mc.level.getBlockState(pos);
-                return !state.hasProperty(PlaceMatBlock.LOCKED) || !state.getValue(PlaceMatBlock.LOCKED);
+                return !state.hasProperty(LOCKED) || !state.getValue(LOCKED);
             }).toList());
 
             // Render overlays on each block.
@@ -110,13 +112,13 @@ public class ClientHandler {
         if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = blockHit.getBlockPos();
             BlockEntity be = mc.level.getBlockEntity(pos);
-            if (be instanceof PlaceMatBlockEntity foodPlacer) {
+            if (be instanceof PlaceMatBlockEntity pmbe && !pmbe.getBlockState().getValue(LOCKED).equals(true)) {
                 poseStack.pushPose();
                 poseStack.translate(pos.getX() - mc.gameRenderer.getMainCamera().getPosition().x,
                         pos.getY() - mc.gameRenderer.getMainCamera().getPosition().y,
                         pos.getZ() - mc.gameRenderer.getMainCamera().getPosition().z);
 
-                BlockState state = foodPlacer.getBlockState();
+                BlockState state = pmbe.getBlockState();
                 Direction facing = state.hasProperty(PlaceMatBlock.FACING) ? state.getValue(PlaceMatBlock.FACING) : Direction.NORTH;
                 poseStack.pushPose();
                 poseStack.translate(0.5, 0, 0.5);
@@ -129,11 +131,11 @@ public class ClientHandler {
                     Vec3 location = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
 
                     final PlaceMatBlock.PlacementRange[] targetedRange = { null };
-                    if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                        pmb.addPlacementRanges(foodPlacer.getBlockState(), range -> {
+                    if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                        pmb.addPlacementRanges(pmbe.getBlockState(), range -> {
                             PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
                         });
-                        targetedRange[0] = pmb.getTargetedPlacementRange(foodPlacer.getBlockState(), location);
+                        targetedRange[0] = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
                         if (targetedRange[0] != null) {
                             if (targetedRange[0].restricted()) {
                                 PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 1, 0, 1);
@@ -143,7 +145,7 @@ public class ClientHandler {
                         }
                     }
 
-                    if (targetedRange[0] != null && foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                    if (targetedRange[0] != null && pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(held.getItem());
                         if (pmb.isDisableCustomModels() || targetedRange[0].disableCustomModels()) {
                             def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
@@ -164,12 +166,12 @@ public class ClientHandler {
                         float placementX, placementZ;
                         if (intersection != null) {
                             Vec3 relativeIntersection = intersection.subtract(pos.getX(), pos.getY(), pos.getZ());
-                            Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(foodPlacer.getBlockState(), relativeIntersection);
+                            Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), relativeIntersection);
                             placementX = (float) localIntersection.x - (def.size().x * multiplier) / 2f;
                             placementZ = (float) localIntersection.z - (def.size().y * multiplier) / 2f;
                         } else {
                             // Fallback to hit location if ray is parallel to plane.
-                            Vec3 localLocation = PlaceMatBlock.getLocalHitVec(foodPlacer.getBlockState(), location);
+                            Vec3 localLocation = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), location);
                             placementX = (float) localLocation.x - (def.size().x * multiplier) / 2f;
                             placementZ = (float) localLocation.z - (def.size().y * multiplier) / 2f;
                         }
@@ -196,15 +198,15 @@ public class ClientHandler {
                             float clampedX = Math.max(minX, Math.min(maxX, placementX));
                             float clampedZ = Math.max(minZ, Math.min(maxZ, placementZ));
                             placementPos = new Vec2(clampedX, clampedZ);
-                            effectiveHeight = foodPlacer.calculateEffectiveHeight(held, placementPos, foodPlacer.getCurrentHeight(), targetedRange[0]);
+                            effectiveHeight = pmbe.calculateEffectiveHeight(held, placementPos, pmbe.getCurrentHeight(), targetedRange[0]);
                         }
-                        boolean valid = foodPlacer.canPlace(held, placementPos, foodPlacer.getCurrentHeight(), targetedRange[0]);
+                        boolean valid = pmbe.canPlace(held, placementPos, pmbe.getCurrentHeight(), targetedRange[0]);
 
-                        PlaceMatRenderer.renderPreview(poseStack, buffer, placementPos, def.size(), def.scale(), foodPlacer.getCurrentRotation(), foodPlacer.getCurrentPitch(),
-                                foodPlacer.getCurrentRoll(), effectiveHeight, valid, held, mc.getItemRenderer(), targetedRange[0], (PlaceMatBlock) foodPlacer.getBlockState().getBlock());
+                        PlaceMatRenderer.renderPreview(poseStack, buffer, placementPos, def.size(), def.scale(), pmbe.getCurrentRotation(), pmbe.getCurrentPitch(),
+                                pmbe.getCurrentRoll(), effectiveHeight, valid, held, mc.getItemRenderer(), targetedRange[0], (PlaceMatBlock) pmbe.getBlockState().getBlock());
                     }
                 } else if (held.isEmpty()) {
-                    PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
+                    PlaceMatBlockEntity.PlacedItem targeted = pmbe.getTargetedItem(eyePos, lookVec, pos);
                     if (targeted != null) {
                         PlaceMatRenderer.renderItemOutline(poseStack, buffer, targeted, 1, 0.84f, 0);
                     }
@@ -278,12 +280,12 @@ public class ClientHandler {
             return;
         }
         BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
-        if (be instanceof PlaceMatBlockEntity foodPlacer) {
+        if (be instanceof PlaceMatBlockEntity pmbe) {
             BlockHitResult hit = null;
             if (event.getLevel().isClientSide && Minecraft.getInstance().hitResult instanceof BlockHitResult bhr) {
                 hit = bhr;
             }
-            if (PlaceMatInteractions.handleLeftClick(foodPlacer, event.getEntity(), hit)) {
+            if (PlaceMatInteractions.handleLeftClick(pmbe, event.getEntity(), hit)) {
                 event.setCanceled(true);
                 event.setCancellationResult(InteractionResult.SUCCESS);
             }
@@ -299,7 +301,7 @@ public class ClientHandler {
         ItemStack held = event.getItemStack();
 
         BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
-        if (be instanceof PlaceMatBlockEntity foodPlacer) {
+        if (be instanceof PlaceMatBlockEntity pmbe) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
             Vec3 location = event.getHitVec().getLocation().subtract(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
@@ -307,13 +309,13 @@ public class ClientHandler {
             // Interaction with existing items.
             PlaceMatBlock.PlacementRange targetedRange = null;
             PlaceMatBlock pmb = null;
-            if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock block) {
+            if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock block) {
                 pmb = block;
-                BlockState state = foodPlacer.getBlockState();
+                BlockState state = pmbe.getBlockState();
                 targetedRange = pmb.getTargetedPlacementRange(state, location);
             }
 
-            if (foodPlacer.getTargetedItem(eyePos, lookVec, event.getPos()) != null) {
+            if (pmbe.getTargetedItem(eyePos, lookVec, event.getPos()) != null) {
                 if (held.isEmpty()) {
                     return;
                 }
@@ -351,11 +353,11 @@ public class ClientHandler {
                         float placementX, placementZ;
                         if (intersection != null) {
                             Vec3 relativeIntersection = intersection.subtract(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
-                            Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(foodPlacer.getBlockState(), relativeIntersection);
+                            Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), relativeIntersection);
                             placementX = (float) localIntersection.x - (def.size().x * multiplier) / 2f;
                             placementZ = (float) localIntersection.z - (def.size().y * multiplier) / 2f;
                         } else {
-                            Vec3 localLocation = PlaceMatBlock.getLocalHitVec(foodPlacer.getBlockState(), location);
+                            Vec3 localLocation = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), location);
                             placementX = (float) localLocation.x - (def.size().x * multiplier) / 2f;
                             placementZ = (float) localLocation.z - (def.size().y * multiplier) / 2f;
                         }
@@ -378,8 +380,8 @@ public class ClientHandler {
 
                         int count = Screen.hasShiftDown() ? held.getCount() : 1;
                         PlaceMatsNetworkHandler.INSTANCE
-                                .sendToServer(new PlaceMatPacket(event.getPos(), placementPos, location, foodPlacer.getCurrentRotation(), foodPlacer.getCurrentPitch(),
-                                        foodPlacer.getCurrentRoll(), foodPlacer.getCurrentHeight(), count));
+                                .sendToServer(new PlaceMatPacket(event.getPos(), placementPos, location, pmbe.getCurrentRotation(), pmbe.getCurrentPitch(),
+                                        pmbe.getCurrentRoll(), pmbe.getCurrentHeight(), count));
                     }
                 }
                 event.setCanceled(true);
@@ -392,85 +394,73 @@ public class ClientHandler {
     public static void onRenderGui(RenderGuiEvent.Post event) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player == null || mc.level == null)
+        if (player == null || mc.level == null) return;
+
+        if (!(mc.hitResult instanceof BlockHitResult blockHit) || blockHit.getType() != HitResult.Type.BLOCK) {
+            handleOutsideLook(player);
             return;
+        }
 
-        HitResult hit = mc.hitResult;
-        boolean isLookingAtPlacemat = false;
+        BlockPos pos = blockHit.getBlockPos();
+        BlockEntity blockEntity = mc.level.getBlockEntity(pos);
+        if (!(blockEntity instanceof PlaceMatBlockEntity foodPlacer) || !(blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb)) {
+            handleOutsideLook(player);
+            return;
+        }
 
-        if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
-            BlockEntity blockEntity = mc.level.getBlockEntity(blockHit.getBlockPos());
-            if (blockEntity instanceof PlaceMatBlockEntity foodPlacer) {
-                isLookingAtPlacemat = true;
+        wasLookingAtPlacemat = true;
+        BlockState state = blockEntity.getBlockState();
+        ItemStack held = player.getMainHandItem();
 
-                Vec3 eyePos = player.getEyePosition(1.0f);
-                Vec3 lookVec = player.getViewVector(1.0f);
-                Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
-                PlaceMatBlock.PlacementRange targetedRange = null;
-                if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                    BlockState state = blockEntity.getBlockState();
-                    targetedRange = pmb.getTargetedPlacementRange(state, location);
-                }
-                PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, blockHit.getBlockPos());
-                if (targeted != null) {
-                    targetedRange = foodPlacer.getRangeForItem(targeted);
-                }
-                ItemStack held = player.getMainHandItem();
+        boolean isLocked = state.hasProperty(PlaceMatBlock.LOCKED) && state.getValue(PlaceMatBlock.LOCKED);
+        boolean holdingKey = held.is(PlaceMatTags.Items.KEY);
 
-                if (targeted != null) {
-                    player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
-                    if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb && pmb.defaultBlockState().getValue(PlaceMatBlock.LOCKED).equals(false)) {
-                        if (foodPlacer.getPlacedItems().size() >= pmb.getContainerSize()) {
-                            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", pmb.getContainerSize()).withStyle(ChatFormatting.ITALIC, ChatFormatting.RED), true);
-                        } else {
-                            TagKey<Item> whitelist = targetedRange != null ? targetedRange.whitelistTag() : null;
-                            if (whitelist != null && !held.is(whitelist)) {
-                                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.placing").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                            } else {
-                                MutableComponent instructions = Component.empty();
-                                boolean yawDisabled = targetedRange != null && targetedRange.yawDisabled();
-                                boolean pitchDisabled = targetedRange != null && targetedRange.pitchDisabled();
-                                boolean rollDisabled = targetedRange != null && targetedRange.rollDisabled();
-                                boolean elevationDisabled = targetedRange != null && targetedRange.elevationDisabled();
+        if (isLocked && !holdingKey) return;
+        if (held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) && !holdingKey) return;
 
-                                if (!yawDisabled) {
-                                    instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
-                                }
-                                if (!pitchDisabled) {
-                                    instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
-                                }
-                                if (!rollDisabled) {
-                                    instructions.append(Component.translatable("place_mats.tooltip.placemat.roll"));
-                                }
-                                if (!elevationDisabled) {
-                                    instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
-                                }
-                                player.displayClientMessage(instructions.withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                            }
-                        }
-                    } else if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb && pmb.defaultBlockState().getValue(PlaceMatBlock.LOCKED).equals(true)) {
-                        player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.locked"), true);
-                    } else {
-                        if (foodPlacer.getPlacedItems().size() >= 10) {
-                            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", 10).withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                        } else {
-                            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.instructions").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                        }
-                    }
-                } else if (!held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
+        Vec3 eyePos = player.getEyePosition(1.0f);
+        Vec3 lookVec = player.getViewVector(1.0f);
+        Vec3 localHit = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+
+        PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
+        PlaceMatBlock.PlacementRange targetedRange = (targetedItem != null)
+            ? foodPlacer.getRangeForItem(targetedItem)
+            : pmb.getTargetedPlacementRange(state, localHit);
+
+        if (holdingKey) {
+            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+        } else if (targetedItem != null) {
+            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+        } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
+
+            int maxCapacity = pmb.getContainerSize();
+            if (foodPlacer.getPlacedItems().size() >= maxCapacity) {
+                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", maxCapacity).withStyle(ChatFormatting.ITALIC, ChatFormatting.RED), true);
+            } else {
+                TagKey<Item> whitelist = targetedRange != null ? targetedRange.whitelistTag() : null;
+
+                if (whitelist != null && !held.is(whitelist)) {
                     player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.placing").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                } else if (held.is(PlaceMatTags.Items.KEY)) {
-                    player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+                } else {
+                    MutableComponent instructions = Component.empty();
+                    if (targetedRange == null || !targetedRange.yawDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
+                    if (targetedRange == null || !targetedRange.pitchDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
+                    if (targetedRange == null || !targetedRange.rollDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.roll"));
+                    if (targetedRange == null || !targetedRange.elevationDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
+
+                    player.displayClientMessage(instructions.withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                 }
             }
+        } else {
+            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.instructions").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
         }
+    }
 
-        if (wasLookingAtPlacemat && !isLookingAtPlacemat) {
+    private static void handleOutsideLook(Player player) {
+        if (wasLookingAtPlacemat) {
             player.displayClientMessage(Component.empty(), true);
+            wasLookingAtPlacemat = false;
         }
-
-        wasLookingAtPlacemat = isLookingAtPlacemat;
     }
 
     @SubscribeEvent

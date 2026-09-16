@@ -2,6 +2,7 @@ package net.placemats.common.blockentity;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.Connection;
@@ -44,6 +45,8 @@ import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
 import net.placemats.compat.tfc.TFCCompat;
 
+import static net.placemats.common.block.PlaceMatBlock.*;
+
 /**
  * Place mat base block entity class.
  * Handles logic for stacking, positioning, rotation, and preservation of items on the placemat surface.
@@ -67,6 +70,10 @@ public class PlaceMatBlockEntity extends BlockEntity {
     private long lastPlacementTick = -1;
     private long lastInteractionTick = -1;
     private boolean climateValid = false;
+    @Setter
+    @Getter
+    @Nullable
+    private UUID lockedBy = null;
 
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new IItemHandler() {
         @Override
@@ -100,7 +107,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             if (level == null || stack.isEmpty())
                 return stack;
-            if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb))
+            if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
                 return stack;
 
             if (slot >= 0 && slot < placedItems.size()) {
@@ -192,6 +199,10 @@ public class PlaceMatBlockEntity extends BlockEntity {
         public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
             if (level == null || amount <= 0)
                 return ItemStack.EMPTY;
+
+            if (getBlockState().getValue(LOCKED).equals(true))
+                return ItemStack.EMPTY;
+
             if (slot >= 0 && slot < placedItems.size()) {
                 PlacedItem item = placedItems.get(slot);
                 if (!isExtractable(item))
@@ -394,7 +405,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
      * Determines whether an item can be placed at a specific position and height on the PlaceMatBlock.
      */
     public boolean canPlace(ItemStack stack, Vec2 pos, float height, @Nullable PlaceMatBlock.PlacementRange targetRange) {
-        if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
+        if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) || getBlockState().getValue(LOCKED).equals(true)) {
             return false;
         }
 
@@ -617,7 +628,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     public boolean isExtractable(PlacedItem item) {
         if (level == null)
             return false;
-        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb))
+        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
             return false;
         if (pmb.isExtractionDisabled())
             return false;
@@ -639,7 +650,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     public boolean isInsertable(PlaceMatBlock.PlacementRange range, ItemStack stack) {
         if (level == null)
             return false;
-        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb))
+        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
             return false;
         if (pmb.isInsertionDisabled())
             return false;
@@ -943,6 +954,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
     protected void saveAdditional(@NotNull CompoundTag tag) {
         super.saveAdditional(tag);
         tag.putBoolean("climateValid", climateValid);
+        if (lockedBy != null) {
+            tag.putUUID("lockedBy", lockedBy);
+        }
         ListTag list = new ListTag();
         for (PlacedItem placed : placedItems) {
             CompoundTag itemTag = new CompoundTag();
@@ -963,6 +977,11 @@ public class PlaceMatBlockEntity extends BlockEntity {
     public void load(@NotNull CompoundTag tag) {
         super.load(tag);
         this.climateValid = tag.getBoolean("climateValid");
+        if (tag.hasUUID("lockedBy")) {
+            this.lockedBy = tag.getUUID("lockedBy");
+        } else {
+            this.lockedBy = null;
+        }
         List<PlacedItem> oldItems = new ArrayList<>(placedItems);
         placedItems.clear();
         ListTag list = tag.getList("Items", Tag.TAG_COMPOUND);

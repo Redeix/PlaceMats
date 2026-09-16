@@ -8,7 +8,9 @@ package net.placemats.compat.jade;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
+import net.minecraft.client.Minecraft;
 import net.placemats.compat.tfc.TFCCompat;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
@@ -30,13 +32,14 @@ import net.placemats.common.blockentity.PlaceMatBlockEntity;
 /**
  * Provides tooltip information for Place Mat block entities.
  */
-public enum PlaceMatProvider implements IBlockComponentProvider {
+public enum PlaceMatJadeProvider implements IBlockComponentProvider {
     INSTANCE;
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
         if (accessor.getBlockEntity() instanceof PlaceMatBlockEntity pm) {
             IElementHelper elementHelper = tooltip.getElementHelper();
+            Minecraft minecraft = Minecraft.getInstance();
             Vec3 hitVec = accessor.getHitResult().getLocation().subtract(accessor.getPosition().getX(), accessor.getPosition().getY(), accessor.getPosition().getZ());
             Vec3 eyePos = accessor.getPlayer().getEyePosition(1.0f);
             Vec3 lookVec = accessor.getPlayer().getViewVector(1.0f);
@@ -52,7 +55,13 @@ public enum PlaceMatProvider implements IBlockComponentProvider {
             boolean containsItems = !pm.getPlacedItems().isEmpty();
 
             if (pm.getBlockState().getValue(PlaceMatBlock.LOCKED).equals(true)) {
+
                 tooltip.add(Component.translatable("place_mats.tooltip.placemat.locked"));
+
+                if (pm.getLockedBy() != null) {
+                    var playerName = Objects.requireNonNull(Objects.requireNonNull(minecraft.getConnection()).getPlayerInfo(pm.getLockedBy())).getProfile().getName();
+                    tooltip.add(Component.translatable("place_mats.tooltip.placemat.owner", Component.literal(playerName)));
+                }
             }
 
             for (PlaceMatBlockEntity.PlacedItem placed : pm.getPlacedItems()) {

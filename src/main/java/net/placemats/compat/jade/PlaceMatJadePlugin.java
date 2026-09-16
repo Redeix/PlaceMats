@@ -16,6 +16,6 @@ public class PlaceMatJadePlugin implements IWailaPlugin {
 
     @Override
     public void registerClient(IWailaClientRegistration registration) {
-        registration.registerBlockComponent(PlaceMatProvider.INSTANCE, PlaceMatBlock.class);
+        registration.registerBlockComponent(PlaceMatJadeProvider.INSTANCE, PlaceMatBlock.class);
     }
 }

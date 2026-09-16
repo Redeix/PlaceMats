@@ -2,8 +2,16 @@ package net.placemats.common.block;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.function.Consumer;
 
+import net.minecraft.core.particles.BlockParticleOption;
+import net.minecraft.core.particles.ParticleOptions;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.particles.SimpleParticleType;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -314,8 +322,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         BlockEntity be = level.getBlockEntity(pos);
-        if (be instanceof PlaceMatBlockEntity foodPlacer) {
-            InteractionResult result = PlaceMatInteractions.handleInteraction(foodPlacer, player, hand, hit);
+        boolean currentState = state.getValue(LOCKED);
+
+        if (be instanceof PlaceMatBlockEntity pmbe && !pmbe.getBlockState().getValue(LOCKED).equals(true)) {
+            InteractionResult result = PlaceMatInteractions.handleInteraction(pmbe, player, hand, hit);
             if (result != InteractionResult.PASS) {
                 return result;
             }
@@ -327,7 +337,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
         ItemStack held = player.getItemInHand(hand);
 
-        if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
+        if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) && !state.getValue(LOCKED).equals(true)) {
             Vec3 location = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
             PlacementRange targetedRange = getTargetedPlacementRange(state, location);
             if (targetedRange != null) {
@@ -337,6 +347,26 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             } else if (placementRanges.isEmpty()) {
                 return InteractionResult.SUCCESS;
             }
+        }
+
+        if (held.is(PlaceMatTags.Items.KEY) && level instanceof ServerLevel serverLevel) {
+            boolean newState = !currentState;
+            state = state.setValue(LOCKED, newState);
+
+            if (be instanceof PlaceMatBlockEntity pmbe) {
+                if (newState) {
+                    pmbe.setLockedBy(player.getUUID());
+                } else if (player.getUUID() == pmbe.getLockedBy()) {
+                    pmbe.setLockedBy(null);
+                }
+                pmbe.setChanged();
+            }
+
+            level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.WOODEN_DOOR_OPEN, SoundSource.AMBIENT, 2f, 0.5f);
+            serverLevel.sendParticles(ParticleTypes.FIREWORK, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6, 0.2, 0.2, 0.2, 0.1);
+            level.setBlockAndUpdate(pos, state);
+
+            return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.PASS;
@@ -387,10 +417,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     // Method for pick-block item cloning when looking at placed items.
     @Override
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
-        if (target instanceof BlockHitResult blockHit && level.getBlockEntity(pos) instanceof PlaceMatBlockEntity foodPlacer) {
+        if (target instanceof BlockHitResult blockHit && level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
-            PlaceMatBlockEntity.PlacedItem targeted = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
+            PlaceMatBlockEntity.PlacedItem targeted = pmbe.getTargetedItem(eyePos, lookVec, pos);
             if (targeted != null) {
                 return targeted.stack.copy();
             }
@@ -402,8 +432,8 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.is(newState.getBlock())) {
             BlockEntity be = level.getBlockEntity(pos);
-            if (be instanceof PlaceMatBlockEntity foodPlacer) {
-                foodPlacer.dropItems();
+            if (be instanceof PlaceMatBlockEntity pmbe) {
+                pmbe.dropItems();
             }
             super.onRemove(state, level, pos, newState, isMoving);
         }
@@ -411,10 +441,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
     @Override
     public float getDestroyProgress(BlockState state, Player player, BlockGetter level, BlockPos pos) {
-        if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity foodPlacer) {
+        if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
-            if (foodPlacer.getTargetedItem(eyePos, lookVec, pos) != null) {
+            if (pmbe.getTargetedItem(eyePos, lookVec, pos) != null || pmbe.getBlockState().getValue(LOCKED).equals(true)) {
                 return 0.0f;
             }
         }

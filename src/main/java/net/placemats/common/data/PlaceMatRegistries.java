@@ -16,7 +16,7 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.placemat.yaw", "§3Shift+Scroll§r for Yaw. ");
             prov.add("place_mats.tooltip.placemat.interacting", "§3RMB§r to remove. §3Shift+RMB§r to remove stack. §3LMB§r to use.");
             prov.add("emi.category.place_mats.place_mat", "Place Mat Interaction");
-            prov.add("place_mats.tooltip.placemat.elevation", "§3Shift+Space/ Shift+Ctrl+Space§r to Raise/Lower. ");
+            prov.add("place_mats.tooltip.placemat.elevation", "§3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
             prov.add("place_mats.tooltip.placemat.roll", "§3Shift+Alt+Scroll§r for Roll. ");
             prov.add("place_mats.tooltip.placemat.instructions", "§3Shift+Scroll§r for Yaw. §3Shift+Ctrl+Scroll§r for Tilt. §3Shift+Alt+Scroll§r for Roll. §3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
             prov.add("config.jade.plugin_place_mats.placemat.title", "Place Mat");
@@ -28,6 +28,7 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.key.explain", "§3RMB§r to lock/unlock Place Mats. Preventing item insertion and extraction.");
             prov.add("place_mats.tooltip.key.joke", "Doesn't taste as good as bread...");
             prov.add("place_mats.tooltip.shift_hint", "[Shift]§r...");
+            prov.add("place_mats.tooltip.placemat.owner", "Owner: %s");
         });
     }
 }
