@@ -35,23 +35,27 @@ public enum PlaceMatProvider implements IBlockComponentProvider {
 
     @Override
     public void appendTooltip(ITooltip tooltip, BlockAccessor accessor, IPluginConfig config) {
-        if (accessor.getBlockEntity() instanceof PlaceMatBlockEntity foodPlacer) {
+        if (accessor.getBlockEntity() instanceof PlaceMatBlockEntity pm) {
             IElementHelper elementHelper = tooltip.getElementHelper();
             Vec3 hitVec = accessor.getHitResult().getLocation().subtract(accessor.getPosition().getX(), accessor.getPosition().getY(), accessor.getPosition().getZ());
             Vec3 eyePos = accessor.getPlayer().getEyePosition(1.0f);
             Vec3 lookVec = accessor.getPlayer().getViewVector(1.0f);
 
-            PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, accessor.getPosition());
+            PlaceMatBlockEntity.PlacedItem targetedItem = pm.getTargetedItem(eyePos, lookVec, accessor.getPosition());
 
             PlaceMatBlock.PlacementRange targetedRange = null;
             if (targetedItem != null) {
-                targetedRange = foodPlacer.getRangeForItem(targetedItem);
-            } else if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                targetedRange = pmb.getTargetedPlacementRange(foodPlacer.getBlockState(), hitVec);
+                targetedRange = pm.getRangeForItem(targetedItem);
+            } else if (pm.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                targetedRange = pmb.getTargetedPlacementRange(pm.getBlockState(), hitVec);
             }
-            boolean containsItems = !foodPlacer.getPlacedItems().isEmpty();
+            boolean containsItems = !pm.getPlacedItems().isEmpty();
 
-            for (PlaceMatBlockEntity.PlacedItem placed : foodPlacer.getPlacedItems()) {
+            if (pm.getBlockState().getValue(PlaceMatBlock.LOCKED).equals(true)) {
+                tooltip.add(Component.translatable("place_mats.tooltip.placemat.locked"));
+            }
+
+            for (PlaceMatBlockEntity.PlacedItem placed : pm.getPlacedItems()) {
                 // If we are looking at a specific box, only show items in that box.
                 if (targetedRange != null) {
                     if (placed.baseHeight < targetedRange.box().minY - 0.001 || placed.baseHeight > targetedRange.box().maxY + 0.001) {

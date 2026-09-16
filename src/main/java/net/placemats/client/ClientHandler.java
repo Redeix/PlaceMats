@@ -79,6 +79,7 @@ public class ClientHandler {
         MultiBufferSource.BufferSource buffer = mc.renderBuffers().bufferSource();
         Vec3 eyePos = player.getEyePosition(event.getPartialTick());
         Vec3 lookVec = player.getViewVector(event.getPartialTick());
+        Vec3 camPos = mc.gameRenderer.getMainCamera().getPosition();
 
         // Handles key overlays.
         boolean holdingKey = held.is(PlaceMatTags.Items.KEY) || player.getOffhandItem().is(PlaceMatTags.Items.KEY);
@@ -98,8 +99,8 @@ public class ClientHandler {
             }).toList());
 
             // Render overlays on each block.
-            renderBlockOverlays(poseStack, buffer, eyePos, lockedBlocks, LOCKED_OVERLAY, new Color(0xFFFF0000, true));
-            renderBlockOverlays(poseStack, buffer, eyePos, unlockedBlocks, UNLOCKED_OVERLAY, new Color(0xFF00E1E1, true));
+            renderBlockOverlays(poseStack, buffer, camPos, lockedBlocks, LOCKED_OVERLAY, new Color(0xFFFF0000, true));
+            renderBlockOverlays(poseStack, buffer, camPos, unlockedBlocks, UNLOCKED_OVERLAY, new Color(0xFF00E1E1, true));
 
             buffer.endBatch(RenderType.lines());
             buffer.endBatch(RenderType.translucent());
@@ -419,7 +420,7 @@ public class ClientHandler {
                 if (targeted != null) {
                     player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                 } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
-                    if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                    if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb && pmb.defaultBlockState().getValue(PlaceMatBlock.LOCKED).equals(false)) {
                         if (foodPlacer.getPlacedItems().size() >= pmb.getContainerSize()) {
                             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", pmb.getContainerSize()).withStyle(ChatFormatting.ITALIC, ChatFormatting.RED), true);
                         } else {
@@ -448,6 +449,8 @@ public class ClientHandler {
                                 player.displayClientMessage(instructions.withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                             }
                         }
+                    } else if (blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb && pmb.defaultBlockState().getValue(PlaceMatBlock.LOCKED).equals(true)) {
+                        player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.locked"), true);
                     } else {
                         if (foodPlacer.getPlacedItems().size() >= 10) {
                             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", 10).withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
@@ -455,8 +458,10 @@ public class ClientHandler {
                             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.instructions").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                         }
                     }
-                } else {
+                } else if (!held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
                     player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.placing").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+                } else if (held.is(PlaceMatTags.Items.KEY)) {
+                    player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                 }
             }
         }

@@ -23,6 +23,11 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.placemat.full", "§l§c⚠ Container Full!§r§r Max Stacks:§6 %s§r");
             prov.add("place_mats.emi.placemat.zone", "Zone");
             prov.add("place_mats.emi.placemat.offhand", "Offhand");
+            prov.add("place_mats.tooltip.placemat.key", "§3RMB§r to lock/unlock.");
+            prov.add("place_mats.tooltip.placemat.locked", "§cLocked \uD83D\uDD12");
+            prov.add("place_mats.tooltip.key.explain", "§3RMB§r to lock/unlock Place Mats. Preventing item insertion and extraction.");
+            prov.add("place_mats.tooltip.key.joke", "Doesn't taste as good as bread...");
+            prov.add("place_mats.tooltip.shift_hint", "[Shift]§r...");
         });
     }
 }

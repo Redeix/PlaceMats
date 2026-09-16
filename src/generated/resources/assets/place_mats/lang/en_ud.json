@@ -19,13 +19,18 @@
   "place_mats.creative_tab.place_mats": "sʇɐW ǝɔɐןԀ",
   "place_mats.emi.placemat.offhand": "puɐɥɟɟO",
   "place_mats.emi.placemat.zone": "ǝuoZ",
+  "place_mats.tooltip.key.explain": "˙uoıʇɔɐɹʇxǝ puɐ uoıʇɹǝsuı ɯǝʇı buıʇuǝʌǝɹԀ ˙sʇɐW ǝɔɐןԀ ʞɔoןun/ʞɔoן oʇ ɹ§ᗺWᴚƐ§",
+  "place_mats.tooltip.key.joke": "˙˙˙pɐǝɹq sɐ poob sɐ ǝʇsɐʇ ʇ,usǝoᗡ",
   "place_mats.tooltip.placemat.elevation": " ˙ɹǝʍoꞀ/ǝsıɐᴚ oʇ ɹ§ǝɔɐdS+ןɹʇƆ+ʇɟıɥS /ǝɔɐdS+ʇɟıɥSƐ§",
   "place_mats.tooltip.placemat.full": "ɹ§%s 9§:sʞɔɐʇS xɐW ɹ§ɹ§¡ןןnℲ ɹǝuıɐʇuoƆ ⚠ɔ§ן§",
   "place_mats.tooltip.placemat.hold_alt_for_nutrition_info": "oɟuI pǝןıɐʇǝᗡ ɹoɟ )ʇןⱯ( pןoH",
   "place_mats.tooltip.placemat.instructions": " ˙ɹǝʍoꞀ oʇ ɹ§ǝɔɐdS+ןɹʇƆ+ʇɟıɥSƐ§ ˙ǝsıɐᴚ oʇ ɹ§ǝɔɐdS+ʇɟıɥSƐ§ ˙ןןoᴚ ɹoɟ ɹ§ןןoɹɔS+ʇןⱯ+ʇɟıɥSƐ§ ˙ʇןı⟘ ɹoɟ ɹ§ןןoɹɔS+ןɹʇƆ+ʇɟıɥSƐ§ ˙ʍɐʎ ɹoɟ ɹ§ןןoɹɔS+ʇɟıɥSƐ§",
   "place_mats.tooltip.placemat.interacting": "˙ǝsn oʇ ɹ§ᗺWꞀƐ§ ˙ʞɔɐʇs ǝʌoɯǝɹ oʇ ɹ§ᗺWᴚ+ʇɟıɥSƐ§ ˙ǝʌoɯǝɹ oʇ ɹ§ᗺWᴚƐ§",
+  "place_mats.tooltip.placemat.key": "˙ʞɔoןun/ʞɔoן oʇ ɹ§ᗺWᴚƐ§",
+  "place_mats.tooltip.placemat.locked": "?? pǝʞɔoꞀɔ§",
   "place_mats.tooltip.placemat.pitch": " ˙ʇןı⟘ ɹoɟ ɹ§ןןoɹɔS+ןɹʇƆ+ʇɟıɥSƐ§",
   "place_mats.tooltip.placemat.placing": "˙ʎɐןdsıp oʇ ɹ§ᗺWᴚƐ§ puɐ ɯǝʇı uɐ pןoH",
   "place_mats.tooltip.placemat.roll": " ˙ןןoᴚ ɹoɟ ɹ§ןןoɹɔS+ʇןⱯ+ʇɟıɥSƐ§",
-  "place_mats.tooltip.placemat.yaw": " ˙ʍɐʎ ɹoɟ ɹ§ןןoɹɔS+ʇɟıɥSƐ§"
+  "place_mats.tooltip.placemat.yaw": " ˙ʍɐʎ ɹoɟ ɹ§ןןoɹɔS+ʇɟıɥSƐ§",
+  "place_mats.tooltip.shift_hint": "˙˙˙ɹ§]ʇɟıɥS["
 }
