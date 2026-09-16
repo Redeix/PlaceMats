@@ -117,7 +117,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 if (ItemHandlerHelper.canItemStacksStack(target.stack, stack)) {
                     // Find the range this item belongs to.
                     PlaceMatBlock.PlacementRange range = null;
-                    for (PlaceMatBlock.PlacementRange r : pmb.getPlacementRanges()) {
+                    for (PlaceMatBlock.PlacementRange r : pmb.getPlacementRanges(getBlockState())) {
                         if (Math.abs(target.baseHeight - r.box().minY) < 0.001f) {
                             float multiplier = getScaleMultiplier(r);
                             DefinitionManager.PlaceMatDefinition targetDef = getEffectiveDefinition(target.stack, r);
@@ -151,7 +151,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
             } else if (slot >= placedItems.size() && slot < getSlots()) {
                 // Try to find a random position for a new item.
                 DefinitionManager.PlaceMatDefinition def = getEffectiveDefinition(stack, null);
-                for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges()) {
+                for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
                     if (!isInsertable(range, stack))
                         continue;
 
@@ -634,7 +634,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         if (pmb.isExtractionDisabled())
             return false;
 
-        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges()) {
+        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
             if (Math.abs(item.baseHeight - range.box().minY) < 0.001f) {
                 if (item.pos.x >= range.box().minX && item.pos.x <= range.box().maxX &&
                         item.pos.y >= range.box().minZ && item.pos.y <= range.box().maxZ) {
@@ -811,7 +811,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb)) {
             return null;
         }
-        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges()) {
+        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
             if (Math.abs(item.baseHeight - range.box().minY) < 0.001f) {
                 if (item.pos.x >= range.box().minX && item.pos.x <= range.box().maxX &&
                         item.pos.y >= range.box().minZ && item.pos.y <= range.box().maxZ) {
@@ -928,6 +928,20 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), placed.stack);
             }
             placedItems.clear();
+        }
+    }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public void setBlockState(@NotNull BlockState newState) {
+        BlockState oldState = getBlockState();
+        super.setBlockState(newState);
+        if (!oldState.isAir() && level != null && !level.isClientSide && !placedItems.isEmpty()) {
+            boolean onlyLockChanged = oldState.hasProperty(PlaceMatBlock.LOCKED) && newState.hasProperty(PlaceMatBlock.LOCKED)
+                    && oldState.setValue(PlaceMatBlock.LOCKED, false).equals(newState.setValue(PlaceMatBlock.LOCKED, false));
+            if (!onlyLockChanged && !oldState.equals(newState)) {
+                dropItems();
+            }
         }
     }
 

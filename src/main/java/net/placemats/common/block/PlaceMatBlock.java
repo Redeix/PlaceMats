@@ -1,8 +1,11 @@
 package net.placemats.common.block;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
@@ -10,6 +13,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.placemats.common.event.PlaceMatInteractions;
 import org.jetbrains.annotations.Nullable;
 
@@ -244,10 +248,128 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             float defaultPitch,
             float defaultRoll,
             float defaultElevation) {
+
+        public PlacementRange withBox(AABB newBox) {
+            return new PlacementRange(newBox, (float) newBox.maxY, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        }
+
+        public PlacementRange withMaxHeight(float newMaxHeight) {
+            return new PlacementRange(this.box, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        }
+
+        public PlacementRange withBoxAndHeight(AABB newBox, float newMaxHeight) {
+            return new PlacementRange(newBox, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        }
+    }
+
+    @FunctionalInterface
+    public interface RangeAdjuster {
+        PlacementRange adjust(BlockState state, PlacementRange range, int index);
+    }
+
+    private final List<RangeAdjuster> rangeAdjusters = new ArrayList<>();
+
+    public PlaceMatBlock addRangeAdjuster(RangeAdjuster adjuster) {
+        this.rangeAdjusters.add(adjuster);
+        return this;
+    }
+
+    public PlaceMatBlock adjustRange(RangeAdjuster adjuster) {
+        return addRangeAdjuster(adjuster);
+    }
+
+    public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, AABB newBox) {
+        return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBox(newBox) : range);
+    }
+
+    public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
+        return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
+    public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox) {
+        return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBox(newBox) : range);
+    }
+
+    public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
+        return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
+    public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, Function<PlacementRange, PlacementRange> transformer) {
+        return addRangeAdjuster((state, range, index) -> predicate.test(state) ? transformer.apply(range) : range);
+    }
+
+    public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, Function<PlacementRange, PlacementRange> transformer) {
+        return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? transformer.apply(range) : range);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, AABB newBox) {
+        return adjustRange(state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, AABB newBox, float newMaxHeight) {
+        return adjustRange(state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, AABB newBox) {
+        return adjustRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, AABB newBox, float newMaxHeight) {
+        return adjustRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, Function<PlacementRange, PlacementRange> transformer) {
+        return adjustRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), transformer);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, AABB newBox) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, AABB newBox, float newMaxHeight) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, AABB newBox) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, AABB newBox, float newMaxHeight) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox, newMaxHeight);
+    }
+
+    public List<PlacementRange> getPlacementRanges(BlockState state) {
+        if (this.placementRanges.isEmpty()) {
+            return this.placementRanges;
+        }
+        List<PlacementRange> adjusted = null;
+        for (int i = 0; i < this.placementRanges.size(); i++) {
+            PlacementRange original = this.placementRanges.get(i);
+            PlacementRange range = getAdjustedPlacementRange(state, original, i);
+            if (range != original) {
+                if (adjusted == null) {
+                    adjusted = new ArrayList<>(this.placementRanges);
+                }
+                adjusted.set(i, range);
+            }
+        }
+        return adjusted != null ? adjusted : this.placementRanges;
+    }
+
+    public PlacementRange getAdjustedPlacementRange(BlockState state, PlacementRange range) {
+        return range;
+    }
+
+    public PlacementRange getAdjustedPlacementRange(BlockState state, PlacementRange range, int index) {
+        PlacementRange current = getAdjustedPlacementRange(state, range);
+        for (RangeAdjuster adjuster : this.rangeAdjusters) {
+            current = adjuster.adjust(state, current, index);
+        }
+        return current;
     }
 
     public void addPlacementRanges(BlockState state, Consumer<PlacementRange> consumer) {
-        placementRanges.forEach(consumer);
+        getPlacementRanges(state).forEach(consumer);
     }
 
     @Nullable
@@ -257,7 +379,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
         Vec3 localHitVec = getLocalHitVec(state, relativeHitVec);
 
-        for (PlacementRange range : placementRanges) {
+        for (PlacementRange range : getPlacementRanges(state)) {
             if (localHitVec.x >= range.box.minX && localHitVec.x <= range.box.maxX &&
                     localHitVec.z >= range.box.minZ && localHitVec.z <= range.box.maxZ) {
                 if (localHitVec.y >= range.box.minY && localHitVec.y <= range.box.maxY) {
@@ -276,7 +398,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             return best;
         }
 
-        for (PlacementRange range : placementRanges) {
+        for (PlacementRange range : getPlacementRanges(state)) {
             double dist = getDistanceToBoxSqr(localHitVec, range.box);
             if (dist < minDistance) {
                 minDistance = dist;
@@ -376,7 +498,7 @@ public class PlaceMatBlock extends Block implements EntityBlock {
                 if (targetedRange.whitelistTag() == null || held.is(targetedRange.whitelistTag())) {
                     return InteractionResult.SUCCESS;
                 }
-            } else if (placementRanges.isEmpty()) {
+            } else if (getPlacementRanges(state).isEmpty()) {
                 return InteractionResult.SUCCESS;
             }
         }
@@ -435,6 +557,16 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             BlockEntity be = level.getBlockEntity(pos);
             if (be instanceof PlaceMatBlockEntity pmbe) {
                 pmbe.dropItems();
+            }
+            super.onRemove(state, level, pos, newState, isMoving);
+        } else if (!state.equals(newState)) {
+            boolean onlyLockChanged = state.hasProperty(LOCKED) && newState.hasProperty(LOCKED)
+                    && state.setValue(LOCKED, false).equals(newState.setValue(LOCKED, false));
+            if (!onlyLockChanged) {
+                BlockEntity be = level.getBlockEntity(pos);
+                if (be instanceof PlaceMatBlockEntity pmbe) {
+                    pmbe.dropItems();
+                }
             }
             super.onRemove(state, level, pos, newState, isMoving);
         }

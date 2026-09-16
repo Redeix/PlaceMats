@@ -4,10 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -35,6 +37,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     private float defaultElevation = 0;
     private ResourceLocation foodTrait = null;
     private final List<PlacementRangeBuilder> ranges = new ArrayList<>();
+    private final List<PlaceMatBlock.RangeAdjuster> rangeAdjusters = new ArrayList<>();
 
     public PlaceMatBlockBuilder(ResourceLocation i) {
         super(i);
@@ -137,6 +140,42 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         return this;
     }
 
+    @Info("Adds a custom range adjuster to modify placement ranges based on blockstate.")
+    public PlaceMatBlockBuilder addRangeAdjuster(PlaceMatBlock.RangeAdjuster adjuster) {
+        this.rangeAdjusters.add(adjuster);
+        return this;
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using a new bounding box.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, AABB newBox) {
+        return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBox(newBox) : range);
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
+        return adjustRange(predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using a new bounding box and max height.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
+        return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox) {
+        return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBox(newBox) : range);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
+        return adjustRange(rangeIndex, predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box and max height.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
+        return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
     @Override
     public PlaceMatBlock createObject() {
         PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(createProperties(), cardinal);
@@ -161,8 +200,16 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         block.scaleMultiplier(scaleMultiplier);
         block.defaultRotation(defaultYaw, defaultPitch, defaultRoll);
         block.defaultElevation(defaultElevation);
-        for (PlacementRangeBuilder rangeBuilder : ranges) {
+        for (int i = 0; i < ranges.size(); i++) {
+            PlacementRangeBuilder rangeBuilder = ranges.get(i);
             block.addRange(rangeBuilder.build());
+            for (PlaceMatBlock.RangeAdjuster adjuster : rangeBuilder.rangeAdjusters) {
+                int targetIndex = i;
+                block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
+            }
+        }
+        for (PlaceMatBlock.RangeAdjuster adjuster : rangeAdjusters) {
+            block.addRangeAdjuster(adjuster);
         }
         PlaceMatBlockEntities.addValidBEBlock(PlaceMatBlockEntities.PLACE_MAT, block);
         return block;
@@ -190,6 +237,24 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         private float defaultPitch = 0;
         private float defaultRoll = 0;
         private float defaultElevation = 0;
+        private final List<PlaceMatBlock.RangeAdjuster> rangeAdjusters = new ArrayList<>();
+
+        @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box.")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, AABB newBox) {
+            this.rangeAdjusters.add((state, range, index) -> predicate.test(state) ? range.withBox(newBox) : range);
+            return this;
+        }
+
+        @Info("Adjusts this placement range when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
+            return adjustForState(predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+        }
+
+        @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box and max height.")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
+            this.rangeAdjusters.add((state, range, index) -> predicate.test(state) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+            return this;
+        }
 
         @Info("Sets the placement bounds. (x1, y1, z1, x2, y2, z2)")
         public PlacementRangeBuilder placementBounds(double x1, double y1, double z1, double x2, double y2, double z2) {

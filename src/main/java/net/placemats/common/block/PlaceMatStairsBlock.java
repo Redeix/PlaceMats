@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.level.block.state.properties.StairsShape;
+import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings({ "deprecation", "unused" })
@@ -44,6 +45,9 @@ public class PlaceMatStairsBlock extends PlaceMatCardinalBlock {
 
     @Override
     public BlockState updateShape(BlockState state, Direction facing, BlockState facingState, LevelAccessor level, BlockPos currentPos, BlockPos facingPos) {
+        if (level.getBlockEntity(currentPos) instanceof PlaceMatBlockEntity pmbe && !pmbe.getPlacedItems().isEmpty()) {
+            return state;
+        }
         return facing.getAxis().isHorizontal() ? state.setValue(SHAPE, getStairsShape(state, level, currentPos)) : super.updateShape(state, facing, facingState, level, currentPos, facingPos);
     }
 

@@ -143,7 +143,7 @@ public class PlaceMatInteractions {
 
     private static int getZoneIndex(PlaceMatBlockEntity foodPlacer, PlacedItem targeted) {
         if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-            var ranges = pmb.getPlacementRanges();
+            var ranges = pmb.getPlacementRanges(foodPlacer.getBlockState());
             var range = foodPlacer.getRangeForItem(targeted);
             if (range != null) {
                 return ranges.indexOf(range);

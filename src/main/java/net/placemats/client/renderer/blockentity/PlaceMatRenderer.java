@@ -61,7 +61,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             poseStack.pushPose();
 
             ItemStack stackToRender = placed.stack;
-            PlaceMatBlock.PlacementRange range = pmb.getPlacementRanges().stream()
+            PlaceMatBlock.PlacementRange range = pmb.getPlacementRanges(state).stream()
                     .filter(r -> Math.abs(placed.baseHeight - r.box().minY) < 0.001f &&
                             placed.pos.x >= r.box().minX && placed.pos.x <= r.box().maxX &&
                             placed.pos.y >= r.box().minZ && placed.pos.y <= r.box().maxZ)

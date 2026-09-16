@@ -128,6 +128,8 @@ public final class PlaceMatBlocks {
                     block.addRange(new PlaceMatBlock.PlacementRange(
                         new AABB(0 / 16D, 2 / 16D, 0 / 16D, 16 / 16D, 16 / 16D, 16 / 16D),
                         16 / 16F, false, false, false, false, true, false, null, false, false, 16, null, false, false, false, false, 1.0f, 0, 0, 0, 0));
+                    block.adjustRange(PlaceMatStairsBlock.SHAPE, List.of(StairsShape.INNER_LEFT, StairsShape.INNER_RIGHT, StairsShape.OUTER_LEFT, StairsShape.OUTER_RIGHT),
+                        new AABB(0 / 16D, 2 / 16D, 0 / 16D, 16 / 16D, 9 / 16D, 16 / 16D));
                 })
                 .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.ORNATE_SHELVES)
                 .loot(RegistrateBlockLootTables::dropSelf)
@@ -164,6 +166,8 @@ public final class PlaceMatBlocks {
         block.addRange(new PlaceMatBlock.PlacementRange(
             new AABB(0 / 16D, 2 / 16D, 0 / 16D, 16 / 16D, 16 / 16D, 16 / 16D),
             16 / 16F, false, false, false, false, true, false, null, false, false, 16, null, false, false, false, false, 1.0f, 0, 0, 0, 0));
+        block.adjustRange(PlaceMatStairsBlock.SHAPE, List.of(StairsShape.INNER_LEFT, StairsShape.INNER_RIGHT, StairsShape.OUTER_LEFT, StairsShape.OUTER_RIGHT),
+            new AABB(0 / 16D, 2 / 16D, 0 / 16D, 16 / 16D, 9 / 16D, 16 / 16D));
         return block;
     }
 }
