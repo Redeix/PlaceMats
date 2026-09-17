@@ -1,97 +1,192 @@
 {
   "variants": {
-    "facing=east,shape=inner_left": {
+    "attached=false,facing=east,shape=inner_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 270
     },
-    "facing=east,shape=inner_right": {
+    "attached=false,facing=east,shape=inner_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true
     },
-    "facing=east,shape=outer_left": {
+    "attached=false,facing=east,shape=outer_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 270
     },
-    "facing=east,shape=outer_right": {
+    "attached=false,facing=east,shape=outer_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true
     },
-    "facing=east,shape=straight": {
+    "attached=false,facing=east,shape=straight": {
       "model": "place_mats:block/mangrove_ornate_shelf",
       "uvlock": true
     },
-    "facing=north,shape=inner_left": {
+    "attached=false,facing=north,shape=inner_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 180
     },
-    "facing=north,shape=inner_right": {
+    "attached=false,facing=north,shape=inner_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 270
     },
-    "facing=north,shape=outer_left": {
+    "attached=false,facing=north,shape=outer_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 180
     },
-    "facing=north,shape=outer_right": {
+    "attached=false,facing=north,shape=outer_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 270
     },
-    "facing=north,shape=straight": {
+    "attached=false,facing=north,shape=straight": {
       "model": "place_mats:block/mangrove_ornate_shelf",
       "uvlock": true,
       "y": 270
     },
-    "facing=south,shape=inner_left": {
+    "attached=false,facing=south,shape=inner_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true
     },
-    "facing=south,shape=inner_right": {
+    "attached=false,facing=south,shape=inner_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 90
     },
-    "facing=south,shape=outer_left": {
+    "attached=false,facing=south,shape=outer_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true
     },
-    "facing=south,shape=outer_right": {
+    "attached=false,facing=south,shape=outer_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 90
     },
-    "facing=south,shape=straight": {
+    "attached=false,facing=south,shape=straight": {
       "model": "place_mats:block/mangrove_ornate_shelf",
       "uvlock": true,
       "y": 90
     },
-    "facing=west,shape=inner_left": {
+    "attached=false,facing=west,shape=inner_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 90
     },
-    "facing=west,shape=inner_right": {
+    "attached=false,facing=west,shape=inner_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_inner",
       "uvlock": true,
       "y": 180
     },
-    "facing=west,shape=outer_left": {
+    "attached=false,facing=west,shape=outer_left": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 90
     },
-    "facing=west,shape=outer_right": {
+    "attached=false,facing=west,shape=outer_right": {
       "model": "place_mats:block/mangrove_ornate_shelf_outer",
       "uvlock": true,
       "y": 180
     },
-    "facing=west,shape=straight": {
+    "attached=false,facing=west,shape=straight": {
       "model": "place_mats:block/mangrove_ornate_shelf",
+      "uvlock": true,
+      "y": 180
+    },
+    "attached=true,facing=east,shape=inner_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 270
+    },
+    "attached=true,facing=east,shape=inner_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true
+    },
+    "attached=true,facing=east,shape=outer_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 270
+    },
+    "attached=true,facing=east,shape=outer_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true
+    },
+    "attached=true,facing=east,shape=straight": {
+      "model": "place_mats:block/mangrove_ornate_shelf_attached",
+      "uvlock": true
+    },
+    "attached=true,facing=north,shape=inner_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 180
+    },
+    "attached=true,facing=north,shape=inner_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 270
+    },
+    "attached=true,facing=north,shape=outer_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 180
+    },
+    "attached=true,facing=north,shape=outer_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 270
+    },
+    "attached=true,facing=north,shape=straight": {
+      "model": "place_mats:block/mangrove_ornate_shelf_attached",
+      "uvlock": true,
+      "y": 270
+    },
+    "attached=true,facing=south,shape=inner_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true
+    },
+    "attached=true,facing=south,shape=inner_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 90
+    },
+    "attached=true,facing=south,shape=outer_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true
+    },
+    "attached=true,facing=south,shape=outer_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 90
+    },
+    "attached=true,facing=south,shape=straight": {
+      "model": "place_mats:block/mangrove_ornate_shelf_attached",
+      "uvlock": true,
+      "y": 90
+    },
+    "attached=true,facing=west,shape=inner_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 90
+    },
+    "attached=true,facing=west,shape=inner_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_inner_attached",
+      "uvlock": true,
+      "y": 180
+    },
+    "attached=true,facing=west,shape=outer_left": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 90
+    },
+    "attached=true,facing=west,shape=outer_right": {
+      "model": "place_mats:block/mangrove_ornate_shelf_outer_attached",
+      "uvlock": true,
+      "y": 180
+    },
+    "attached=true,facing=west,shape=straight": {
+      "model": "place_mats:block/mangrove_ornate_shelf_attached",
       "uvlock": true,
       "y": 180
     }

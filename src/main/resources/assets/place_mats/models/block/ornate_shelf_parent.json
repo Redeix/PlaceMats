@@ -1,407 +1,88 @@
 {
     "textures": {
         "0": "#0",
-        "1": "place_mats:block/ornate_bracket_side",
         "particle": "#0"
     },
-    "elements": [
-        {
-            "rotation": {
-                "origin": [
-                    8,
-                    0,
-                    8
-                ],
-                "angle": 0,
-                "axis": "y"
-            },
-            "name": "shelf",
-            "from": [
+    "elements": [{
+        "rotation": {
+            "origin": [
+                8,
                 0,
-                0,
-                0.02
+                8
             ],
-            "to": [
-                16,
-                2,
-                15.98
-            ],
-            "faces": {
-                "east": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        2
-                    ],
-                    "texture": "#0"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        2
-                    ],
-                    "texture": "#0"
-                },
-                "north": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        2
-                    ],
-                    "texture": "#0"
-                },
-                "west": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        2
-                    ],
-                    "texture": "#0"
-                },
-                "up": {
-                    "uv": [
-                        16,
-                        16,
-                        0,
-                        0
-                    ],
-                    "texture": "#0",
-                    "rotation": 270
-                },
-                "down": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        16
-                    ],
-                    "texture": "#0",
-                    "rotation": 90
-                }
-            }
+            "angle": 0,
+            "axis": "y"
         },
-        {
-            "rotation": {
-                "origin": [
-                    8,
+        "name": "shelf",
+        "from": [
+            0,
+            0,
+            0.02
+        ],
+        "to": [
+            16,
+            2,
+            15.98
+        ],
+        "faces": {
+            "east": {
+                "uv": [
                     0,
-                    8
-                ],
-                "angle": 0,
-                "axis": "y"
-            },
-            "name": "bracketSide1",
-            "from": [
-                0,
-                -14,
-                15.99
-            ],
-            "to": [
-                16,
-                2,
-                15.99
-            ],
-            "faces": {
-                "east": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "north": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "west": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "up": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "down": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                }
-            }
-        },
-        {
-            "rotation": {
-                "origin": [
-                    8,
                     0,
-                    8
+                    16,
+                    2
                 ],
-                "angle": 0,
-                "axis": "y"
+                "texture": "#0"
             },
-            "name": "bracketSide2",
-            "from": [
-                0,
-                -14,
-                0.01
-            ],
-            "to": [
-                16,
-                2,
-                0.01
-            ],
-            "faces": {
-                "east": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "north": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "west": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "up": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                },
-                "down": {
-                    "uv": [
-                        16,
-                        0,
-                        0,
-                        0
-                    ],
-                    "texture": "#1"
-                }
-            }
-        },
-        {
-            "rotation": {
-                "origin": [
-                    8,
+            "south": {
+                "uv": [
                     0,
-                    8
-                ],
-                "angle": 0,
-                "axis": "y"
-            },
-            "name": "bracketBack1",
-            "from": [
-                15.99,
-                -14,
-                15.5
-            ],
-            "to": [
-                15.99,
-                2,
-                16.5
-            ],
-            "faces": {
-                "east": {
-                    "uv": [
-                        15,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "north": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "west": {
-                    "uv": [
-                        15,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "up": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1",
-                    "rotation": 270
-                },
-                "down": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1",
-                    "rotation": 90
-                }
-            }
-        },
-        {
-            "rotation": {
-                "origin": [
-                    8,
                     0,
-                    8
+                    16,
+                    2
                 ],
-                "angle": 0,
-                "axis": "y"
+                "texture": "#0"
             },
-            "name": "bracketBack2",
-            "from": [
-                15.98,
-                -14,
-                -0.5
-            ],
-            "to": [
-                15.98,
-                2,
-                0.5
-            ],
-            "faces": {
-                "east": {
-                    "uv": [
-                        15,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "south": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "north": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "west": {
-                    "uv": [
-                        15,
-                        0,
-                        16,
-                        16
-                    ],
-                    "texture": "#1"
-                },
-                "up": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1",
-                    "rotation": 270
-                },
-                "down": {
-                    "uv": [
-                        0,
-                        16,
-                        0,
-                        16
-                    ],
-                    "texture": "#1",
-                    "rotation": 90
-                }
+            "north": {
+                "uv": [
+                    0,
+                    0,
+                    16,
+                    2
+                ],
+                "texture": "#0"
+            },
+            "west": {
+                "uv": [
+                    0,
+                    0,
+                    16,
+                    2
+                ],
+                "texture": "#0"
+            },
+            "up": {
+                "uv": [
+                    16,
+                    16,
+                    0,
+                    0
+                ],
+                "texture": "#0",
+                "rotation": 270
+            },
+            "down": {
+                "uv": [
+                    16,
+                    0,
+                    0,
+                    16
+                ],
+                "texture": "#0",
+                "rotation": 90
             }
         }
-    ],
+    }],
     "display": {
         "head": {"translation": [
             0,

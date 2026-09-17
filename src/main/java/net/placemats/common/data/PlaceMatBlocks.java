@@ -61,8 +61,8 @@ public final class PlaceMatBlocks {
         .register();
 
     public static final List<BlockEntry<PlaceMatCardinalBlock>> WOOD_STORAGE_RACKS = registerWoodVariants();
-    public static final List<BlockEntry<PlaceMatStairsBlock>> WOOD_ORNATE_SHELVES = registerWoodOrnateShelves();
-    public static final List<BlockEntry<PlaceMatStairsBlock>> ORNATE_SHELVES = WOOD_ORNATE_SHELVES;
+    public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_ORNATE_SHELVES = registerWoodOrnateShelves();
+    public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> ORNATE_SHELVES = WOOD_ORNATE_SHELVES;
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_FLOATING_SHELVES = registerWoodFloatingShelves();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> FLOATING_SHELVES = WOOD_FLOATING_SHELVES;
 
@@ -105,36 +105,42 @@ public final class PlaceMatBlocks {
         return list;
     }
 
-    private static List<BlockEntry<PlaceMatStairsBlock>> registerWoodOrnateShelves() {
-        List<BlockEntry<PlaceMatStairsBlock>> list = new ArrayList<>();
+    private static List<BlockEntry<PlaceMatAttachedStairsBlock>> registerWoodOrnateShelves() {
+        List<BlockEntry<PlaceMatAttachedStairsBlock>> list = new ArrayList<>();
 
         WoodType.values().forEach(woodType -> {
             String name = woodType.name() + "_" + "ornate_shelf";
 
-            BlockEntry<PlaceMatStairsBlock> blockReg = PlaceMatRegistries.REGISTRATE.ornateShelf(name)
+            BlockEntry<PlaceMatAttachedStairsBlock> blockReg = PlaceMatRegistries.REGISTRATE.floatingShelf(name)
                 .properties(p -> p.sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
                 .blockstate((ctx, prov) -> {
-                    var straightModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/ornate_shelf_parent"))
-                            .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"));
-                    var innerModel = prov.models().withExistingParent(ctx.getName() + "_inner", prov.modLoc("block/ornate_shelf_inner_parent"))
-                            .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"));
-                    var outerModel = prov.models().withExistingParent(ctx.getName() + "_outer", prov.modLoc("block/ornate_shelf_outer_parent"))
-                            .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"));
+                    String shelf = String.valueOf(prov.modLoc("block/" + woodType.name() + "_shelf"));
+                    var straightModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/ornate_shelf_parent")).texture("0", shelf);
+                    var straightAttachedModel = prov.models().withExistingParent(ctx.getName() + "_attached", prov.modLoc("block/ornate_shelf_attached_parent")).texture("0", shelf);
+                    var innerModel = prov.models().withExistingParent(ctx.getName() + "_inner", prov.modLoc("block/ornate_shelf_inner_parent")).texture("0", shelf);
+                    var innerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_inner_attached", prov.modLoc("block/ornate_shelf_inner_attached_parent")).texture("0", shelf);
+                    var outerModel = prov.models().withExistingParent(ctx.getName() + "_outer", prov.modLoc("block/ornate_shelf_outer_parent")).texture("0", shelf);
+                    var outerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_outer_attached", prov.modLoc("block/ornate_shelf_outer_attached_parent")).texture("0", shelf);
 
                     prov.getVariantBuilder(ctx.getEntry()).forAllStatesExcept(state -> {
-                        Direction facing = state.getValue(PlaceMatStairsBlock.FACING);
-                        StairsShape shape = state.getValue(PlaceMatStairsBlock.SHAPE);
+                        Direction facing = state.getValue(PlaceMatAttachedStairsBlock.FACING);
+                        StairsShape shape = state.getValue(PlaceMatAttachedStairsBlock.SHAPE);
+                        boolean attached = state.getValue(PlaceMatAttachedStairsBlock.ATTACHED);
                         int yRot = (int) facing.getClockWise().toYRot();
                         if (shape == StairsShape.INNER_LEFT || shape == StairsShape.OUTER_LEFT) {
                             yRot += 270;
                         }
                         yRot %= 360;
-                        var model = shape == StairsShape.STRAIGHT ? straightModel : (shape == StairsShape.INNER_LEFT || shape == StairsShape.INNER_RIGHT ? innerModel : outerModel);
+                        var model = shape == StairsShape.STRAIGHT
+                            ? (attached ? straightAttachedModel : straightModel)
+                            : (shape == StairsShape.INNER_LEFT || shape == StairsShape.INNER_RIGHT
+                            ? (attached ? innerAttachedModel : innerModel)
+                            : (attached ? outerAttachedModel : outerModel));
                         return ConfiguredModel.builder()
-                                .modelFile(model)
-                                .rotationY(yRot)
-                                .uvLock(true)
-                                .build();
+                            .modelFile(model)
+                            .rotationY(yRot)
+                            .uvLock(true)
+                            .build();
                     }, PlaceMatBlock.LOCKED);
                 })
                 .onRegister(block -> {
@@ -150,7 +156,7 @@ public final class PlaceMatBlocks {
                 .loot(RegistrateBlockLootTables::dropSelf)
                 .item()
                 .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.ORNATE_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST)
-                .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+                .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
                 .build()
                 .register();
 
@@ -170,24 +176,13 @@ public final class PlaceMatBlocks {
                 .properties(p -> p.sound(SoundType.WOOD).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
                 .blockstate((ctx, prov) -> {
                     ResourceLocation strippedLog = getStrippedLogTexture(woodType);
-                    var straightModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/floating_shelf_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
-                    var straightAttachedModel = prov.models().withExistingParent(ctx.getName() + "_attached", prov.modLoc("block/floating_shelf_attached_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
-                    var innerModel = prov.models().withExistingParent(ctx.getName() + "_inner", prov.modLoc("block/floating_shelf_inner_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
-                    var innerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_inner_attached", prov.modLoc("block/floating_shelf_inner_attached_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
-                    var outerModel = prov.models().withExistingParent(ctx.getName() + "_outer", prov.modLoc("block/floating_shelf_outer_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
-                    var outerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_outer_attached", prov.modLoc("block/floating_shelf_outer_attached_parent"))
-                        .texture("0", prov.modLoc("block/" + woodType.name() + "_shelf"))
-                        .texture("1", strippedLog);
+                    String shelf = String.valueOf(prov.modLoc("block/" + woodType.name() + "_shelf"));
+                    var straightModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/floating_shelf_parent")).texture("0", shelf).texture("1", strippedLog);
+                    var straightAttachedModel = prov.models().withExistingParent(ctx.getName() + "_attached", prov.modLoc("block/floating_shelf_attached_parent")).texture("0", shelf).texture("1", strippedLog);
+                    var innerModel = prov.models().withExistingParent(ctx.getName() + "_inner", prov.modLoc("block/floating_shelf_inner_parent")).texture("0", shelf).texture("1", strippedLog);
+                    var innerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_inner_attached", prov.modLoc("block/floating_shelf_inner_attached_parent")).texture("0", shelf).texture("1", strippedLog);
+                    var outerModel = prov.models().withExistingParent(ctx.getName() + "_outer", prov.modLoc("block/floating_shelf_outer_parent")).texture("0", shelf).texture("1", strippedLog);
+                    var outerAttachedModel = prov.models().withExistingParent(ctx.getName() + "_outer_attached", prov.modLoc("block/floating_shelf_outer_attached_parent")).texture("0", shelf).texture("1", strippedLog);
 
                     prov.getVariantBuilder(ctx.getEntry()).forAllStatesExcept(state -> {
                         Direction facing = state.getValue(PlaceMatAttachedStairsBlock.FACING);
@@ -223,7 +218,7 @@ public final class PlaceMatBlocks {
                 .loot(RegistrateBlockLootTables::dropSelf)
                 .item()
                 .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.FLOATING_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST)
-                .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+                .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
                 .build()
                 .register();
 
@@ -247,8 +242,8 @@ public final class PlaceMatBlocks {
         return block;
     }
 
-    public static PlaceMatStairsBlock createOrnateShelf(BlockBehaviour.Properties properties) {
-        PlaceMatStairsBlock block = (PlaceMatStairsBlock) TFCCompat.INSTANCE.createPlaceMatStairsBlock(properties);
+    public static PlaceMatAttachedStairsBlock createOrnateShelf(BlockBehaviour.Properties properties) {
+        PlaceMatAttachedStairsBlock block = (PlaceMatAttachedStairsBlock) TFCCompat.INSTANCE.createPlaceMatAttachedStairsBlock(properties);
         block.collisionShape(Block.box(0, 0, 0, 16, 2, 16));
         block.containerSize(10);
         block.addRange(new PlaceMatBlock.PlacementRange(

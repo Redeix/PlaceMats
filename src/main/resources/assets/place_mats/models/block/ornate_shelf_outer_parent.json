@@ -1,4 +1,4 @@
 {
-    "parent": "place_mats:block/ornate_shelf_inner_parent",
+    "parent": "place_mats:block/ornate_shelf_parent",
     "textures": {"0": "#0"}
 }

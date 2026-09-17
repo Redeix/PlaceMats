@@ -1,0 +1,6 @@
+{
+  "parent": "place_mats:block/ornate_shelf_inner_attached_parent",
+  "textures": {
+    "0": "place_mats:block/crimson_shelf"
+  }
+}
