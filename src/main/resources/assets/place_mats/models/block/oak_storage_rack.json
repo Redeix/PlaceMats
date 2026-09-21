@@ -1,5 +1,0 @@
-{
-    "parent": "place_mats:block/storage_rack_parent",
-    "format_version": "1.9.0",
-    "textures": {"0": "place_mats:block/oak_smooth_shelf"}
-}
