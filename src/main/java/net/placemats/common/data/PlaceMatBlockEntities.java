@@ -19,6 +19,7 @@ public class PlaceMatBlockEntities {
         .validBlock(PlaceMatBlocks.STORAGE_RACK)
         .validBlocks(PlaceMatBlocks.WOOD_STORAGE_RACKS.toArray(BlockEntry[]::new))
         .validBlocks(PlaceMatBlocks.WOOD_ORNATE_SHELVES.toArray(BlockEntry[]::new))
+        .validBlocks(PlaceMatBlocks.WOOD_ORNATE_DOUBLE_SHELVES.toArray(BlockEntry[]::new))
         .validBlocks(PlaceMatBlocks.WOOD_FLOATING_SHELVES.toArray(BlockEntry[]::new))
         .register();
 

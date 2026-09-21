@@ -1,0 +1,6 @@
+{
+  "parent": "place_mats:block/ornate_double_shelf_inner_parent",
+  "textures": {
+    "0": "place_mats:block/mangrove_shelf"
+  }
+}

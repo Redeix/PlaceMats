@@ -1,0 +1,6 @@
+{
+  "parent": "place_mats:block/ornate_double_shelf_attached_parent",
+  "textures": {
+    "0": "place_mats:block/dark_oak_shelf"
+  }
+}

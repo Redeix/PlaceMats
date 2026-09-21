@@ -1,8 +1,10 @@
 {
     "block_type.place_mats.ornate_shelf": "%s Ornate Shelf",
     "block_type.pm.ornate_shelf": "%s Ornate Shelf",
+    "block_type.place_mats.ornate_double_shelf": "%s Ornate Double Shelf",
     "block_type.place_mats.floating_shelf": "%s Floating Shelf",
     "block_type.place_mats.storage_rack": "%s Storage Rack",
+    "block_type.pm.ornate_double_shelf": "%s Ornate Double Shelf",
     "block_type.pm.floating_shelf": "%s Floating Shelf",
     "block_type.pm.storage_rack": "%s Storage Rack"
 }

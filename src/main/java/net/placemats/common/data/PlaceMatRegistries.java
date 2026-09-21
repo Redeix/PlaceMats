@@ -10,9 +10,11 @@ public class PlaceMatRegistries {
         REGISTRATE.addDataGenerator(ProviderType.LANG, prov -> {
             prov.add("block_type.pm.storage_rack", "%s Storage Rack");
             prov.add("block_type.pm.ornate_shelf", "%s Ornate Shelf");
+            prov.add("block_type.pm.ornate_double_shelf", "%s Ornate Double Shelf");
             prov.add("block_type.pm.floating_shelf", "%s Floating Shelf");
             prov.add("block_type.place_mats.storage_rack", "%s Storage Rack");
             prov.add("block_type.place_mats.ornate_shelf", "%s Ornate Shelf");
+            prov.add("block_type.place_mats.ornate_double_shelf", "%s Ornate Double Shelf");
             prov.add("block_type.place_mats.floating_shelf", "%s Floating Shelf");
             prov.add("place_mats.creative_tab.place_mats", "Place Mats");
             prov.add("place_mats.tooltip.placemat.placing", "Hold an item and §3RMB§r to display.");

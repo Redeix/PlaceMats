@@ -16,10 +16,13 @@ public final class PlaceMatTags {
     public static final class Items {
 
         public static final TagKey<Item> PLACE_MAT_BLACKLIST = createItemTag("place_mat_blacklist");
+        public static final TagKey<Item> DOUBLE_SHELVES = createItemTag("place_mats/double_shelves");
+        public static final TagKey<Item> SINGLE_SHELVES = createItemTag("place_mats/single_shelves");
         public static final TagKey<Item> PLACE_MATS = createItemTag("place_mats");
-        public static final TagKey<Item> STORAGE_RACKS = createItemTag("place_mats/storage_racks");
-        public static final TagKey<Item> ORNATE_SHELVES = createItemTag("place_mats/ornate_shelves");
-        public static final TagKey<Item> FLOATING_SHELVES = createItemTag("place_mats/floating_shelves");
+        public static final TagKey<Item> STORAGE_RACKS = createItemTag("place_mats/double_shelves/storage_racks");
+        public static final TagKey<Item> ORNATE_SHELVES = createItemTag("place_mats/single_shelves/ornate");
+        public static final TagKey<Item> ORNATE_DOUBLE_SHELVES = createItemTag("place_mats/double_shelves/ornate");
+        public static final TagKey<Item> FLOATING_SHELVES = createItemTag("place_mats/single_shelves/floating");
         public static final TagKey<Item> KEY = createItemTag("key");
 
         private static TagKey<Item> createItemTag(String path) {
@@ -35,9 +38,12 @@ public final class PlaceMatTags {
 
         public static final TagKey<Block> PLACE_MATS = createBlockTag("place_mats");
         public static final TagKey<Block> PLACE_MAT_BLACKLIST = createBlockTag("place_mat_blacklist");
-        public static final TagKey<Block> STORAGE_RACKS = createBlockTag("place_mats/storage_racks");
-        public static final TagKey<Block> ORNATE_SHELVES = createBlockTag("place_mats/ornate_shelves");
-        public static final TagKey<Block> FLOATING_SHELVES = createBlockTag("place_mats/floating_shelves");
+        public static final TagKey<Block> DOUBLE_SHELVES = createBlockTag("place_mats/double_shelves");
+        public static final TagKey<Block> SINGLE_SHELVES = createBlockTag("place_mats/single_shelves");
+        public static final TagKey<Block> STORAGE_RACKS = createBlockTag("place_mats/double_shelves/storage_racks");
+        public static final TagKey<Block> ORNATE_SHELVES = createBlockTag("place_mats/single_shelves/ornate");
+        public static final TagKey<Block> ORNATE_DOUBLE_SHELVES = createBlockTag("place_mats/double_shelves/ornate");
+        public static final TagKey<Block> FLOATING_SHELVES = createBlockTag("place_mats/single_shelves/floating");
 
         private static TagKey<Block> createBlockTag(String path) {
             return createBlockTag(PlaceMatMain.id(path));

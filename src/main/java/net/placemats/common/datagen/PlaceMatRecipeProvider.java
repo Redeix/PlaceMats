@@ -168,5 +168,36 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                     .build(consumer, blockReg.getId());
             }
         });
+
+        PlaceMatBlocks.WOOD_ORNATE_DOUBLE_SHELVES.forEach(blockReg -> {
+            String woodName = blockReg.getId().getPath().replace("_ornate_double_shelf", "");
+            var slab = getSlab(woodName);
+
+            if (slab != null) {
+                ConditionalRecipe.builder()
+                    // TFC version.
+                    .addCondition(new ModLoadedCondition("tfc"))
+                    .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, blockReg.get(),2)
+                        .pattern(" SS")
+                        .pattern("  I")
+                        .pattern(" SS")
+                        .define('S', slab)
+                        .define('I', tfcIronBarsIngredient)
+                        .unlockedBy("always", PlayerTrigger.TriggerInstance.tick())
+                        .save(consumer1))
+                    // Regular version.
+                    .addCondition(TrueCondition.INSTANCE)
+                    .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, blockReg.get(), 2)
+                        .pattern(" SS")
+                        .pattern("  I")
+                        .pattern(" SS")
+                        .define('S', slab)
+                        .define('I', Blocks.IRON_BARS)
+                        .unlockedBy("has_iron", has(Tags.Items.INGOTS_IRON))
+                        .save(consumer1))
+                    .generateAdvancement()
+                    .build(consumer, blockReg.getId());
+            }
+        });
     }
 }

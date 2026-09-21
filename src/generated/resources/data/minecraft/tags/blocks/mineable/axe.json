@@ -32,6 +32,17 @@
     "place_mats:crimson_floating_shelf",
     "place_mats:warped_floating_shelf",
     "place_mats:mangrove_floating_shelf",
-    "place_mats:bamboo_floating_shelf"
+    "place_mats:bamboo_floating_shelf",
+    "place_mats:oak_ornate_double_shelf",
+    "place_mats:spruce_ornate_double_shelf",
+    "place_mats:birch_ornate_double_shelf",
+    "place_mats:acacia_ornate_double_shelf",
+    "place_mats:cherry_ornate_double_shelf",
+    "place_mats:jungle_ornate_double_shelf",
+    "place_mats:dark_oak_ornate_double_shelf",
+    "place_mats:crimson_ornate_double_shelf",
+    "place_mats:warped_ornate_double_shelf",
+    "place_mats:mangrove_ornate_double_shelf",
+    "place_mats:bamboo_ornate_double_shelf"
   ]
 }

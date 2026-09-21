@@ -2,7 +2,10 @@ package net.placemats.common.block;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -63,6 +66,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     private int containerSize = 12;
     @Getter
     private final List<PlacementRange> placementRanges = new ArrayList<>();
+    @Getter
+    private final List<StatePlacementRange> statePlacementRanges = new ArrayList<>();
+
+    public record StatePlacementRange(int index, @Nullable Predicate<BlockState> predicate, PlacementRange range) {}
 
     @Getter
     private boolean extractionDisabled = false;
@@ -93,6 +100,12 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     private VoxelShape shape = Shapes.block();
     @Getter
     private VoxelShape collisionShape = Shapes.block();
+    @Getter
+    private final List<StateShape> shapeOverrides = new ArrayList<>();
+    @Getter
+    private final List<StateShape> collisionShapeOverrides = new ArrayList<>();
+
+    public record StateShape(Predicate<BlockState> predicate, VoxelShape shape) {}
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
@@ -200,15 +213,141 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return this;
     }
 
+    public static VoxelShape box(float x1, float y1, float z1, float x2, float y2, float z2) {
+        return Block.box(x1, y1, z1, x2, y2, z2);
+    }
+
+    public static VoxelShape box(double x1, double y1, double z1, double x2, double y2, double z2) {
+        return Block.box(x1, y1, z1, x2, y2, z2);
+    }
+
+    /* ======================== Shape ========================== */
+
     public PlaceMatBlock shape(VoxelShape shape) {
         this.shape = shape;
         return this;
     }
 
     public PlaceMatBlock shape(AABB box) {
-        this.shape = Shapes.create(box);
+        return shape(Shapes.create(box));
+    }
+
+    public PlaceMatBlock shape(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock shape(Predicate<BlockState> predicate, AABB box) {
+        return addShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock shape(Property<T> property, T value, VoxelShape shape) {
+        return addShapeOverride(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock shape(Property<T> property, T value, AABB box) {
+        return shape(property, value, Shapes.create(box));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock shape(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return addShapeOverride(state -> state.hasProperty(property) && values.contains(state.getValue(property)), shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock shape(Property<T> property, Collection<T> values, AABB box) {
+        return shape(property, values, Shapes.create(box));
+    }
+
+    public PlaceMatBlock addShapeOverride(Predicate<BlockState> predicate, VoxelShape shape) {
+        this.shapeOverrides.add(new StateShape(predicate, shape));
         return this;
     }
+
+    public PlaceMatBlock addShapeOverride(Predicate<BlockState> predicate, AABB box) {
+        return addShapeOverride(predicate, Shapes.create(box));
+    }
+
+    public PlaceMatBlock adjustShape(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock adjustShape(Predicate<BlockState> predicate, AABB box) {
+        return addShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustShape(Property<T> property, T value, VoxelShape shape) {
+        return shape(property, value, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustShape(Property<T> property, T value, AABB box) {
+        return shape(property, value, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustShape(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return shape(property, values, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustShape(Property<T> property, Collection<T> values, AABB box) {
+        return shape(property, values, box);
+    }
+
+    /* ======================== Bounding Box ========================== */
+
+    public PlaceMatBlock boundingBox(VoxelShape shape) {
+        return shape(shape);
+    }
+
+    public PlaceMatBlock boundingBox(AABB box) {
+        return shape(box);
+    }
+
+    public PlaceMatBlock boundingBox(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock boundingBox(Predicate<BlockState> predicate, AABB box) {
+        return addShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock boundingBox(Property<T> property, T value, VoxelShape shape) {
+        return shape(property, value, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock boundingBox(Property<T> property, T value, AABB box) {
+        return shape(property, value, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock boundingBox(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return shape(property, values, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock boundingBox(Property<T> property, Collection<T> values, AABB box) {
+        return shape(property, values, box);
+    }
+
+    public PlaceMatBlock adjustBoundingBox(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock adjustBoundingBox(Predicate<BlockState> predicate, AABB box) {
+        return addShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustBoundingBox(Property<T> property, T value, VoxelShape shape) {
+        return shape(property, value, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustBoundingBox(Property<T> property, T value, AABB box) {
+        return shape(property, value, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustBoundingBox(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return shape(property, values, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustBoundingBox(Property<T> property, Collection<T> values, AABB box) {
+        return shape(property, values, box);
+    }
+
+    /* ======================== Collision Shape ========================== */
 
     public PlaceMatBlock collisionShape(VoxelShape collisionShape) {
         this.collisionShape = collisionShape;
@@ -216,13 +355,394 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     }
 
     public PlaceMatBlock collisionShape(AABB box) {
-        this.collisionShape = Shapes.create(box);
+        return collisionShape(Shapes.create(box));
+    }
+
+    public PlaceMatBlock addCollisionShapeOverride(Predicate<BlockState> predicate, VoxelShape shape) {
+        this.collisionShapeOverrides.add(new StateShape(predicate, shape));
+        return this;
+    }
+
+    public PlaceMatBlock addCollisionShapeOverride(Predicate<BlockState> predicate, AABB box) {
+        return addCollisionShapeOverride(predicate, Shapes.create(box));
+    }
+
+    public PlaceMatBlock collisionShape(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addCollisionShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock collisionShape(Predicate<BlockState> predicate, AABB box) {
+        return addCollisionShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock collisionShape(Property<T> property, T value, VoxelShape shape) {
+        return addCollisionShapeOverride(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock collisionShape(Property<T> property, T value, AABB box) {
+        return collisionShape(property, value, Shapes.create(box));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock collisionShape(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return addCollisionShapeOverride(state -> state.hasProperty(property) && values.contains(state.getValue(property)), shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock collisionShape(Property<T> property, Collection<T> values, AABB box) {
+        return collisionShape(property, values, Shapes.create(box));
+    }
+
+    public PlaceMatBlock adjustCollisionShape(Predicate<BlockState> predicate, VoxelShape shape) {
+        return addCollisionShapeOverride(predicate, shape);
+    }
+
+    public PlaceMatBlock adjustCollisionShape(Predicate<BlockState> predicate, AABB box) {
+        return addCollisionShapeOverride(predicate, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCollisionShape(Property<T> property, T value, VoxelShape shape) {
+        return collisionShape(property, value, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCollisionShape(Property<T> property, T value, AABB box) {
+        return collisionShape(property, value, box);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCollisionShape(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return collisionShape(property, values, shape);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCollisionShape(Property<T> property, Collection<T> values, AABB box) {
+        return collisionShape(property, values, box);
+    }
+
+    /* ======================== Shape Manipulation ========================== */
+
+    public static VoxelShape combineShapes(VoxelShape... shapes) {
+        VoxelShape combined = Shapes.empty();
+        for (VoxelShape shape : shapes) {
+            if (shape != null) {
+                combined = Shapes.or(combined, shape);
+            }
+        }
+        return combined;
+    }
+
+    public static VoxelShape combineBoxes(AABB... boxes) {
+        VoxelShape combined = Shapes.empty();
+        for (AABB box : boxes) {
+            if (box != null) {
+                combined = Shapes.or(combined, Shapes.create(box));
+            }
+        }
+        return combined;
+    }
+
+    public static AABB rotateAABB(Direction direction, AABB box) {
+        return switch (direction) {
+            case SOUTH -> new AABB(1 - box.maxX, box.minY, 1 - box.maxZ, 1 - box.minX, box.maxY, 1 - box.minZ);
+            case EAST -> new AABB(1 - box.maxZ, box.minY, box.minX, 1 - box.minZ, box.maxY, box.maxX);
+            case WEST -> new AABB(box.minZ, box.minY, 1 - box.maxX, box.maxZ, box.maxY, 1 - box.minX);
+            default -> box;
+        };
+    }
+
+    public static VoxelShape rotateShape(Direction direction, VoxelShape shape) {
+        if (direction == Direction.NORTH || direction == null) {
+            return shape;
+        }
+        VoxelShape result = Shapes.empty();
+        for (AABB box : shape.toAabbs()) {
+            result = Shapes.or(result, Shapes.create(rotateAABB(direction, box)));
+        }
+        return result;
+    }
+
+    public static VoxelShape rotateShape(Direction direction, VoxelShape... shapes) {
+        return rotateShape(direction, combineShapes(shapes));
+    }
+
+    public static VoxelShape rotateShape(Direction direction, AABB... boxes) {
+        return rotateShape(direction, combineBoxes(boxes));
+    }
+
+
+    /* ======================== Cardinal Helpers ========================== */
+
+    public static Map<Direction, VoxelShape> createCardinalRotations(VoxelShape shape) {
+        Map<Direction, VoxelShape> map = new EnumMap<>(Direction.class);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            map.put(dir, rotateShape(dir, shape));
+        }
+        return map;
+    }
+
+    public static Map<Direction, VoxelShape> createCardinalRotations(VoxelShape... shapes) {
+        return createCardinalRotations(combineShapes(shapes));
+    }
+
+    public static Map<Direction, VoxelShape> createCardinalRotations(AABB... boxes) {
+        return createCardinalRotations(combineBoxes(boxes));
+    }
+
+    public PlaceMatBlock cardinalShape(VoxelShape... shapes) {
+        VoxelShape combined = combineShapes(shapes);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            shape(PlaceMatCardinalBlock.FACING, dir, rotateShape(dir, combined));
+        }
+        return this;
+    }
+
+    public PlaceMatBlock cardinalShape(AABB... boxes) {
+        return cardinalShape(combineBoxes(boxes));
+    }
+
+    public PlaceMatBlock cardinalBoundingBox(VoxelShape... shapes) {
+        return cardinalShape(shapes);
+    }
+
+    public PlaceMatBlock cardinalBoundingBox(AABB... boxes) {
+        return cardinalShape(boxes);
+    }
+
+    public PlaceMatBlock adjustCardinalShape(VoxelShape... shapes) {
+        return cardinalShape(shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalShape(AABB... boxes) {
+        return cardinalShape(boxes);
+    }
+
+    public PlaceMatBlock adjustCardinalBoundingBox(VoxelShape... shapes) {
+        return cardinalShape(shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalBoundingBox(AABB... boxes) {
+        return cardinalShape(boxes);
+    }
+
+    public PlaceMatBlock cardinalShape(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        VoxelShape combined = combineShapes(shapes);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            addShapeOverride(state -> state.hasProperty(PlaceMatCardinalBlock.FACING)
+                    && state.getValue(PlaceMatCardinalBlock.FACING) == dir
+                    && predicate.test(state), rotateShape(dir, combined));
+        }
+        return this;
+    }
+
+    public PlaceMatBlock cardinalShape(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalShape(predicate, combineBoxes(boxes));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalShape(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalShape(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalShape(Property<T> property, T value, AABB... boxes) {
+        return cardinalShape(property, value, combineBoxes(boxes));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalShape(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalShape(state -> state.hasProperty(property) && values.contains(state.getValue(property)), shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalShape(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalShape(property, values, combineBoxes(boxes));
+    }
+
+    public PlaceMatBlock cardinalBoundingBox(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        return cardinalShape(predicate, shapes);
+    }
+
+    public PlaceMatBlock cardinalBoundingBox(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalShape(predicate, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalBoundingBox(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalShape(property, value, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalBoundingBox(Property<T> property, T value, AABB... boxes) {
+        return cardinalShape(property, value, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalBoundingBox(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalShape(property, values, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalBoundingBox(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalShape(property, values, boxes);
+    }
+
+    public PlaceMatBlock adjustCardinalShape(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        return cardinalShape(predicate, shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalShape(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalShape(predicate, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalShape(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalShape(property, value, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalShape(Property<T> property, T value, AABB... boxes) {
+        return cardinalShape(property, value, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalShape(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalShape(property, values, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalShape(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalShape(property, values, boxes);
+    }
+
+    public PlaceMatBlock adjustCardinalBoundingBox(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        return cardinalShape(predicate, shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalBoundingBox(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalShape(predicate, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalBoundingBox(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalShape(property, value, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalBoundingBox(Property<T> property, T value, AABB... boxes) {
+        return cardinalShape(property, value, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalBoundingBox(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalShape(property, values, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalBoundingBox(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalShape(property, values, boxes);
+    }
+
+    public PlaceMatBlock cardinalCollisionShape(VoxelShape... shapes) {
+        VoxelShape combined = combineShapes(shapes);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            collisionShape(PlaceMatCardinalBlock.FACING, dir, rotateShape(dir, combined));
+        }
+        return this;
+    }
+
+    public PlaceMatBlock cardinalCollisionShape(AABB... boxes) {
+        return cardinalCollisionShape(combineBoxes(boxes));
+    }
+
+    public PlaceMatBlock adjustCardinalCollisionShape(VoxelShape... shapes) {
+        return cardinalCollisionShape(shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalCollisionShape(AABB... boxes) {
+        return cardinalCollisionShape(boxes);
+    }
+
+    public PlaceMatBlock cardinalCollisionShape(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        VoxelShape combined = combineShapes(shapes);
+        for (Direction dir : Direction.Plane.HORIZONTAL) {
+            addCollisionShapeOverride(state -> state.hasProperty(PlaceMatCardinalBlock.FACING)
+                    && state.getValue(PlaceMatCardinalBlock.FACING) == dir
+                    && predicate.test(state), rotateShape(dir, combined));
+        }
+        return this;
+    }
+
+    public PlaceMatBlock cardinalCollisionShape(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalCollisionShape(predicate, combineBoxes(boxes));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalCollisionShape(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalCollisionShape(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalCollisionShape(Property<T> property, T value, AABB... boxes) {
+        return cardinalCollisionShape(property, value, combineBoxes(boxes));
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalCollisionShape(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalCollisionShape(state -> state.hasProperty(property) && values.contains(state.getValue(property)), shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock cardinalCollisionShape(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalCollisionShape(property, values, combineBoxes(boxes));
+    }
+
+    public PlaceMatBlock adjustCardinalCollisionShape(Predicate<BlockState> predicate, VoxelShape... shapes) {
+        return cardinalCollisionShape(predicate, shapes);
+    }
+
+    public PlaceMatBlock adjustCardinalCollisionShape(Predicate<BlockState> predicate, AABB... boxes) {
+        return cardinalCollisionShape(predicate, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalCollisionShape(Property<T> property, T value, VoxelShape... shapes) {
+        return cardinalCollisionShape(property, value, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalCollisionShape(Property<T> property, T value, AABB... boxes) {
+        return cardinalCollisionShape(property, value, boxes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalCollisionShape(Property<T> property, Collection<T> values, VoxelShape... shapes) {
+        return cardinalCollisionShape(property, values, shapes);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustCardinalCollisionShape(Property<T> property, Collection<T> values, AABB... boxes) {
+        return cardinalCollisionShape(property, values, boxes);
+    }
+
+    /* ======================== Range ========================== */
+
+    public PlaceMatBlock addRange(int index, PlacementRange range) {
+        while (this.placementRanges.size() <= index) {
+            this.placementRanges.add(null);
+        }
+        this.placementRanges.set(index, range);
         return this;
     }
 
     public PlaceMatBlock addRange(PlacementRange range) {
-        this.placementRanges.add(range);
+        return addRange(getNextRangeIndex(), range);
+    }
+
+    public PlaceMatBlock addRange(int index, Predicate<BlockState> predicate, PlacementRange range) {
+        this.statePlacementRanges.add(new StatePlacementRange(index, predicate, range));
         return this;
+    }
+
+    public PlaceMatBlock addRange(Predicate<BlockState> predicate, PlacementRange range) {
+        return addRange(getNextRangeIndex(), predicate, range);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock addRange(int index, Property<T> property, T value, PlacementRange range) {
+        return addRange(index, state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), range);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock addRange(Property<T> property, T value, PlacementRange range) {
+        return addRange(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), range);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock addRange(int index, Property<T> property, Collection<T> values, PlacementRange range) {
+        return addRange(index, state -> state.hasProperty(property) && values.contains(state.getValue(property)), range);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock addRange(Property<T> property, Collection<T> values, PlacementRange range) {
+        return addRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), range);
+    }
+
+    private int getNextRangeIndex() {
+        int maxIndex = this.placementRanges.size() - 1;
+        for (StatePlacementRange entry : this.statePlacementRanges) {
+            if (entry.index() > maxIndex) {
+                maxIndex = entry.index();
+            }
+        }
+        return maxIndex + 1;
     }
 
     public record PlacementRange(
@@ -249,8 +769,88 @@ public class PlaceMatBlock extends Block implements EntityBlock {
             float defaultRoll,
             float defaultElevation) {
 
+        public PlacementRange(
+                VoxelShape shape,
+                float maxHeight,
+                boolean rollDisabled,
+                boolean yawDisabled,
+                boolean pitchDisabled,
+                boolean elevationDisabled,
+                boolean stackingEnabled,
+                boolean collisionDisabled,
+                @Nullable TagKey<Item> whitelistTag,
+                boolean extractionDisabled,
+                boolean insertionDisabled,
+                int maxStackSize,
+                @Nullable ResourceLocation foodTrait,
+                boolean restricted,
+                boolean disableLayFlat,
+                boolean disableCustomModels,
+                boolean snapToCenter,
+                float scaleMultiplier,
+                float defaultYaw,
+                float defaultPitch,
+                float defaultRoll,
+                float defaultElevation) {
+            this(shape.bounds(), maxHeight, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        }
+
+        public PlacementRange(
+                VoxelShape shape,
+                boolean rollDisabled,
+                boolean yawDisabled,
+                boolean pitchDisabled,
+                boolean elevationDisabled,
+                boolean stackingEnabled,
+                boolean collisionDisabled,
+                @Nullable TagKey<Item> whitelistTag,
+                boolean extractionDisabled,
+                boolean insertionDisabled,
+                int maxStackSize,
+                @Nullable ResourceLocation foodTrait,
+                boolean restricted,
+                boolean disableLayFlat,
+                boolean disableCustomModels,
+                boolean snapToCenter,
+                float scaleMultiplier,
+                float defaultYaw,
+                float defaultPitch,
+                float defaultRoll,
+                float defaultElevation) {
+            this(shape.bounds(), (float) shape.bounds().maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        }
+
+        public PlacementRange(
+                AABB box,
+                boolean rollDisabled,
+                boolean yawDisabled,
+                boolean pitchDisabled,
+                boolean elevationDisabled,
+                boolean stackingEnabled,
+                boolean collisionDisabled,
+                @Nullable TagKey<Item> whitelistTag,
+                boolean extractionDisabled,
+                boolean insertionDisabled,
+                int maxStackSize,
+                @Nullable ResourceLocation foodTrait,
+                boolean restricted,
+                boolean disableLayFlat,
+                boolean disableCustomModels,
+                boolean snapToCenter,
+                float scaleMultiplier,
+                float defaultYaw,
+                float defaultPitch,
+                float defaultRoll,
+                float defaultElevation) {
+            this(box, (float) box.maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        }
+
         public PlacementRange withBox(AABB newBox) {
             return new PlacementRange(newBox, (float) newBox.maxY, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        }
+
+        public PlacementRange withBox(VoxelShape newShape) {
+            return withBox(newShape.bounds());
         }
 
         public PlacementRange withMaxHeight(float newMaxHeight) {
@@ -259,6 +859,10 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
         public PlacementRange withBoxAndHeight(AABB newBox, float newMaxHeight) {
             return new PlacementRange(newBox, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        }
+
+        public PlacementRange withBoxAndHeight(VoxelShape newShape, float newMaxHeight) {
+            return withBoxAndHeight(newShape.bounds(), newMaxHeight);
         }
     }
 
@@ -282,16 +886,34 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBox(newBox) : range);
     }
 
+    public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, VoxelShape shape) {
+        return adjustRange(predicate, shape.bounds());
+    }
+
+
     public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
         return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
     }
+
+    public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(predicate, shape.bounds(), newMaxHeight);
+    }
+
 
     public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox) {
         return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBox(newBox) : range);
     }
 
+    public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, VoxelShape shape) {
+        return adjustRange(rangeIndex, predicate, shape.bounds());
+    }
+
     public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
         return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
+    public PlaceMatBlock adjustRange(int rangeIndex, Predicate<BlockState> predicate, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(rangeIndex, predicate, shape.bounds(), newMaxHeight);
     }
 
     public PlaceMatBlock adjustRange(Predicate<BlockState> predicate, Function<PlacementRange, PlacementRange> transformer) {
@@ -306,16 +928,32 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return adjustRange(state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox);
     }
 
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, VoxelShape shape) {
+        return adjustRange(property, value, shape.bounds());
+    }
+
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, AABB newBox, float newMaxHeight) {
         return adjustRange(state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(property, value, shape.bounds(), newMaxHeight);
     }
 
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, AABB newBox) {
         return adjustRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox);
     }
 
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, VoxelShape shape) {
+        return adjustRange(property, values, shape.bounds());
+    }
+
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, AABB newBox, float newMaxHeight) {
         return adjustRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(property, values, shape.bounds(), newMaxHeight);
     }
 
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, Collection<T> values, Function<PlacementRange, PlacementRange> transformer) {
@@ -326,34 +964,84 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         return adjustRange(rangeIndex, state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox);
     }
 
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, VoxelShape shape) {
+        return adjustRange(rangeIndex, property, value, shape.bounds());
+    }
+
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, AABB newBox, float newMaxHeight) {
         return adjustRange(rangeIndex, state -> state.hasProperty(property) && state.getValue(property).equals(value), newBox, newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(rangeIndex, property, value, shape.bounds(), newMaxHeight);
     }
 
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, AABB newBox) {
         return adjustRange(rangeIndex, state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox);
     }
 
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, VoxelShape shape) {
+        return adjustRange(rangeIndex, property, values, shape.bounds());
+    }
+
     public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, AABB newBox, float newMaxHeight) {
         return adjustRange(rangeIndex, state -> state.hasProperty(property) && values.contains(state.getValue(property)), newBox, newMaxHeight);
     }
 
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(rangeIndex, property, values, shape.bounds(), newMaxHeight);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, T value, Function<PlacementRange, PlacementRange> transformer) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), transformer);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(int rangeIndex, Property<T> property, Collection<T> values, Function<PlacementRange, PlacementRange> transformer) {
+        return adjustRange(rangeIndex, state -> state.hasProperty(property) && values.contains(state.getValue(property)), transformer);
+    }
+
+    public <T extends Comparable<T>> PlaceMatBlock adjustRange(Property<T> property, T value, Function<PlacementRange, PlacementRange> transformer) {
+        return adjustRange(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), transformer);
+    }
+
     public List<PlacementRange> getPlacementRanges(BlockState state) {
-        if (this.placementRanges.isEmpty()) {
+        if (this.placementRanges.isEmpty() && this.statePlacementRanges.isEmpty()) {
             return this.placementRanges;
         }
-        List<PlacementRange> adjusted = null;
-        for (int i = 0; i < this.placementRanges.size(); i++) {
-            PlacementRange original = this.placementRanges.get(i);
-            PlacementRange range = getAdjustedPlacementRange(state, original, i);
-            if (range != original) {
-                if (adjusted == null) {
-                    adjusted = new ArrayList<>(this.placementRanges);
-                }
-                adjusted.set(i, range);
+        if (this.statePlacementRanges.isEmpty() && this.rangeAdjusters.isEmpty()) {
+            return this.placementRanges;
+        }
+
+        int maxIndex = this.placementRanges.size() - 1;
+        for (StatePlacementRange entry : this.statePlacementRanges) {
+            if (entry.index() > maxIndex) {
+                maxIndex = entry.index();
             }
         }
-        return adjusted != null ? adjusted : this.placementRanges;
+
+        if (maxIndex < 0) {
+            return List.of();
+        }
+
+        List<PlacementRange> result = new ArrayList<>(maxIndex + 1);
+        for (int i = 0; i <= maxIndex; i++) {
+            PlacementRange range = null;
+            for (int j = this.statePlacementRanges.size() - 1; j >= 0; j--) {
+                StatePlacementRange entry = this.statePlacementRanges.get(j);
+                if (entry.index() == i && (entry.predicate() == null || entry.predicate().test(state))) {
+                    range = entry.range();
+                    break;
+                }
+            }
+            if (range == null && i < this.placementRanges.size()) {
+                range = this.placementRanges.get(i);
+            }
+            if (range != null) {
+                PlacementRange adjusted = getAdjustedPlacementRange(state, range, i);
+                result.add(adjusted);
+            }
+        }
+        return result;
     }
 
     public PlacementRange getAdjustedPlacementRange(BlockState state, PlacementRange range) {
@@ -369,7 +1057,11 @@ public class PlaceMatBlock extends Block implements EntityBlock {
     }
 
     public void addPlacementRanges(BlockState state, Consumer<PlacementRange> consumer) {
-        getPlacementRanges(state).forEach(consumer);
+        for (PlacementRange range : getPlacementRanges(state)) {
+            if (range != null) {
+                consumer.accept(range);
+            }
+        }
     }
 
     @Nullable
@@ -380,6 +1072,9 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         Vec3 localHitVec = getLocalHitVec(state, relativeHitVec);
 
         for (PlacementRange range : getPlacementRanges(state)) {
+            if (range == null) {
+                continue;
+            }
             if (localHitVec.x >= range.box.minX && localHitVec.x <= range.box.maxX &&
                     localHitVec.z >= range.box.minZ && localHitVec.z <= range.box.maxZ) {
                 if (localHitVec.y >= range.box.minY && localHitVec.y <= range.box.maxY) {
@@ -399,6 +1094,9 @@ public class PlaceMatBlock extends Block implements EntityBlock {
         }
 
         for (PlacementRange range : getPlacementRanges(state)) {
+            if (range == null) {
+                continue;
+            }
             double dist = getDistanceToBoxSqr(localHitVec, range.box);
             if (dist < minDistance) {
                 minDistance = dist;
@@ -586,11 +1284,23 @@ public class PlaceMatBlock extends Block implements EntityBlock {
 
     @Override
     public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        for (int i = this.shapeOverrides.size() - 1; i >= 0; i--) {
+            StateShape override = this.shapeOverrides.get(i);
+            if (override.predicate().test(state)) {
+                return override.shape();
+            }
+        }
         return this.shape;
     }
 
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        for (int i = this.collisionShapeOverrides.size() - 1; i >= 0; i--) {
+            StateShape override = this.collisionShapeOverrides.get(i);
+            if (override.predicate().test(state)) {
+                return override.shape();
+            }
+        }
         return this.collisionShape;
     }
 

@@ -31,7 +31,7 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
             .addTile(PlaceMatBlockEntities.PLACE_MAT)
             .requiresChildren("slab")
             .setTabKey(PlaceMatCreativeTab.PLACE_MATS.getId())
-            .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_storage_rack"))
+            .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_smooth_shelf"))
             .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_storage_rack"))
             .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_storage_rack"))
             .defaultRecipe()
@@ -78,6 +78,28 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
             .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_outer"))
             .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_floating_shelf_outer_attached"))
             .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_floating_shelf"))
+            .defaultRecipe()
+            .build());
+        this.addEntry(SimpleEntrySet.builder(WoodType.class, "ornate_double_shelf",
+                () -> PlaceMatBlocks.WOOD_ORNATE_SHELVES.stream().filter(r -> r.getId().getPath().contains("oak")).findFirst().get().get(), () -> VanillaWoodTypes.OAK,
+                w -> PlaceMatBlocks.createOrnateDoubleShelf(Utils.copyPropertySafe(w.planks).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            )
+            .addTag(BlockTags.MINEABLE_WITH_AXE, Registries.BLOCK)
+            .addTag(PlaceMatTags.Blocks.PLACE_MATS, Registries.BLOCK)
+            .addTag(PlaceMatTags.Blocks.ORNATE_DOUBLE_SHELVES, Registries.BLOCK)
+            .addTag(PlaceMatTags.Blocks.DOUBLE_SHELVES, Registries.BLOCK)
+            .addTag(PlaceMatTags.Items.PLACE_MATS, Registries.ITEM)
+            .addTag(PlaceMatTags.Items.ORNATE_DOUBLE_SHELVES, Registries.ITEM)
+            .addTag(PlaceMatTags.Items.DOUBLE_SHELVES, Registries.ITEM)
+            .addTag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST, Registries.ITEM)
+            .addTile(PlaceMatBlockEntities.PLACE_MAT)
+            .requiresChildren("slab")
+            .setTabKey(PlaceMatCreativeTab.PLACE_MATS.getId())
+            .addTexture(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_shelf"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_ornate_double_shelf"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_ornate_double_shelf_inner"))
+            .includeModelsBlock(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/oak_ornate_double_shelf_outer"))
+            .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_ornate_double_shelf"))
             .defaultRecipe()
             .build());
     }

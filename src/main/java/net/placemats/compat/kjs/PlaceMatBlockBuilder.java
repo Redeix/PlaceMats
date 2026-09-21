@@ -1,16 +1,22 @@
 package net.placemats.compat.kjs;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+import org.jetbrains.annotations.Nullable;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import dev.latvian.mods.kubejs.typings.Info;
@@ -37,7 +43,10 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     private float defaultElevation = 0;
     private ResourceLocation foodTrait = null;
     private final List<PlacementRangeBuilder> ranges = new ArrayList<>();
+    private final List<StateRangeEntry> stateRanges = new ArrayList<>();
     private final List<PlaceMatBlock.RangeAdjuster> rangeAdjusters = new ArrayList<>();
+
+    public record StateRangeEntry(int index, @Nullable Predicate<BlockState> predicate, PlacementRangeBuilder builder) {}
 
     public PlaceMatBlockBuilder(ResourceLocation i) {
         super(i);
@@ -123,12 +132,66 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         return this;
     }
 
+    private int getNextRangeIndex() {
+        int maxIndex = this.ranges.size() - 1;
+        for (StateRangeEntry entry : this.stateRanges) {
+            if (entry.index() > maxIndex) {
+                maxIndex = entry.index();
+            }
+        }
+        return maxIndex + 1;
+    }
+
     @Info("Adds a placement range bounding box with custom parameters.")
     public PlaceMatBlockBuilder addPlacementRange(Consumer<PlacementRangeBuilder> consumer) {
         PlacementRangeBuilder builder = new PlacementRangeBuilder();
         consumer.accept(builder);
         this.ranges.add(builder);
         return this;
+    }
+
+    @Info("Adds a placement range bounding box at a specific index with custom parameters.")
+    public PlaceMatBlockBuilder addPlacementRange(int index, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        consumer.accept(builder);
+        while (this.ranges.size() <= index) {
+            this.ranges.add(null);
+        }
+        this.ranges.set(index, builder);
+        return this;
+    }
+
+    @Info("Adds a placement range bounding box with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addPlacementRange(Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        return addPlacementRange(getNextRangeIndex(), predicate, consumer);
+    }
+
+    @Info("Adds a placement range bounding box at a specific index with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addPlacementRange(int index, Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        consumer.accept(builder);
+        this.stateRanges.add(new StateRangeEntry(index, predicate, builder));
+        return this;
+    }
+
+    @Info("Adds a placement range bounding box when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addPlacementRange(Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addPlacementRange(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a placement range bounding box at a specific index when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addPlacementRange(int index, Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addPlacementRange(index, state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a placement range bounding box when a blockstate property matches any of the given values.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addPlacementRange(Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addPlacementRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
+    }
+
+    @Info("Adds a placement range bounding box at a specific index when a blockstate property matches any of the given values.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addPlacementRange(int index, Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addPlacementRange(index, state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
     }
 
     @Info("Adds a restricted placement range bounding box with custom parameters. These boxes only hold one itemStack that cant be moved.")
@@ -138,6 +201,52 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         consumer.accept(builder);
         this.ranges.add(builder);
         return this;
+    }
+
+    @Info("Adds a restricted placement range bounding box at a specific index with custom parameters.")
+    public PlaceMatBlockBuilder addRestrictedPlacementRange(int index, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        builder.restricted = true;
+        consumer.accept(builder);
+        while (this.ranges.size() <= index) {
+            this.ranges.add(null);
+        }
+        this.ranges.set(index, builder);
+        return this;
+    }
+
+    @Info("Adds a restricted placement range bounding box with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addRestrictedPlacementRange(Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        return addRestrictedPlacementRange(getNextRangeIndex(), predicate, consumer);
+    }
+
+    @Info("Adds a restricted placement range bounding box at a specific index with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addRestrictedPlacementRange(int index, Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        builder.restricted = true;
+        consumer.accept(builder);
+        this.stateRanges.add(new StateRangeEntry(index, predicate, builder));
+        return this;
+    }
+
+    @Info("Adds a restricted placement range bounding box when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addRestrictedPlacementRange(Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addRestrictedPlacementRange(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a restricted placement range bounding box at a specific index when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addRestrictedPlacementRange(int index, Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addRestrictedPlacementRange(index, state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a restricted placement range bounding box when a blockstate property matches any of the given values.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addRestrictedPlacementRange(Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addRestrictedPlacementRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
+    }
+
+    @Info("Adds a restricted placement range bounding box at a specific index when a blockstate property matches any of the given values.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addRestrictedPlacementRange(int index, Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addRestrictedPlacementRange(index, state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
     }
 
     @Info("Adds a custom range adjuster to modify placement ranges based on blockstate.")
@@ -151,9 +260,14 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBox(newBox) : range);
     }
 
+    @Info("Adjusts placement ranges when a blockstate condition matches using a new bounding box shape.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, VoxelShape shape) {
+        return adjustRange(predicate, shape.bounds());
+    }
+
     @Info("Adjusts placement ranges when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
     public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
-        return adjustRange(predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+        return adjustRange(predicate, Block.box(x1, y1, z1, x2, y2, z2));
     }
 
     @Info("Adjusts placement ranges when a blockstate condition matches using a new bounding box and max height.")
@@ -161,19 +275,74 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         return addRangeAdjuster((state, range, index) -> predicate.test(state) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
     }
 
+    @Info("Adjusts placement ranges when a blockstate condition matches using a new bounding box shape and max height.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(predicate, shape.bounds(), newMaxHeight);
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2, float newMaxHeight) {
+        return adjustRange(predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, float x1, float y1, float z1, float x2, float y2, float z2, float newMaxHeight) {
+        return adjustRange(predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
+    }
+
+    @Info("Adjusts placement ranges when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(Predicate<BlockState> predicate, int x1, int y1, int z1, int x2, int y2, int z2, float newMaxHeight) {
+        return adjustRange(predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
+    }
+
     @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box.")
     public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox) {
         return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBox(newBox) : range);
     }
 
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box shape.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, VoxelShape shape) {
+        return adjustRange(rangeIndex, predicate, shape.bounds());
+    }
+
     @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
     public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
-        return adjustRange(rangeIndex, predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2));
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, float x1, float y1, float z1, float x2, float y2, float z2) {
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2));
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, int x1, int y1, int z1, int x2, int y2, int z2) {
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2));
     }
 
     @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box and max height.")
     public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, AABB newBox, float newMaxHeight) {
         return addRangeAdjuster((state, range, index) -> (index == rangeIndex && predicate.test(state)) ? range.withBoxAndHeight(newBox, newMaxHeight) : range);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using a new bounding box shape and max height.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, VoxelShape shape, float newMaxHeight) {
+        return adjustRange(rangeIndex, predicate, shape.bounds(), newMaxHeight);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2, float newMaxHeight) {
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, float x1, float y1, float z1, float x2, float y2, float z2, float newMaxHeight) {
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
+    }
+
+    @Info("Adjusts a specific placement range by index when a blockstate condition matches using bounding box coordinates (in 1/16ths) and max height.")
+    public PlaceMatBlockBuilder adjustRange(int rangeIndex, Predicate<BlockState> predicate, int x1, int y1, int z1, int x2, int y2, int z2, float newMaxHeight) {
+        return adjustRange(rangeIndex, predicate, Block.box(x1, y1, z1, x2, y2, z2), newMaxHeight);
     }
 
     @Override
@@ -202,9 +371,18 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         block.defaultElevation(defaultElevation);
         for (int i = 0; i < ranges.size(); i++) {
             PlacementRangeBuilder rangeBuilder = ranges.get(i);
-            block.addRange(rangeBuilder.build());
-            for (PlaceMatBlock.RangeAdjuster adjuster : rangeBuilder.rangeAdjusters) {
-                int targetIndex = i;
+            if (rangeBuilder != null) {
+                block.addRange(i, rangeBuilder.build());
+                for (PlaceMatBlock.RangeAdjuster adjuster : rangeBuilder.rangeAdjusters) {
+                    int targetIndex = i;
+                    block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
+                }
+            }
+        }
+        for (StateRangeEntry entry : stateRanges) {
+            block.addRange(entry.index(), entry.predicate(), entry.builder().build());
+            for (PlaceMatBlock.RangeAdjuster adjuster : entry.builder().rangeAdjusters) {
+                int targetIndex = entry.index();
                 block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
             }
         }
@@ -245,9 +423,24 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
             return this;
         }
 
+        @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box shape.")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, VoxelShape shape) {
+            return adjustForState(predicate, shape.bounds());
+        }
+
         @Info("Adjusts this placement range when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
-        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
-            return adjustForState(predicate, new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D));
+    public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, double x1, double y1, double z1, double x2, double y2, double z2) {
+            return adjustForState(predicate, Block.box(x1, y1, z1, x2, y2, z2));
+        }
+
+        @Info("Adjusts this placement range when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, float x1, float y1, float z1, float x2, float y2, float z2) {
+            return adjustForState(predicate, Block.box(x1, y1, z1, x2, y2, z2));
+        }
+
+        @Info("Adjusts this placement range when a blockstate condition matches using bounding box coordinates (in 1/16ths).")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, int x1, int y1, int z1, int x2, int y2, int z2) {
+            return adjustForState(predicate, Block.box(x1, y1, z1, x2, y2, z2));
         }
 
         @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box and max height.")
@@ -256,9 +449,32 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
             return this;
         }
 
+        @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box shape and max height.")
+        public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, VoxelShape shape, float newMaxHeight) {
+            return adjustForState(predicate, shape.bounds(), newMaxHeight);
+        }
+
+        @Info("Sets the placement bounds using a VoxelShape.")
+        public PlacementRangeBuilder placementBounds(VoxelShape shape) {
+            this.box = shape.bounds();
+            return this;
+        }
+
         @Info("Sets the placement bounds. (x1, y1, z1, x2, y2, z2)")
         public PlacementRangeBuilder placementBounds(double x1, double y1, double z1, double x2, double y2, double z2) {
-            this.box = new AABB(x1 / 16D, y1 / 16D, z1 / 16D, x2 / 16D, y2 / 16D, z2 / 16D);
+            this.box = Block.box(x1, y1, z1, x2, y2, z2).bounds();
+            return this;
+        }
+
+        @Info("Sets the placement bounds. (x1, y1, z1, x2, y2, z2)")
+        public PlacementRangeBuilder placementBounds(float x1, float y1, float z1, float x2, float y2, float z2) {
+            this.box = Block.box(x1, y1, z1, x2, y2, z2).bounds();
+            return this;
+        }
+
+        @Info("Sets the placement bounds. (x1, y1, z1, x2, y2, z2)")
+        public PlacementRangeBuilder placementBounds(int x1, int y1, int z1, int x2, int y2, int z2) {
+            this.box = Block.box(x1, y1, z1, x2, y2, z2).bounds();
             return this;
         }
 
