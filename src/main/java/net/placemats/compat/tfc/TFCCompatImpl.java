@@ -63,6 +63,23 @@ public class TFCCompatImpl implements TFCCompat {
     }
 
     @Override
+    public boolean hasTrait(ItemStack stack, ResourceLocation traitId) {
+        FoodTrait trait = FoodTrait.getTrait(traitId);
+        if (trait != null) {
+            return hasTrait(stack, trait);
+        }
+        return false;
+    }
+
+    @Override
+    public boolean hasTrait(ItemStack stack, Object trait) {
+        if (trait instanceof FoodTrait foodTrait) {
+            return stack.getCapability(FoodCapability.CAPABILITY).map(food -> food.getTraits().contains(foodTrait)).orElse(false);
+        }
+        return false;
+    }
+
+    @Override
     public boolean isRotten(ItemStack stack) {
         return stack.getCapability(FoodCapability.CAPABILITY).map(IFood::isRotten).orElse(false);
     }

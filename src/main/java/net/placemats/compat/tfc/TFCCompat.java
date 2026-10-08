@@ -19,6 +19,8 @@ public interface TFCCompat {
     void applyTrait(ItemStack stack, Object trait);
     void removeTrait(ItemStack stack, Object trait);
     Object getTrait(ResourceLocation id);
+    boolean hasTrait(ItemStack stack, ResourceLocation traitId);
+    boolean hasTrait(ItemStack stack, Object trait);
     boolean isRotten(ItemStack stack);
     float getAverageTemperature(Level level, BlockPos pos);
     boolean hasFoodCapability(ItemStack stack);

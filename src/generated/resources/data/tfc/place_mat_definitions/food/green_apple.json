@@ -1,9 +1,14 @@
 {
+  "conditions": [
+    {
+      "condition": "place_mats:is_rotten",
+      "model": "place_mats:render/tfc/food/green_apple_rotten"
+    }
+  ],
   "item": "tfc:food/green_apple",
   "item_depth": 0.19,
   "item_scale": 1.0,
   "item_width": 0.19,
   "lay_flat": false,
-  "model": "place_mats:render/tfc/food/green_apple",
-  "model_rotten": "place_mats:render/tfc/food/green_apple_rotten"
+  "model": "place_mats:render/tfc/food/green_apple"
 }

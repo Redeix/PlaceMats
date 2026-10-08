@@ -1,10 +1,13 @@
 package net.placemats.common.datagen;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import net.minecraft.data.CachedOutput;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
 import net.placemats.common.datagen.definitions.*;
+import net.placemats.common.datagen.definitions.compat.MinecraftDefinitions;
+import net.placemats.common.datagen.definitions.compat.TFCDefinitions;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -43,18 +46,7 @@ public class PlaceMatDefinitionProvider implements DataProvider {
             for (IPlaceMatDefinition def : group) {
                 Definition d = def.getDefinition();
 
-                if (d.modelData != null) {
-                    if (d.model == null) {
-                        d.model = inferModelPath(d.id, false);
-                    }
-                    futures.add(saveModel(cache, d.model, d.modelData));
-                }
-                if (d.modelRottenData != null) {
-                    if (d.modelRotten == null) {
-                        d.modelRotten = inferModelPath(d.id, true);
-                    }
-                    futures.add(saveModel(cache, d.modelRotten, d.modelRottenData));
-                }
+                collectAndSaveModels(d, futures, cache);
 
                 JsonObject json = new JsonObject();
 
@@ -62,21 +54,21 @@ public class PlaceMatDefinitionProvider implements DataProvider {
                 String namespace = "minecraft";
                 String path = id;
 
-                if (id.startsWith("#")) {
+                if (id != null && id.startsWith("#")) {
                     json.addProperty("tag", id.substring(1));
                     path = id.substring(1);
                 } else {
                     json.addProperty("item", id);
                 }
 
-                if (path.contains(":")) {
+                if (path != null && path.contains(":")) {
                     String[] split = path.split(":", 2);
                     namespace = split[0];
                     path = split[1];
                 }
 
-                json.addProperty("item_width", d.width);
-                json.addProperty("item_depth", d.depth);
+                if (d.width != null) json.addProperty("item_width", d.width);
+                if (d.depth != null) json.addProperty("item_depth", d.depth);
 
                 if (d.model != null) json.addProperty("model", d.model);
                 if (d.modelRotten != null) json.addProperty("model_rotten", d.modelRotten);
@@ -86,6 +78,11 @@ public class PlaceMatDefinitionProvider implements DataProvider {
                 if (d.stackable != null) json.addProperty("stackable", d.stackable);
                 if (d.allowsStackingOnTop != null) json.addProperty("allows_stacking_on_top", d.allowsStackingOnTop);
 
+                if (!d.getConditions().isEmpty()) {
+                    json.add("conditions", serializeConditions(d.getConditions()));
+                }
+
+                assert id != null;
                 String fileName = (id.startsWith("#") ? "tag/" : "") + path + ".json";
 
                 Path assetsPath = output.getOutputFolder(PackOutput.Target.RESOURCE_PACK)
@@ -99,6 +96,49 @@ public class PlaceMatDefinitionProvider implements DataProvider {
         }
 
         return CompletableFuture.allOf(futures.toArray(CompletableFuture[]::new));
+    }
+
+    private void collectAndSaveModels(Definition d, List<CompletableFuture<?>> futures, CachedOutput cache) {
+        if (d.modelData != null) {
+            if (d.model == null && d.id != null) {
+                d.model = inferModelPath(d.id, false);
+            }
+            if (d.model != null) {
+                futures.add(saveModel(cache, d.model, d.modelData));
+            }
+        }
+        if (d.modelRottenData != null) {
+            if (d.modelRotten == null && d.id != null) {
+                d.modelRotten = inferModelPath(d.id, true);
+            }
+            if (d.modelRotten != null) {
+                futures.add(saveModel(cache, d.modelRotten, d.modelRottenData));
+            }
+        }
+        for (ConditionDefinition cd : d.getConditions()) {
+            collectAndSaveModels(cd.definition(), futures, cache);
+        }
+    }
+
+    private JsonArray serializeConditions(List<ConditionDefinition> conditions) {
+        JsonArray array = new JsonArray();
+        for (ConditionDefinition cd : conditions) {
+            JsonObject condObj = cd.condition().toJson();
+            Definition def = cd.definition();
+            if (def.width != null) condObj.addProperty("item_width", def.width);
+            if (def.depth != null) condObj.addProperty("item_depth", def.depth);
+            if (def.model != null) condObj.addProperty("model", def.model);
+            if (def.height != null) condObj.addProperty("item_height", def.height);
+            if (def.scale != null) condObj.addProperty("item_scale", def.scale);
+            if (def.flat != null) condObj.addProperty("lay_flat", def.flat);
+            if (def.stackable != null) condObj.addProperty("stackable", def.stackable);
+            if (def.allowsStackingOnTop != null) condObj.addProperty("allows_stacking_on_top", def.allowsStackingOnTop);
+            if (!def.getConditions().isEmpty()) {
+                condObj.add("conditions", serializeConditions(def.getConditions()));
+            }
+            array.add(condObj);
+        }
+        return array;
     }
 
     @Override

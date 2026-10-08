@@ -824,7 +824,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     }
 
     public DefinitionManager.PlaceMatDefinition getEffectiveDefinition(ItemStack stack, @Nullable PlacementRange range) {
-        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(stack.getItem());
+        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(stack, getBlockState(), range);
         if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
             if (pmb.isDisableCustomModels() || (range != null && range.disableCustomModels())) {
                 return DefinitionManager.PlaceMatDefinition.DEFAULT(stack.getItem());

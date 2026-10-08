@@ -74,7 +74,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             float elevation = be.getEffectiveElevation(range);
             float[] rotation = be.getEffectiveRotation(range);
 
-            DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(stackToRender.getItem());
+            DefinitionManager.PlaceMatDefinition def = be.getEffectiveDefinition(stackToRender, range);
             if (disableCustomModels) {
                 def = DefinitionManager.PlaceMatDefinition.DEFAULT(stackToRender.getItem());
             }
@@ -164,7 +164,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         float effectiveScale = scale * multiplier;
         poseStack.scale(effectiveScale, effectiveScale, effectiveScale);
 
-        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(stack.getItem());
+        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(stack, pmb.defaultBlockState(), targetRange);
         if (disableCustomModels) {
             def = DefinitionManager.PlaceMatDefinition.DEFAULT(stack.getItem());
         }

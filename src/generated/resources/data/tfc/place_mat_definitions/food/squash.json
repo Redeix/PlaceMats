@@ -1,9 +1,14 @@
 {
+  "conditions": [
+    {
+      "condition": "place_mats:is_rotten",
+      "model": "place_mats:render/tfc/food/squash_rotten"
+    }
+  ],
   "item": "tfc:food/squash",
   "item_depth": 0.19,
   "item_scale": 1.0,
   "item_width": 0.19,
   "lay_flat": false,
-  "model": "place_mats:render/tfc/food/squash",
-  "model_rotten": "place_mats:render/tfc/food/squash_rotten"
+  "model": "place_mats:render/tfc/food/squash"
 }

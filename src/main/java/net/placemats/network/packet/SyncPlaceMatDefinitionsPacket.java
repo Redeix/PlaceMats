@@ -1,6 +1,8 @@
 package net.placemats.network.packet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
@@ -14,6 +16,7 @@ import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.placemats.common.data.resource.DefinitionManager;
+import net.placemats.common.datagen.definitions.Condition;
 
 public class SyncPlaceMatDefinitionsPacket {
     private final Map<Item, DefinitionManager.PlaceMatDefinition> definitions;
@@ -53,6 +56,41 @@ public class SyncPlaceMatDefinitionsPacket {
             buffer.writeFloat(def.itemHeight());
         buffer.writeBoolean(def.stackable());
         buffer.writeBoolean(def.allowsStackingOnTop());
+        buffer.writeInt(def.conditions().size());
+        for (DefinitionManager.PlaceMatConditionDefinition condDef : def.conditions()) {
+            encodeConditionDefinition(condDef, buffer);
+        }
+    }
+
+    private static void encodeConditionDefinition(DefinitionManager.PlaceMatConditionDefinition def, FriendlyByteBuf buffer) {
+        def.condition().encode(buffer);
+        buffer.writeBoolean(def.size() != null);
+        if (def.size() != null) {
+            buffer.writeFloat(def.size().x);
+            buffer.writeFloat(def.size().y);
+        }
+        buffer.writeBoolean(def.model() != null);
+        if (def.model() != null)
+            buffer.writeResourceLocation(def.model());
+        buffer.writeBoolean(def.scale() != null);
+        if (def.scale() != null)
+            buffer.writeFloat(def.scale());
+        buffer.writeBoolean(def.flat() != null);
+        if (def.flat() != null)
+            buffer.writeBoolean(def.flat());
+        buffer.writeBoolean(def.itemHeight() != null);
+        if (def.itemHeight() != null)
+            buffer.writeFloat(def.itemHeight());
+        buffer.writeBoolean(def.stackable() != null);
+        if (def.stackable() != null)
+            buffer.writeBoolean(def.stackable());
+        buffer.writeBoolean(def.allowsStackingOnTop() != null);
+        if (def.allowsStackingOnTop() != null)
+            buffer.writeBoolean(def.allowsStackingOnTop());
+        buffer.writeInt(def.conditions().size());
+        for (DefinitionManager.PlaceMatConditionDefinition child : def.conditions()) {
+            encodeConditionDefinition(child, buffer);
+        }
     }
 
     public static SyncPlaceMatDefinitionsPacket decode(FriendlyByteBuf buffer) {
@@ -85,7 +123,29 @@ public class SyncPlaceMatDefinitionsPacket {
         Float itemHeight = buffer.readBoolean() ? buffer.readFloat() : null;
         boolean stackable = buffer.readBoolean();
         boolean allowsStackingOnTop = buffer.readBoolean();
-        return new DefinitionManager.PlaceMatDefinition(new Vec2(width, depth), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop);
+        int condSize = buffer.readInt();
+        List<DefinitionManager.PlaceMatConditionDefinition> conditions = new ArrayList<>(condSize);
+        for (int i = 0; i < condSize; i++) {
+            conditions.add(decodeConditionDefinition(buffer));
+        }
+        return new DefinitionManager.PlaceMatDefinition(new Vec2(width, depth), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, conditions);
+    }
+
+    private static DefinitionManager.PlaceMatConditionDefinition decodeConditionDefinition(FriendlyByteBuf buffer) {
+        Condition condition = Condition.decode(buffer);
+        Vec2 size = buffer.readBoolean() ? new Vec2(buffer.readFloat(), buffer.readFloat()) : null;
+        ResourceLocation model = buffer.readBoolean() ? buffer.readResourceLocation() : null;
+        Float scale = buffer.readBoolean() ? buffer.readFloat() : null;
+        Boolean flat = buffer.readBoolean() ? buffer.readBoolean() : null;
+        Float itemHeight = buffer.readBoolean() ? buffer.readFloat() : null;
+        Boolean stackable = buffer.readBoolean() ? buffer.readBoolean() : null;
+        Boolean allowsStackingOnTop = buffer.readBoolean() ? buffer.readBoolean() : null;
+        int childSize = buffer.readInt();
+        List<DefinitionManager.PlaceMatConditionDefinition> children = new ArrayList<>(childSize);
+        for (int i = 0; i < childSize; i++) {
+            children.add(decodeConditionDefinition(buffer));
+        }
+        return new DefinitionManager.PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, children);
     }
 
     public static void handle(SyncPlaceMatDefinitionsPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {

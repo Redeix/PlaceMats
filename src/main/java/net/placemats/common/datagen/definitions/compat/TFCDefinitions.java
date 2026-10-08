@@ -1,8 +1,12 @@
-package net.placemats.common.datagen.definitions;
+package net.placemats.common.datagen.definitions.compat;
+
+import net.placemats.common.datagen.definitions.Definition;
+import net.placemats.common.datagen.definitions.IPlaceMatDefinition;
 
 import static net.placemats.common.datagen.definitions.DefinitionHelpers.*;
 
-public enum TFCDefinitions implements IPlaceMatDefinition {
+public enum TFCDefinitions implements IPlaceMatDefinition
+{
     ONION(tfcFood3x3("tfc:food/onion","onion")),
     ORANGE(tfcFood3x3("tfc:food/orange","orange")),
     PEACH(tfcFood3x3("tfc:food/peach","peach")),

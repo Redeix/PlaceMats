@@ -1,7 +1,10 @@
 package net.placemats.common.data.resource;
 
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
@@ -9,9 +12,14 @@ import java.util.function.Consumer;
 
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fml.util.thread.EffectiveSide;
 import net.minecraftforge.server.ServerLifecycleHooks;
 import net.placemats.PlaceMatMain;
+import net.placemats.common.block.PlacementRange;
+import net.placemats.common.datagen.definitions.Condition;
+import net.placemats.common.datagen.definitions.ConditionContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +43,7 @@ import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.SyncPlaceMatDefinitionsPacket;
 import net.placemats.compat.kjs.KJSCompat;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation", "FieldCanBeLocal"})
 public class DefinitionManager extends SimpleJsonResourceReloadListener {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private static final Map<Item, PlaceMatDefinition> CLIENT_DEFINITIONS = new ConcurrentHashMap<>();
@@ -93,6 +101,18 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         return def;
     }
 
+    public static PlaceMatDefinition getEffectiveDefinition(ItemStack stack, @Nullable BlockState state, @Nullable PlacementRange range) {
+        PlaceMatDefinition def = getDefinition(stack.getItem());
+        ConditionContext context = ConditionContext.of(stack, state, range);
+        return def.resolve(context);
+    }
+
+    public static PlaceMatDefinition getEffectiveDefinition(ItemStack stack, @Nullable BlockState state, @Nullable PlacementRange range, int rangeIndex) {
+        PlaceMatDefinition def = getDefinition(stack.getItem());
+        ConditionContext context = ConditionContext.of(stack, state, range, rangeIndex);
+        return def.resolve(context);
+    }
+
     public static Iterable<PlaceMatDefinition> getDefinitions() {
         return getDefinitionsMapInternal().values();
     }
@@ -120,22 +140,8 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
 
     public static void registerModels(ResourceManager resourceManager, Consumer<ResourceLocation> consumer) {
         postKjsEvent();
-        getDefinitionsMapInternal().values().forEach(def -> {
-            if (def.model() != null) {
-                consumer.accept(def.model());
-            }
-            if (def.modelRotten() != null) {
-                consumer.accept(def.modelRotten());
-            }
-        });
-        getTagDefinitionsMapInternal().values().forEach(def -> {
-            if (def.model() != null) {
-                consumer.accept(def.model());
-            }
-            if (def.modelRotten() != null) {
-                consumer.accept(def.modelRotten());
-            }
-        });
+        getDefinitionsMapInternal().values().forEach(def -> collectDefinitionModels(def, consumer));
+        getTagDefinitionsMapInternal().values().forEach(def -> collectDefinitionModels(def, consumer));
 
         // Search for definitions in all namespaces.
         Map<ResourceLocation, Resource> resourcesAssets = new HashMap<>();
@@ -150,19 +156,51 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         }
     }
 
+    private static void collectDefinitionModels(PlaceMatDefinition def, Consumer<ResourceLocation> consumer) {
+        if (def.model() != null) {
+            consumer.accept(def.model());
+        }
+        if (def.modelRotten() != null) {
+            consumer.accept(def.modelRotten());
+        }
+        for (PlaceMatConditionDefinition condDef : def.conditions()) {
+            collectConditionModels(condDef, consumer);
+        }
+    }
+
+    private static void collectConditionModels(PlaceMatConditionDefinition condDef, Consumer<ResourceLocation> consumer) {
+        if (condDef.model() != null) {
+            consumer.accept(condDef.model());
+        }
+        for (PlaceMatConditionDefinition child : condDef.conditions()) {
+            collectConditionModels(child, consumer);
+        }
+    }
+
     private static void processResource(ResourceLocation location, Resource resource, Consumer<ResourceLocation> consumer) {
         try (var stream = resource.open()) {
             JsonObject json = GSON.fromJson(new InputStreamReader(stream), JsonObject.class);
-            if (json.has("model")) {
-                ResourceLocation loc = ResourceLocation.parse(json.get("model").getAsString());
-                consumer.accept(loc);
-            }
-            if (json.has("model_rotten")) {
-                ResourceLocation loc = ResourceLocation.parse(json.get("model_rotten").getAsString());
-                consumer.accept(loc);
-            }
+            collectJsonModels(json, consumer);
         } catch (Exception e) {
             PlaceMatMain.LOGGER.error("Error pre-loading place mat definition models {}: {}", location, e.getMessage());
+        }
+    }
+
+    private static void collectJsonModels(JsonObject json, Consumer<ResourceLocation> consumer) {
+        if (json.has("model")) {
+            ResourceLocation loc = ResourceLocation.parse(json.get("model").getAsString());
+            consumer.accept(loc);
+        }
+        if (json.has("model_rotten")) {
+            ResourceLocation loc = ResourceLocation.parse(json.get("model_rotten").getAsString());
+            consumer.accept(loc);
+        }
+        if (json.has("conditions") && json.get("conditions").isJsonArray()) {
+            for (JsonElement el : json.getAsJsonArray("conditions")) {
+                if (el.isJsonObject()) {
+                    collectJsonModels(el.getAsJsonObject(), consumer);
+                }
+            }
         }
     }
 
@@ -228,11 +266,78 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         float scale = json.has("item_scale") ? json.get("item_scale").getAsFloat() : (flat ? 0.375f : 0.5f);
         boolean stackable = !json.has("stackable") || json.get("stackable").getAsBoolean();
         boolean allowsStackingOnTop = !json.has("allows_stacking_on_top") || json.get("allows_stacking_on_top").getAsBoolean();
-        return new PlaceMatDefinition(new Vec2(width * (flat ? 0.75f : 1.0f), depth * (flat ? 0.75f : 1.0f)), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop);
+        List<PlaceMatConditionDefinition> conditions = parseConditions(json);
+        return new PlaceMatDefinition(new Vec2(width * (flat ? 0.75f : 1.0f), depth * (flat ? 0.75f : 1.0f)), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, conditions);
     }
 
-    public record PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable,
-            boolean allowsStackingOnTop) {
+    private static List<PlaceMatConditionDefinition> parseConditions(JsonObject json) {
+        if (!json.has("conditions") || !json.get("conditions").isJsonArray()) {
+            return List.of();
+        }
+        List<PlaceMatConditionDefinition> list = new ArrayList<>();
+        for (JsonElement el : json.getAsJsonArray("conditions")) {
+            if (el.isJsonObject()) {
+                JsonObject condObj = el.getAsJsonObject();
+                Condition condition = Condition.fromJson(condObj);
+                Vec2 size = null;
+                if (condObj.has("item_width") && condObj.has("item_depth")) {
+                    float w = condObj.get("item_width").getAsFloat();
+                    float d = condObj.get("item_depth").getAsFloat();
+                    boolean flat = !condObj.has("lay_flat") || condObj.get("lay_flat").getAsBoolean();
+                    size = new Vec2(w * (flat ? 0.75f : 1.0f), d * (flat ? 0.75f : 1.0f));
+                }
+                ResourceLocation model = condObj.has("model") ? ResourceLocation.parse(condObj.get("model").getAsString()) : null;
+                Float scale = condObj.has("item_scale") ? condObj.get("item_scale").getAsFloat() : null;
+                Boolean flat = condObj.has("lay_flat") ? condObj.get("lay_flat").getAsBoolean() : null;
+                Float itemHeight = condObj.has("item_height") ? condObj.get("item_height").getAsFloat() : null;
+                Boolean stackable = condObj.has("stackable") ? condObj.get("stackable").getAsBoolean() : null;
+                Boolean allowsStackingOnTop = condObj.has("allows_stacking_on_top") ? condObj.get("allows_stacking_on_top").getAsBoolean() : null;
+                List<PlaceMatConditionDefinition> nested = parseConditions(condObj);
+                list.add(new PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, nested));
+            }
+        }
+        return list;
+    }
+
+    public record PlaceMatConditionDefinition(
+            Condition condition,
+            @Nullable Vec2 size,
+            @Nullable ResourceLocation model,
+            @Nullable Float scale,
+            @Nullable Boolean flat,
+            @Nullable Float itemHeight,
+            @Nullable Boolean stackable,
+            @Nullable Boolean allowsStackingOnTop,
+            List<PlaceMatConditionDefinition> conditions) {
+
+        public PlaceMatConditionDefinition(
+                Condition condition,
+                @Nullable Vec2 size,
+                @Nullable ResourceLocation model,
+                @Nullable Float scale,
+                @Nullable Boolean flat,
+                @Nullable Float itemHeight,
+                @Nullable Boolean stackable,
+                @Nullable Boolean allowsStackingOnTop) {
+            this(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, List.of());
+        }
+    }
+
+    public record PlaceMatDefinition(
+            Vec2 size,
+            ResourceLocation model,
+            ResourceLocation modelRotten,
+            float scale,
+            boolean flat,
+            @Nullable Float itemHeight,
+            boolean stackable,
+            boolean allowsStackingOnTop,
+            List<PlaceMatConditionDefinition> conditions) {
+
+        public PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable, boolean allowsStackingOnTop) {
+            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, List.of());
+        }
+
         public static PlaceMatDefinition DEFAULT(Item item) {
             boolean isBlock = item instanceof BlockItem;
             // Generic render food as items.
@@ -240,7 +345,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             boolean flat = !isBlock || isFood;
             float scale = flat ? 0.375f : 0.5f;
             float size = flat ? 0.1875f : 0.25f;
-            return new PlaceMatDefinition(new Vec2(size, size), null, null, scale, flat, null, true, true);
+            return new PlaceMatDefinition(new Vec2(size, size), null, null, scale, flat, null, true, true, List.of());
         }
 
         public float getItemHeight() {
@@ -251,6 +356,74 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
                 return 1 / 16f;
             }
             return Math.max(size.x, size.y);
+        }
+
+        public PlaceMatDefinition resolve(ConditionContext context) {
+            if (conditions.isEmpty()) {
+                return this;
+            }
+
+            record MatchedOverride(int depth, int priority, int order, PlaceMatConditionDefinition def) {}
+
+            List<MatchedOverride> matched = new ArrayList<>();
+            int[] orderCounter = new int[1];
+
+            class Collector {
+                void collect(List<PlaceMatConditionDefinition> condList, int depth) {
+                    for (PlaceMatConditionDefinition condDef : condList) {
+                        if (condDef.condition().test(context)) {
+                            matched.add(new MatchedOverride(depth, condDef.condition().getType().getPriority(), orderCounter[0]++, condDef));
+                            if (!condDef.conditions().isEmpty()) {
+                                collect(condDef.conditions(), depth + 1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            new Collector().collect(conditions, 0);
+
+            if (matched.isEmpty()) {
+                return this;
+            }
+
+            // Quality comparator: higher depth wins; if equal depth, higher hierarchy priority (lower priority index) wins; if equal, later order wins.
+            Comparator<MatchedOverride> comparator = (a, b) -> {
+                if (a.depth != b.depth) return Integer.compare(a.depth, b.depth);
+                if (a.priority != b.priority) return Integer.compare(b.priority, a.priority);
+                return Integer.compare(a.order, b.order);
+            };
+
+            Vec2 effectiveSize = this.size;
+            ResourceLocation effectiveModel = this.model;
+            float effectiveScale = this.scale;
+            boolean effectiveFlat = this.flat;
+            Float effectiveItemHeight = this.itemHeight;
+            boolean effectiveStackable = this.stackable;
+            boolean effectiveAllowsStackingOnTop = this.allowsStackingOnTop;
+
+            MatchedOverride bestSize = matched.stream().filter(m -> m.def.size() != null).max(comparator).orElse(null);
+            if (bestSize != null) effectiveSize = bestSize.def.size();
+
+            MatchedOverride bestModel = matched.stream().filter(m -> m.def.model() != null).max(comparator).orElse(null);
+            if (bestModel != null) effectiveModel = bestModel.def.model();
+
+            MatchedOverride bestScale = matched.stream().filter(m -> m.def.scale() != null).max(comparator).orElse(null);
+            if (bestScale != null && bestScale.def.scale() != null) effectiveScale = bestScale.def.scale();
+
+            MatchedOverride bestFlat = matched.stream().filter(m -> m.def.flat() != null).max(comparator).orElse(null);
+            if (bestFlat != null && bestFlat.def.flat() != null) effectiveFlat = bestFlat.def.flat();
+
+            MatchedOverride bestHeight = matched.stream().filter(m -> m.def.itemHeight() != null).max(comparator).orElse(null);
+            if (bestHeight != null) effectiveItemHeight = bestHeight.def.itemHeight();
+
+            MatchedOverride bestStackable = matched.stream().filter(m -> m.def.stackable() != null).max(comparator).orElse(null);
+            if (bestStackable != null && bestStackable.def.stackable() != null) effectiveStackable = bestStackable.def.stackable();
+
+            MatchedOverride bestAllowsStacking = matched.stream().filter(m -> m.def.allowsStackingOnTop() != null).max(comparator).orElse(null);
+            if (bestAllowsStacking != null && bestAllowsStacking.def.allowsStackingOnTop() != null) effectiveAllowsStackingOnTop = bestAllowsStacking.def.allowsStackingOnTop();
+
+            return new PlaceMatDefinition(effectiveSize, effectiveModel, this.modelRotten, effectiveScale, effectiveFlat, effectiveItemHeight, effectiveStackable, effectiveAllowsStackingOnTop, List.of());
         }
     }
 }

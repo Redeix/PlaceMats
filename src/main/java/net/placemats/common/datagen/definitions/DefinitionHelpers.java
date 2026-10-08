@@ -65,7 +65,7 @@ public class DefinitionHelpers {
             .scale(1f)
             .flat(false)
             .model(Definition.parentModel(modelPath, "place_mats:render/3x3_food", new String[]{"0", texturePath}))
-            .modelRotten(Definition.parentModel(modelRottenPath, "place_mats:render/3x3_food", new String[]{"0", textureRottenPath}));
+            .condition(Condition.isRotten(), d -> d.model(Definition.parentModel(modelRottenPath, "place_mats:render/3x3_food", new String[]{"0", textureRottenPath})));
     }
 
     /**

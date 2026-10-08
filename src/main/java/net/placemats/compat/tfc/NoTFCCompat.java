@@ -20,6 +20,8 @@ public class NoTFCCompat implements TFCCompat {
     @Override public void applyTrait(ItemStack stack, Object trait) {}
     @Override public void removeTrait(ItemStack stack, Object trait) {}
     @Override public Object getTrait(ResourceLocation id) { return null; }
+    @Override public boolean hasTrait(ItemStack stack, ResourceLocation traitId) { return false; }
+    @Override public boolean hasTrait(ItemStack stack, Object trait) { return false; }
     @Override public boolean isRotten(ItemStack stack) { return false; }
     @Override public float getAverageTemperature(Level level, BlockPos pos) { return 0; }
     @Override public boolean hasFoodCapability(ItemStack stack) { return false; }

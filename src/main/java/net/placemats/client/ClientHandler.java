@@ -146,7 +146,7 @@ public class ClientHandler {
                     }
 
                     if (targetedRange[0] != null && pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(held.getItem());
+                        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRange[0]);
                         if (pmb.isDisableCustomModels() || targetedRange[0].disableCustomModels()) {
                             def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
                         }
@@ -333,7 +333,7 @@ public class ClientHandler {
                 if (event.getLevel().isClientSide) {
                     final PlacementRange[] targetedRangeArr = { targetedRange };
                     if (targetedRangeArr[0] != null) {
-                        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(held.getItem());
+                        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRangeArr[0]);
                         if (pmb != null && (pmb.isDisableCustomModels() || targetedRangeArr[0].disableCustomModels())) {
                             def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
                         }
