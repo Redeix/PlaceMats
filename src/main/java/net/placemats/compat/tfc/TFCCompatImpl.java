@@ -2,12 +2,14 @@ package net.placemats.compat.tfc;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.dries007.tfc.common.capabilities.Capabilities;
 import net.dries007.tfc.common.capabilities.food.FoodCapability;
 import net.dries007.tfc.common.capabilities.food.FoodData;
 import net.dries007.tfc.common.capabilities.food.FoodHandler;
 import net.dries007.tfc.common.capabilities.food.FoodTrait;
 import net.dries007.tfc.common.capabilities.food.IFood;
 import net.dries007.tfc.common.capabilities.food.Nutrient;
+import net.dries007.tfc.common.items.FluidContainerItem;
 import net.dries007.tfc.common.recipes.RecipeHelpers;
 import net.dries007.tfc.config.TFCConfig;
 import net.dries007.tfc.util.Helpers;
@@ -15,6 +17,8 @@ import net.dries007.tfc.util.calendar.Calendars;
 import net.dries007.tfc.util.calendar.ICalendar;
 import net.dries007.tfc.util.climate.Climate;
 import net.dries007.tfc.common.recipes.outputs.ItemStackProvider;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.IFluidHandler;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -220,6 +224,47 @@ public class TFCCompatImpl implements TFCCompat {
     @Override
     public Block createPlaceMatAttachedStairsBlock(Block.Properties properties) {
         return new TFCPlaceMatBlock.AttachedStairs(properties);
+    }
+
+    @Override
+    public FluidStack getContainedFluid(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return FluidStack.EMPTY;
+        if (stack.hasTag() && stack.getTag() != null) {
+            if (stack.getTag().contains("fluid", 10)) {
+                FluidStack fromNbt = FluidStack.loadFluidStackFromNBT(stack.getTag().getCompound("fluid"));
+                if (!fromNbt.isEmpty()) return fromNbt;
+            } else if (stack.getTag().contains("Fluid", 10)) {
+                FluidStack fromNbt = FluidStack.loadFluidStackFromNBT(stack.getTag().getCompound("Fluid"));
+                if (!fromNbt.isEmpty()) return fromNbt;
+            }
+        }
+        ItemStack single = stack.getCount() == 1 ? stack : stack.copyWithCount(1);
+        IFluidHandler handler = Helpers.getCapability(single, Capabilities.FLUID_ITEM);
+        if (handler != null) {
+            for (int i = 0; i < handler.getTanks(); i++) {
+                FluidStack fluid = handler.getFluidInTank(i);
+                if (!fluid.isEmpty()) return fluid;
+            }
+        }
+        IFluidHandler fluidHandler = Helpers.getCapability(single, Capabilities.FLUID);
+        if (fluidHandler != null) {
+            for (int i = 0; i < fluidHandler.getTanks(); i++) {
+                FluidStack fluid = fluidHandler.getFluidInTank(i);
+                if (!fluid.isEmpty()) return fluid;
+            }
+        }
+        return FluidStack.EMPTY;
+    }
+
+    @Override
+    public boolean isFluidContainer(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        if (stack.getItem() instanceof FluidContainerItem) {
+            return true;
+        }
+        ItemStack single = stack.getCount() == 1 ? stack : stack.copyWithCount(1);
+        return Helpers.getCapability(single, Capabilities.FLUID_ITEM) != null
+            || Helpers.getCapability(single, Capabilities.FLUID) != null;
     }
 
     private static class SimulatedCraftingContainer implements CraftingContainer {

@@ -2,6 +2,7 @@ package net.placemats.common.data.resource;
 
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -38,6 +39,8 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.joml.Vector3f;
+import com.google.gson.JsonArray;
 
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.SyncPlaceMatDefinitionsPacket;
@@ -214,13 +217,26 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
         for (Map.Entry<ResourceLocation, JsonElement> entry : object.entrySet()) {
             try {
                 JsonObject json = entry.getValue().getAsJsonObject();
-                float itemWidth = json.get("item_width").getAsFloat();
-                float itemDepth = json.get("item_depth").getAsFloat();
+                Float width = null;
+                Float depth = null;
+                Float height = null;
+                if (json.has("size") && json.get("size").isJsonArray()) {
+                    JsonArray arr = json.getAsJsonArray("size");
+                    if (!arr.isEmpty()) width = arr.get(0).getAsFloat();
+                    if (arr.size() >= 2) depth = arr.get(1).getAsFloat();
+                    if (arr.size() >= 3) height = arr.get(2).getAsFloat();
+                }
+                if (width == null && json.has("item_width")) width = json.get("item_width").getAsFloat();
+                if (depth == null && json.has("item_depth")) depth = json.get("item_depth").getAsFloat();
+                if (height == null && json.has("item_height")) height = json.get("item_height").getAsFloat();
+                if (height == null && json.has("height")) height = json.get("height").getAsFloat();
+
+                float itemWidth = width != null ? width : 0.25f;
+                float itemDepth = depth != null ? depth : 0.25f;
                 ResourceLocation model = json.has("model") ? ResourceLocation.parse(json.get("model").getAsString()) : null;
                 ResourceLocation modelRotten = json.has("model_rotten") ? ResourceLocation.parse(json.get("model_rotten").getAsString()) : null;
-                Float itemHeight = json.has("item_height") ? json.get("item_height").getAsFloat() : null;
 
-                PlaceMatDefinition def = createDefinition(json, itemWidth, itemDepth, model, modelRotten, itemHeight);
+                PlaceMatDefinition def = createDefinition(json, itemWidth, itemDepth, model, modelRotten, height);
 
                 if (json.has("item")) {
                     ResourceLocation itemLoc = ResourceLocation.parse(json.get("item").getAsString());
@@ -263,11 +279,108 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
 
     private static PlaceMatDefinition createDefinition(JsonObject json, float width, float depth, ResourceLocation model, ResourceLocation modelRotten, Float itemHeight) {
         boolean flat = !json.has("lay_flat") || json.get("lay_flat").getAsBoolean();
-        float scale = json.has("item_scale") ? json.get("item_scale").getAsFloat() : (flat ? 0.375f : 0.5f);
+        float scale;
+        if (json.has("scale")) {
+            scale = json.get("scale").getAsFloat();
+        } else if (json.has("item_scale")) {
+            scale = json.get("item_scale").getAsFloat();
+        } else {
+            scale = flat ? 0.375f : 0.5f;
+        }
         boolean stackable = !json.has("stackable") || json.get("stackable").getAsBoolean();
         boolean allowsStackingOnTop = !json.has("allows_stacking_on_top") || json.get("allows_stacking_on_top").getAsBoolean();
+        boolean ignoreItemTints = parseIgnoreItemTints(json);
+        String fluidTextureIndex = parseFluidTextureIndex(json);
+        Map<Integer, Integer> tintColors = parseTintColors(json);
+        Vector3f pos = parseVector3f(json, "pos", "offset", "position");
+        Vector3f rot = parseVector3f(json, "rot", "rotation");
         List<PlaceMatConditionDefinition> conditions = parseConditions(json);
-        return new PlaceMatDefinition(new Vec2(width * (flat ? 0.75f : 1.0f), depth * (flat ? 0.75f : 1.0f)), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, conditions);
+        return new PlaceMatDefinition(new Vec2(width * (flat ? 0.75f : 1.0f), depth * (flat ? 0.75f : 1.0f)), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, ignoreItemTints, fluidTextureIndex, tintColors, pos, rot, conditions);
+    }
+
+    public static Vector3f parseVector3f(JsonObject json, String primaryKey, String... alternateKeys) {
+        JsonElement elem = json.get(primaryKey);
+        if (elem == null) {
+            for (String alt : alternateKeys) {
+                if (json.has(alt)) {
+                    elem = json.get(alt);
+                    break;
+                }
+            }
+        }
+        if (elem != null) {
+            if (elem.isJsonArray() && elem.getAsJsonArray().size() >= 3) {
+                JsonArray arr = elem.getAsJsonArray();
+                return new Vector3f(arr.get(0).getAsFloat(), arr.get(1).getAsFloat(), arr.get(2).getAsFloat());
+            } else if (elem.isJsonObject()) {
+                JsonObject obj = elem.getAsJsonObject();
+                float x = obj.has("x") ? obj.get("x").getAsFloat() : (obj.has("roll") ? obj.get("roll").getAsFloat() : 0f);
+                float y = obj.has("y") ? obj.get("y").getAsFloat() : (obj.has("pitch") ? obj.get("pitch").getAsFloat() : 0f);
+                float z = obj.has("z") ? obj.get("z").getAsFloat() : (obj.has("yaw") ? obj.get("yaw").getAsFloat() : 0f);
+                return new Vector3f(x, y, z);
+            }
+        }
+        return null;
+    }
+
+    public static boolean parseIgnoreItemTints(JsonObject json) {
+        if (json.has("ignore_item_tints")) {
+            return json.get("ignore_item_tints").getAsBoolean();
+        } else if (json.has("override_tints")) {
+            return json.get("override_tints").getAsBoolean();
+        } else if (json.has("ignore_tints")) {
+            return json.get("ignore_tints").getAsBoolean();
+        }
+        return false;
+    }
+
+    public static String parseFluidTextureIndex(JsonObject json) {
+        if (json.has("fluid_texture_index")) {
+            return json.get("fluid_texture_index").getAsString();
+        } else if (json.has("fluid_texture")) {
+            return json.get("fluid_texture").getAsString();
+        } else if (json.has("fluid_texture_key")) {
+            return json.get("fluid_texture_key").getAsString();
+        }
+        return null;
+    }
+
+    public static Map<Integer, Integer> parseTintColors(JsonObject json) {
+        Map<Integer, Integer> map = new HashMap<>();
+        JsonObject obj = null;
+        if (json.has("tint_colors") && json.get("tint_colors").isJsonObject()) {
+            obj = json.getAsJsonObject("tint_colors");
+        } else if (json.has("colors") && json.get("colors").isJsonObject()) {
+            obj = json.getAsJsonObject("colors");
+        } else if (json.has("tints") && json.get("tints").isJsonObject()) {
+            obj = json.getAsJsonObject("tints");
+        }
+        if (obj != null) {
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                try {
+                    int idx = Integer.parseInt(entry.getKey());
+                    int color = getColor(entry);
+                    map.put(idx, color);
+                } catch (Exception ignored) {}
+            }
+        }
+        return map.isEmpty() ? Map.of() : Collections.unmodifiableMap(map);
+    }
+
+    public static int getColor(Map.Entry<String, JsonElement> entry)
+    {
+        JsonElement val = entry.getValue();
+        int color;
+        if (val.isJsonPrimitive() && val.getAsJsonPrimitive().isString()) {
+            String s = val.getAsString();
+            if (s.startsWith("#")) s = s.substring(1);
+            long num = Long.parseLong(s, 16);
+            if (s.length() <= 6) num |= 0xFF000000L;
+            color = (int) num;
+        } else {
+            color = val.getAsInt();
+        }
+        return color;
     }
 
     private static List<PlaceMatConditionDefinition> parseConditions(JsonObject json) {
@@ -280,20 +393,46 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
                 JsonObject condObj = el.getAsJsonObject();
                 Condition condition = Condition.fromJson(condObj);
                 Vec2 size = null;
-                if (condObj.has("item_width") && condObj.has("item_depth")) {
+                Float itemHeight = null;
+                if (condObj.has("size") && condObj.get("size").isJsonArray()) {
+                    JsonArray arr = condObj.getAsJsonArray("size");
+                    float w = !arr.isEmpty() ? arr.get(0).getAsFloat() : 0.25f;
+                    float d = arr.size() >= 2 ? arr.get(1).getAsFloat() : 0.25f;
+                    if (arr.size() >= 3) {
+                        itemHeight = arr.get(2).getAsFloat();
+                    }
+                    boolean flat = !condObj.has("lay_flat") || condObj.get("lay_flat").getAsBoolean();
+                    size = new Vec2(w * (flat ? 0.75f : 1.0f), d * (flat ? 0.75f : 1.0f));
+                } else if (condObj.has("item_width") && condObj.has("item_depth")) {
                     float w = condObj.get("item_width").getAsFloat();
                     float d = condObj.get("item_depth").getAsFloat();
                     boolean flat = !condObj.has("lay_flat") || condObj.get("lay_flat").getAsBoolean();
                     size = new Vec2(w * (flat ? 0.75f : 1.0f), d * (flat ? 0.75f : 1.0f));
                 }
                 ResourceLocation model = condObj.has("model") ? ResourceLocation.parse(condObj.get("model").getAsString()) : null;
-                Float scale = condObj.has("item_scale") ? condObj.get("item_scale").getAsFloat() : null;
+                Float scale = null;
+                if (condObj.has("scale")) {
+                    scale = condObj.get("scale").getAsFloat();
+                } else if (condObj.has("item_scale")) {
+                    scale = condObj.get("item_scale").getAsFloat();
+                }
                 Boolean flat = condObj.has("lay_flat") ? condObj.get("lay_flat").getAsBoolean() : null;
-                Float itemHeight = condObj.has("item_height") ? condObj.get("item_height").getAsFloat() : null;
+                if (itemHeight == null) {
+                    if (condObj.has("item_height")) {
+                        itemHeight = condObj.get("item_height").getAsFloat();
+                    } else if (condObj.has("height")) {
+                        itemHeight = condObj.get("height").getAsFloat();
+                    }
+                }
                 Boolean stackable = condObj.has("stackable") ? condObj.get("stackable").getAsBoolean() : null;
                 Boolean allowsStackingOnTop = condObj.has("allows_stacking_on_top") ? condObj.get("allows_stacking_on_top").getAsBoolean() : null;
+                Boolean ignoreItemTints = condObj.has("ignore_item_tints") ? Boolean.valueOf(condObj.get("ignore_item_tints").getAsBoolean()) : (condObj.has("override_tints") ? condObj.get("override_tints").getAsBoolean() : null);
+                String fluidTextureIndex = parseFluidTextureIndex(condObj);
+                Map<Integer, Integer> tintColors = parseTintColors(condObj);
+                Vector3f pos = parseVector3f(condObj, "pos", "offset", "position");
+                Vector3f rot = parseVector3f(condObj, "rot", "rotation");
                 List<PlaceMatConditionDefinition> nested = parseConditions(condObj);
-                list.add(new PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, nested));
+                list.add(new PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, ignoreItemTints, fluidTextureIndex, tintColors.isEmpty() ? null : tintColors, pos, rot, nested));
             }
         }
         return list;
@@ -308,6 +447,11 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             @Nullable Float itemHeight,
             @Nullable Boolean stackable,
             @Nullable Boolean allowsStackingOnTop,
+            @Nullable Boolean ignoreItemTints,
+            @Nullable String fluidTextureIndex,
+            @Nullable Map<Integer, Integer> tintColors,
+            @Nullable Vector3f pos,
+            @Nullable Vector3f rot,
             List<PlaceMatConditionDefinition> conditions) {
 
         public PlaceMatConditionDefinition(
@@ -319,7 +463,35 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
                 @Nullable Float itemHeight,
                 @Nullable Boolean stackable,
                 @Nullable Boolean allowsStackingOnTop) {
-            this(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, List.of());
+            this(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, null, null, null, null, null, List.of());
+        }
+
+        public PlaceMatConditionDefinition(
+                Condition condition,
+                @Nullable Vec2 size,
+                @Nullable ResourceLocation model,
+                @Nullable Float scale,
+                @Nullable Boolean flat,
+                @Nullable Float itemHeight,
+                @Nullable Boolean stackable,
+                @Nullable Boolean allowsStackingOnTop,
+                List<PlaceMatConditionDefinition> conditions) {
+            this(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, null, null, null, null, null, conditions);
+        }
+
+        public PlaceMatConditionDefinition(
+                Condition condition,
+                @Nullable Vec2 size,
+                @Nullable ResourceLocation model,
+                @Nullable Float scale,
+                @Nullable Boolean flat,
+                @Nullable Float itemHeight,
+                @Nullable Boolean stackable,
+                @Nullable Boolean allowsStackingOnTop,
+                @Nullable String fluidTextureIndex,
+                @Nullable Map<Integer, Integer> tintColors,
+                List<PlaceMatConditionDefinition> conditions) {
+            this(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, null, fluidTextureIndex, tintColors, null, null, conditions);
         }
     }
 
@@ -332,10 +504,27 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             @Nullable Float itemHeight,
             boolean stackable,
             boolean allowsStackingOnTop,
+            boolean ignoreItemTints,
+            @Nullable String fluidTextureIndex,
+            Map<Integer, Integer> tintColors,
+            @Nullable Vector3f pos,
+            @Nullable Vector3f rot,
             List<PlaceMatConditionDefinition> conditions) {
 
         public PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable, boolean allowsStackingOnTop) {
-            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, List.of());
+            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, false, null, Map.of(), null, null, List.of());
+        }
+
+        public PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable, boolean allowsStackingOnTop, List<PlaceMatConditionDefinition> conditions) {
+            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, false, null, Map.of(), null, null, conditions);
+        }
+
+        public PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable, boolean allowsStackingOnTop, @Nullable String fluidTextureIndex, Map<Integer, Integer> tintColors, List<PlaceMatConditionDefinition> conditions) {
+            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, false, fluidTextureIndex, tintColors, null, null, conditions);
+        }
+
+        public PlaceMatDefinition(Vec2 size, ResourceLocation model, ResourceLocation modelRotten, float scale, boolean flat, @Nullable Float itemHeight, boolean stackable, boolean allowsStackingOnTop, @Nullable String fluidTextureIndex, Map<Integer, Integer> tintColors, @Nullable Vector3f pos, @Nullable Vector3f rot, List<PlaceMatConditionDefinition> conditions) {
+            this(size, model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, false, fluidTextureIndex, tintColors, pos, rot, conditions);
         }
 
         public static PlaceMatDefinition DEFAULT(Item item) {
@@ -345,7 +534,7 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             boolean flat = !isBlock || isFood;
             float scale = flat ? 0.375f : 0.5f;
             float size = flat ? 0.1875f : 0.25f;
-            return new PlaceMatDefinition(new Vec2(size, size), null, null, scale, flat, null, true, true, List.of());
+            return new PlaceMatDefinition(new Vec2(size, size), null, null, scale, flat, null, true, true, false, null, Map.of(), null, null, List.of());
         }
 
         public float getItemHeight() {
@@ -401,6 +590,11 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             Float effectiveItemHeight = this.itemHeight;
             boolean effectiveStackable = this.stackable;
             boolean effectiveAllowsStackingOnTop = this.allowsStackingOnTop;
+            boolean effectiveIgnoreItemTints = this.ignoreItemTints;
+            String effectiveFluidTextureIndex = this.fluidTextureIndex;
+            Map<Integer, Integer> effectiveTintColors = new HashMap<>(this.tintColors != null ? this.tintColors : Map.of());
+            Vector3f effectivePos = this.pos;
+            Vector3f effectiveRot = this.rot;
 
             MatchedOverride bestSize = matched.stream().filter(m -> m.def.size() != null).max(comparator).orElse(null);
             if (bestSize != null) effectiveSize = bestSize.def.size();
@@ -423,7 +617,23 @@ public class DefinitionManager extends SimpleJsonResourceReloadListener {
             MatchedOverride bestAllowsStacking = matched.stream().filter(m -> m.def.allowsStackingOnTop() != null).max(comparator).orElse(null);
             if (bestAllowsStacking != null && bestAllowsStacking.def.allowsStackingOnTop() != null) effectiveAllowsStackingOnTop = bestAllowsStacking.def.allowsStackingOnTop();
 
-            return new PlaceMatDefinition(effectiveSize, effectiveModel, this.modelRotten, effectiveScale, effectiveFlat, effectiveItemHeight, effectiveStackable, effectiveAllowsStackingOnTop, List.of());
+            MatchedOverride bestIgnoreTints = matched.stream().filter(m -> m.def.ignoreItemTints() != null).max(comparator).orElse(null);
+            if (bestIgnoreTints != null && bestIgnoreTints.def.ignoreItemTints() != null) effectiveIgnoreItemTints = bestIgnoreTints.def.ignoreItemTints();
+
+            MatchedOverride bestFluidTex = matched.stream().filter(m -> m.def.fluidTextureIndex() != null).max(comparator).orElse(null);
+            if (bestFluidTex != null) effectiveFluidTextureIndex = bestFluidTex.def.fluidTextureIndex();
+
+            matched.stream().filter(m -> m.def.tintColors() != null && !m.def.tintColors().isEmpty())
+                    .sorted(comparator)
+                    .forEach(m -> effectiveTintColors.putAll(m.def.tintColors()));
+
+            MatchedOverride bestPos = matched.stream().filter(m -> m.def.pos() != null).max(comparator).orElse(null);
+            if (bestPos != null) effectivePos = bestPos.def.pos();
+
+            MatchedOverride bestRot = matched.stream().filter(m -> m.def.rot() != null).max(comparator).orElse(null);
+            if (bestRot != null) effectiveRot = bestRot.def.rot();
+
+            return new PlaceMatDefinition(effectiveSize, effectiveModel, this.modelRotten, effectiveScale, effectiveFlat, effectiveItemHeight, effectiveStackable, effectiveAllowsStackingOnTop, effectiveIgnoreItemTints, effectiveFluidTextureIndex, effectiveTintColors.isEmpty() ? Map.of() : Collections.unmodifiableMap(effectiveTintColors), effectivePos, effectiveRot, List.of());
         }
     }
 }

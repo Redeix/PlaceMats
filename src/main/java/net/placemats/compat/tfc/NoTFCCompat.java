@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import com.google.gson.JsonElement;
+import net.minecraftforge.fluids.FluidStack;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -40,5 +41,11 @@ public class NoTFCCompat implements TFCCompat {
     }
     @Override public Block createPlaceMatAttachedStairsBlock(Block.Properties properties) {
         return new PlaceMatAttachedStairsBlock(properties);
+    }
+    @Override public FluidStack getContainedFluid(ItemStack stack) {
+        return FluidStack.EMPTY;
+    }
+    @Override public boolean isFluidContainer(ItemStack stack) {
+        return false;
     }
 }

@@ -14,6 +14,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.phys.Vec2;
 import net.minecraftforge.network.NetworkEvent;
 import net.minecraftforge.registries.ForgeRegistries;
+import org.joml.Vector3f;
 
 import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.common.datagen.definitions.Condition;
@@ -56,6 +57,29 @@ public class SyncPlaceMatDefinitionsPacket {
             buffer.writeFloat(def.itemHeight());
         buffer.writeBoolean(def.stackable());
         buffer.writeBoolean(def.allowsStackingOnTop());
+        buffer.writeBoolean(def.ignoreItemTints());
+        buffer.writeBoolean(def.fluidTextureIndex() != null);
+        if (def.fluidTextureIndex() != null)
+            buffer.writeUtf(def.fluidTextureIndex());
+        buffer.writeInt(def.tintColors() != null ? def.tintColors().size() : 0);
+        if (def.tintColors() != null) {
+            def.tintColors().forEach((k, v) -> {
+                buffer.writeInt(k);
+                buffer.writeInt(v);
+            });
+        }
+        buffer.writeBoolean(def.pos() != null);
+        if (def.pos() != null) {
+            buffer.writeFloat(def.pos().x);
+            buffer.writeFloat(def.pos().y);
+            buffer.writeFloat(def.pos().z);
+        }
+        buffer.writeBoolean(def.rot() != null);
+        if (def.rot() != null) {
+            buffer.writeFloat(def.rot().x);
+            buffer.writeFloat(def.rot().y);
+            buffer.writeFloat(def.rot().z);
+        }
         buffer.writeInt(def.conditions().size());
         for (DefinitionManager.PlaceMatConditionDefinition condDef : def.conditions()) {
             encodeConditionDefinition(condDef, buffer);
@@ -87,6 +111,31 @@ public class SyncPlaceMatDefinitionsPacket {
         buffer.writeBoolean(def.allowsStackingOnTop() != null);
         if (def.allowsStackingOnTop() != null)
             buffer.writeBoolean(def.allowsStackingOnTop());
+        buffer.writeBoolean(def.ignoreItemTints() != null);
+        if (def.ignoreItemTints() != null)
+            buffer.writeBoolean(def.ignoreItemTints());
+        buffer.writeBoolean(def.fluidTextureIndex() != null);
+        if (def.fluidTextureIndex() != null)
+            buffer.writeUtf(def.fluidTextureIndex());
+        buffer.writeInt(def.tintColors() != null ? def.tintColors().size() : 0);
+        if (def.tintColors() != null) {
+            def.tintColors().forEach((k, v) -> {
+                buffer.writeInt(k);
+                buffer.writeInt(v);
+            });
+        }
+        buffer.writeBoolean(def.pos() != null);
+        if (def.pos() != null) {
+            buffer.writeFloat(def.pos().x);
+            buffer.writeFloat(def.pos().y);
+            buffer.writeFloat(def.pos().z);
+        }
+        buffer.writeBoolean(def.rot() != null);
+        if (def.rot() != null) {
+            buffer.writeFloat(def.rot().x);
+            buffer.writeFloat(def.rot().y);
+            buffer.writeFloat(def.rot().z);
+        }
         buffer.writeInt(def.conditions().size());
         for (DefinitionManager.PlaceMatConditionDefinition child : def.conditions()) {
             encodeConditionDefinition(child, buffer);
@@ -123,12 +172,21 @@ public class SyncPlaceMatDefinitionsPacket {
         Float itemHeight = buffer.readBoolean() ? buffer.readFloat() : null;
         boolean stackable = buffer.readBoolean();
         boolean allowsStackingOnTop = buffer.readBoolean();
+        boolean ignoreItemTints = buffer.readBoolean();
+        String fluidTextureIndex = buffer.readBoolean() ? buffer.readUtf() : null;
+        int tintCount = buffer.readInt();
+        Map<Integer, Integer> tintColors = new HashMap<>(tintCount);
+        for (int i = 0; i < tintCount; i++) {
+            tintColors.put(buffer.readInt(), buffer.readInt());
+        }
+        Vector3f pos = buffer.readBoolean() ? new Vector3f(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()) : null;
+        Vector3f rot = buffer.readBoolean() ? new Vector3f(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()) : null;
         int condSize = buffer.readInt();
         List<DefinitionManager.PlaceMatConditionDefinition> conditions = new ArrayList<>(condSize);
         for (int i = 0; i < condSize; i++) {
             conditions.add(decodeConditionDefinition(buffer));
         }
-        return new DefinitionManager.PlaceMatDefinition(new Vec2(width, depth), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, conditions);
+        return new DefinitionManager.PlaceMatDefinition(new Vec2(width, depth), model, modelRotten, scale, flat, itemHeight, stackable, allowsStackingOnTop, ignoreItemTints, fluidTextureIndex, tintColors.isEmpty() ? Map.of() : tintColors, pos, rot, conditions);
     }
 
     private static DefinitionManager.PlaceMatConditionDefinition decodeConditionDefinition(FriendlyByteBuf buffer) {
@@ -140,12 +198,21 @@ public class SyncPlaceMatDefinitionsPacket {
         Float itemHeight = buffer.readBoolean() ? buffer.readFloat() : null;
         Boolean stackable = buffer.readBoolean() ? buffer.readBoolean() : null;
         Boolean allowsStackingOnTop = buffer.readBoolean() ? buffer.readBoolean() : null;
+        Boolean ignoreItemTints = buffer.readBoolean() ? buffer.readBoolean() : null;
+        String fluidTextureIndex = buffer.readBoolean() ? buffer.readUtf() : null;
+        int tintCount = buffer.readInt();
+        Map<Integer, Integer> tintColors = new HashMap<>(tintCount);
+        for (int i = 0; i < tintCount; i++) {
+            tintColors.put(buffer.readInt(), buffer.readInt());
+        }
+        Vector3f pos = buffer.readBoolean() ? new Vector3f(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()) : null;
+        Vector3f rot = buffer.readBoolean() ? new Vector3f(buffer.readFloat(), buffer.readFloat(), buffer.readFloat()) : null;
         int childSize = buffer.readInt();
         List<DefinitionManager.PlaceMatConditionDefinition> children = new ArrayList<>(childSize);
         for (int i = 0; i < childSize; i++) {
             children.add(decodeConditionDefinition(buffer));
         }
-        return new DefinitionManager.PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, children);
+        return new DefinitionManager.PlaceMatConditionDefinition(condition, size, model, scale, flat, itemHeight, stackable, allowsStackingOnTop, ignoreItemTints, fluidTextureIndex, tintColors.isEmpty() ? null : tintColors, pos, rot, children);
     }
 
     public static void handle(SyncPlaceMatDefinitionsPacket packet, Supplier<NetworkEvent.Context> contextSupplier) {

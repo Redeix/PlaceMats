@@ -1,5 +1,9 @@
 package net.placemats.compat.kjs;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import net.minecraft.resources.ResourceLocation;
@@ -12,7 +16,10 @@ import dev.latvian.mods.kubejs.generator.DataJsonGenerator;
 import dev.latvian.mods.kubejs.typings.Info;
 
 import net.placemats.common.data.resource.DefinitionManager;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3f;
 
+@SuppressWarnings("unused")
 public class PlaceMatDefinitionBuilder {
     public final ResourceLocation id;
     private String item;
@@ -25,6 +32,11 @@ public class PlaceMatDefinitionBuilder {
     private Float itemHeight;
     private boolean stackable = true;
     private boolean allowsStackingOnTop = true;
+    private Boolean ignoreItemTints;
+    private String fluidTextureIndex;
+    private final Map<Integer, Integer> tintColors = new LinkedHashMap<>();
+    private Vector3f pos;
+    private Vector3f rot;
     private final JsonObject textures = new JsonObject();
     private final JsonObject texturesRotten = new JsonObject();
 
@@ -48,6 +60,38 @@ public class PlaceMatDefinitionBuilder {
     public PlaceMatDefinitionBuilder depth(float depth) {
         this.itemDepth = depth;
         return this;
+    }
+
+    @Info("Sets the physical width and depth of the item box.")
+    public PlaceMatDefinitionBuilder size(float width, float depth) {
+        this.itemWidth = width;
+        this.itemDepth = depth;
+        return this;
+    }
+
+    @Info("Sets the physical width, depth, and height of the item box.")
+    public PlaceMatDefinitionBuilder size(float width, float depth, float height) {
+        this.itemWidth = width;
+        this.itemDepth = depth;
+        this.itemHeight = height;
+        return this;
+    }
+
+    @Info("Sets the manual model position offset (x, y, z) where 1f is 16px.")
+    public PlaceMatDefinitionBuilder pos(float x, float y, float z) {
+        this.pos = new org.joml.Vector3f(x, y, z);
+        return this;
+    }
+
+    @Info("Sets the manual model rotation offset (roll, pitch, yaw) in degrees.")
+    public PlaceMatDefinitionBuilder rot(float roll, float pitch, float yaw) {
+        this.rot = new org.joml.Vector3f(roll, pitch, yaw);
+        return this;
+    }
+
+    @Info("Sets the manual model rotation offset (roll, pitch, yaw) in degrees.")
+    public PlaceMatDefinitionBuilder rotation(float roll, float pitch, float yaw) {
+        return rot(roll, pitch, yaw);
     }
 
     @Info("Sets the custom model for the item. (ResourceLocation)")
@@ -92,6 +136,111 @@ public class PlaceMatDefinitionBuilder {
         return this;
     }
 
+    @Info("Sets whether outside/base item tints should be ignored for this model.")
+    public PlaceMatDefinitionBuilder ignoreItemTints(boolean ignore) {
+        this.ignoreItemTints = ignore;
+        return this;
+    }
+
+    @Info("Sets whether outside/base item tints should be ignored for this model.")
+    public PlaceMatDefinitionBuilder ignoreItemTints() {
+        return ignoreItemTints(true);
+    }
+
+    @Info("Sets whether outside/base item tints should be ignored for this model.")
+    public PlaceMatDefinitionBuilder overrideTints(boolean override) {
+        return ignoreItemTints(override);
+    }
+
+    @Info("Sets whether outside/base item tints should be ignored for this model.")
+    public PlaceMatDefinitionBuilder overrideTints() {
+        return ignoreItemTints(true);
+    }
+
+    @Info("Sets the fluid texture index to be dynamically textured with contained fluid.")
+    public PlaceMatDefinitionBuilder fluidTexture(int textureIndex) {
+        this.fluidTextureIndex = String.valueOf(textureIndex);
+        return this;
+    }
+
+    @Info("Sets the fluid texture index to be dynamically textured with contained fluid.")
+    public PlaceMatDefinitionBuilder fluidTexture(String textureIndex) {
+        this.fluidTextureIndex = textureIndex;
+        return this;
+    }
+
+    @Info("Sets the fluid texture index to be dynamically textured with contained fluid.")
+    public PlaceMatDefinitionBuilder fluidTextureIndex(int textureIndex) {
+        return fluidTexture(textureIndex);
+    }
+
+    @Info("Sets the fluid texture index to be dynamically textured with contained fluid.")
+    public PlaceMatDefinitionBuilder fluidTextureIndex(String textureIndex) {
+        return fluidTexture(textureIndex);
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder tint(int tintIndex, int color) {
+        if ((color & 0xFF000000) == 0) {
+            color |= 0xFF000000;
+        }
+        this.tintColors.put(tintIndex, color);
+        return this;
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder tint(int tintIndex, int r, int g, int b) {
+        return tint(tintIndex, (255 << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder tint(int tintIndex, int a, int r, int g, int b) {
+        return tint(tintIndex, ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
+    }
+
+    @Info("Sets custom tint color from a hex string (e.g. '#fc8c03' or 'fc8c03').")
+    public PlaceMatDefinitionBuilder tint(int tintIndex, String hexColor) {
+        if (hexColor.startsWith("#")) {
+            hexColor = hexColor.substring(1);
+        }
+        long val = Long.parseLong(hexColor, 16);
+        if (hexColor.length() <= 6) {
+            val |= 0xFF000000L;
+        }
+        return tint(tintIndex, (int) val);
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder color(int tintIndex, int color) {
+        return tint(tintIndex, color);
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder color(int tintIndex, int r, int g, int b) {
+        return tint(tintIndex, r, g, b);
+    }
+
+    @Info("Sets custom tint color for a specific tint index.")
+    public PlaceMatDefinitionBuilder color(int tintIndex, int a, int r, int g, int b) {
+        return tint(tintIndex, a, r, g, b);
+    }
+
+    @Info("Sets custom tint color from a hex string.")
+    public PlaceMatDefinitionBuilder color(int tintIndex, String hexColor) {
+        return tint(tintIndex, hexColor);
+    }
+
+    @Info("Sets multiple tint colors.")
+    public PlaceMatDefinitionBuilder tints(java.util.Map<Integer, Integer> tints) {
+        tints.forEach(this::tint);
+        return this;
+    }
+
+    @Info("Sets multiple tint colors.")
+    public PlaceMatDefinitionBuilder colors(java.util.Map<Integer, Integer> colors) {
+        return tints(colors);
+    }
+
     @Info("Overrides a texture layer for the model.")
     public PlaceMatDefinitionBuilder modelTexture(String layer, String texture) {
         this.textures.addProperty(layer, texture);
@@ -108,24 +257,20 @@ public class PlaceMatDefinitionBuilder {
             java.util.Map<net.minecraft.tags.TagKey<Item>, DefinitionManager.PlaceMatDefinition> tagDefinitions) {
         if (item == null)
             return;
-        boolean flat = !Boolean.FALSE.equals(layFlat);
-        DefinitionManager.PlaceMatDefinition def = new DefinitionManager.PlaceMatDefinition(
-                new Vec2(itemWidth * (flat ? 0.75f : 1.0f), itemDepth * (flat ? 0.75f : 1.0f)),
-                model, modelRotten, itemScale != null ? itemScale : (flat ? 0.375f : 0.5f),
-                flat, itemHeight, stackable, allowsStackingOnTop);
+        DefinitionManager.PlaceMatDefinition def = getDef();
 
         // If textures are overridden, the model ResourceLocation in the definition needs to point to the generated one.
         if (textures.size() > 0) {
             def = new DefinitionManager.PlaceMatDefinition(def.size(), ResourceLocation.fromNamespaceAndPath("place_mats", "place_mat_item/" + id.getPath()), def.modelRotten(), def.scale(),
-                    def.flat(), def.itemHeight(), def.stackable(), def.allowsStackingOnTop());
+                    def.flat(), def.itemHeight(), def.stackable(), def.allowsStackingOnTop(), def.ignoreItemTints(), def.fluidTextureIndex(), def.tintColors(), pos, rot, java.util.List.of());
         }
         if (texturesRotten.size() > 0) {
             def = new DefinitionManager.PlaceMatDefinition(def.size(), def.model(), ResourceLocation.fromNamespaceAndPath("place_mats", "place_mat_item/" + id.getPath() + "_rotten"), def.scale(),
-                    def.flat(), def.itemHeight(), def.stackable(), def.allowsStackingOnTop());
+                    def.flat(), def.itemHeight(), def.stackable(), def.allowsStackingOnTop(), def.ignoreItemTints(), def.fluidTextureIndex(), def.tintColors(), pos, rot, java.util.List.of());
         }
 
         if (item.startsWith("#")) {
-            var tagKey = ForgeRegistries.ITEMS.tags().createTagKey(ResourceLocation.parse(item.substring(1)));
+            var tagKey = Objects.requireNonNull(ForgeRegistries.ITEMS.tags()).createTagKey(ResourceLocation.parse(item.substring(1)));
             tagDefinitions.put(tagKey, def);
         } else {
             Item i = ForgeRegistries.ITEMS.getValue(ResourceLocation.parse(item));
@@ -133,6 +278,16 @@ public class PlaceMatDefinitionBuilder {
                 definitions.put(i, def);
             }
         }
+    }
+
+    private DefinitionManager.@NotNull PlaceMatDefinition getDef()
+    {
+        boolean flat = !Boolean.FALSE.equals(layFlat);
+        boolean ignoreTints = Boolean.TRUE.equals(ignoreItemTints);
+        return new DefinitionManager.PlaceMatDefinition(
+                new Vec2(itemWidth * (flat ? 0.75f : 1.0f), itemDepth * (flat ? 0.75f : 1.0f)),
+                model, modelRotten, itemScale != null ? itemScale : (flat ? 0.375f : 0.5f),
+                flat, itemHeight, stackable, allowsStackingOnTop, ignoreTints, fluidTextureIndex, tintColors.isEmpty() ? Map.of() : Map.copyOf(tintColors), pos, rot, java.util.List.of());
     }
 
     public void generateDataJsons(DataJsonGenerator generator) {
@@ -174,8 +329,20 @@ public class PlaceMatDefinitionBuilder {
                 json.addProperty("item", item);
             }
         }
-        json.addProperty("item_width", itemWidth);
-        json.addProperty("item_depth", itemDepth);
+        if (itemWidth != 0.25f || itemDepth != 0.25f || itemHeight != null) {
+            JsonArray arr = new JsonArray();
+            arr.add(itemWidth);
+            arr.add(itemDepth);
+            if (itemHeight != null) {
+                arr.add(itemHeight);
+            }
+            json.add("size", arr);
+        } else {
+            JsonArray arr = new JsonArray();
+            arr.add(itemWidth);
+            arr.add(itemDepth);
+            json.add("size", arr);
+        }
 
         ResourceLocation modelLoc = model;
         if (textures.size() > 0) {
@@ -192,15 +359,36 @@ public class PlaceMatDefinitionBuilder {
         if (modelRottenLoc != null)
             json.addProperty("model_rotten", modelRottenLoc.toString());
         if (itemScale != null)
-            json.addProperty("item_scale", itemScale);
+            json.addProperty("scale", itemScale);
         if (layFlat != null)
             json.addProperty("lay_flat", layFlat);
-        if (itemHeight != null)
-            json.addProperty("item_height", itemHeight);
         if (!stackable)
             json.addProperty("stackable", false);
         if (!allowsStackingOnTop)
             json.addProperty("allows_stacking_on_top", false);
+        if (pos != null) {
+            JsonArray arr = new JsonArray();
+            arr.add(pos.x);
+            arr.add(pos.y);
+            arr.add(pos.z);
+            json.add("pos", arr);
+        }
+        if (rot != null) {
+            JsonArray arr = new JsonArray();
+            arr.add(rot.x);
+            arr.add(rot.y);
+            arr.add(rot.z);
+            json.add("rot", arr);
+        }
+        if (ignoreItemTints != null)
+            json.addProperty("ignore_item_tints", ignoreItemTints);
+        if (fluidTextureIndex != null)
+            json.addProperty("fluid_texture_index", fluidTextureIndex);
+        if (!tintColors.isEmpty()) {
+            JsonObject tints = new JsonObject();
+            tintColors.forEach((idx, col) -> tints.addProperty(String.valueOf(idx), col));
+            json.add("tint_colors", tints);
+        }
         return json;
     }
 }

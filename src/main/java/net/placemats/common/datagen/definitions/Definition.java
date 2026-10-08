@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import org.joml.Vector3f;
+
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -26,6 +28,11 @@ public class Definition {
     public Boolean flat;
     public Boolean stackable;
     public Boolean allowsStackingOnTop;
+    public Boolean ignoreItemTints;
+    public String fluidTextureIndex;
+    public final Map<Integer, Integer> tintColors = new LinkedHashMap<>();
+    public Vector3f pos;
+    public Vector3f rot;
     private final List<ConditionDefinition> conditions = new ArrayList<>();
 
     public Definition() {
@@ -42,6 +49,27 @@ public class Definition {
         this.width = width;
         this.depth = depth;
         return this;
+    }
+
+    public Definition size(float width, float depth, float height) {
+        this.width = width;
+        this.depth = depth;
+        this.height = height;
+        return this;
+    }
+
+    public Definition pos(float x, float y, float z) {
+        this.pos = new Vector3f(x, y, z);
+        return this;
+    }
+
+    public Definition rot(float roll, float pitch, float yaw) {
+        this.rot = new Vector3f(roll, pitch, yaw);
+        return this;
+    }
+
+    public Definition rotation(float roll, float pitch, float yaw) {
+        return rot(roll, pitch, yaw);
     }
 
     public Definition model(String model) {
@@ -111,6 +139,133 @@ public class Definition {
         return this;
     }
 
+    public Definition ignoreItemTints(boolean ignoreItemTints) {
+        this.ignoreItemTints = ignoreItemTints;
+        return this;
+    }
+
+    public Definition ignoreItemTints() {
+        return ignoreItemTints(true);
+    }
+
+    public Definition overrideTints(boolean overrideTints) {
+        return ignoreItemTints(overrideTints);
+    }
+
+    public Definition overrideTints() {
+        return ignoreItemTints(true);
+    }
+
+    public Definition fluidTextureIndex(int textureIndex) {
+        this.fluidTextureIndex = String.valueOf(textureIndex);
+        return this;
+    }
+
+    public Definition fluidTextureIndex(String textureIndex) {
+        this.fluidTextureIndex = textureIndex;
+        return this;
+    }
+
+    public Definition fluidTexture(int textureIndex) {
+        return fluidTextureIndex(textureIndex);
+    }
+
+    public Definition fluidTexture(String textureIndex) {
+        return fluidTextureIndex(textureIndex);
+    }
+
+    public Definition tint(int tintIndex, int color) {
+        if ((color & 0xFF000000) == 0) {
+            color |= 0xFF000000;
+        }
+        this.tintColors.put(tintIndex, color);
+        return this;
+    }
+
+    public Definition tint(int tintIndex, int r, int g, int b) {
+        return tint(tintIndex, (255 << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
+    }
+
+    public Definition tint(int tintIndex, int a, int r, int g, int b) {
+        return tint(tintIndex, ((a & 0xFF) << 24) | ((r & 0xFF) << 16) | ((g & 0xFF) << 8) | (b & 0xFF));
+    }
+
+    public Definition tint(int tintIndex, String hexColor) {
+        if (hexColor.startsWith("#")) {
+            hexColor = hexColor.substring(1);
+        }
+        long val = Long.parseLong(hexColor, 16);
+        if (hexColor.length() <= 6) {
+            val |= 0xFF000000L;
+        }
+        return tint(tintIndex, (int) val);
+    }
+
+    public Definition tints(Map<Integer, Integer> tintColors) {
+        tintColors.forEach(this::tint);
+        return this;
+    }
+
+    public Definition color(int tintIndex, int color) {
+        return tint(tintIndex, color);
+    }
+
+    public Definition color(int tintIndex, int r, int g, int b) {
+        return tint(tintIndex, r, g, b);
+    }
+
+    public Definition color(int tintIndex, int a, int r, int g, int b) {
+        return tint(tintIndex, a, r, g, b);
+    }
+
+    public Definition color(int tintIndex, String hexColor) {
+        return tint(tintIndex, hexColor);
+    }
+
+    public Definition colors(Map<Integer, Integer> tintColors) {
+        return tints(tintColors);
+    }
+
+    public Definition stackSize(int count, Consumer<Definition> consumer) {
+        return condition(Condition.stackSize(count), consumer);
+    }
+
+    public Definition stackSize(float percentage, Consumer<Definition> consumer) {
+        return condition(Condition.stackSize(percentage), consumer);
+    }
+
+    public Definition notStackSize(int count, Consumer<Definition> consumer) {
+        return notCondition(Condition.stackSize(count), consumer);
+    }
+
+    public Definition notStackSize(float percentage, Consumer<Definition> consumer) {
+        return notCondition(Condition.stackSize(percentage), consumer);
+    }
+
+    public Definition isFluidContainer(Consumer<Definition> consumer) {
+        return condition(Condition.isFluidContainer(), consumer);
+    }
+
+    public Definition isFluidContainer(boolean requireNotEmpty, Consumer<Definition> consumer) {
+        return condition(Condition.isFluidContainer(requireNotEmpty), consumer);
+    }
+
+    public Definition fluidContainer(Consumer<Definition> consumer) {
+        return isFluidContainer(consumer);
+    }
+
+    public Definition fluidContainer(boolean requireNotEmpty, Consumer<Definition> consumer) {
+        return isFluidContainer(requireNotEmpty, consumer);
+    }
+
+    public Definition notFluidContainer(Consumer<Definition> consumer) {
+        return notCondition(Condition.isFluidContainer(), consumer);
+    }
+
+    public Definition notFluidContainer(boolean requireNotEmpty, Consumer<Definition> consumer) {
+        return notCondition(Condition.isFluidContainer(requireNotEmpty), consumer);
+    }
+
     public Definition condition(Condition condition, Consumer<Definition> consumer) {
         Definition nested = new Definition();
         consumer.accept(nested);
@@ -129,6 +284,22 @@ public class Definition {
 
     public Definition notCondition(Condition condition, Definition nested) {
         return condition(condition.not(), nested);
+    }
+
+    public Definition hasFluid(Consumer<Definition> consumer) {
+        return condition(Condition.hasFluid(), consumer);
+    }
+
+    public Definition notHasFluid(Consumer<Definition> consumer) {
+        return notCondition(Condition.hasFluid(), consumer);
+    }
+
+    public Definition containsFluid(Consumer<Definition> consumer) {
+        return condition(Condition.containsFluid(), consumer);
+    }
+
+    public Definition notContainsFluid(Consumer<Definition> consumer) {
+        return notCondition(Condition.containsFluid(), consumer);
     }
 
     public Definition isPlacematBlock(String blockOrTag, Consumer<Definition> consumer) {

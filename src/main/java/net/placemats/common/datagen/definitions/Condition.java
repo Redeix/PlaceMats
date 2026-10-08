@@ -1,5 +1,6 @@
 package net.placemats.common.datagen.definitions;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.FriendlyByteBuf;
@@ -8,6 +9,7 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 
+@SuppressWarnings("unused")
 public interface Condition {
     ConditionType getType();
 
@@ -19,6 +21,54 @@ public interface Condition {
 
     default Condition not() {
         return new NotCondition(this);
+    }
+
+    static StackSizeCondition stackSize(int count) {
+        return new StackSizeCondition(count);
+    }
+
+    static StackSizeCondition stackSize(float percentage) {
+        return new StackSizeCondition(percentage);
+    }
+
+    static StackSizeCondition isStackSize(int count) {
+        return stackSize(count);
+    }
+
+    static StackSizeCondition isStackSize(float percentage) {
+        return stackSize(percentage);
+    }
+
+    static IsFluidContainerCondition fluidContainer() {
+        return IsFluidContainerCondition.ANY;
+    }
+
+    static IsFluidContainerCondition fluidContainer(boolean requireNotEmpty) {
+        return requireNotEmpty ? IsFluidContainerCondition.NOT_EMPTY : IsFluidContainerCondition.ANY;
+    }
+
+    static IsFluidContainerCondition isFluidContainer() {
+        return fluidContainer();
+    }
+
+    static IsFluidContainerCondition isFluidContainer(boolean requireNotEmpty) {
+        return fluidContainer(requireNotEmpty);
+    }
+
+    static HasFluidCondition hasFluid() {
+        return HasFluidCondition.INSTANCE;
+    }
+
+    static HasFluidCondition containsFluid() {
+        return HasFluidCondition.INSTANCE;
+    }
+
+    static Condition notHasFluid() {
+        return new NotCondition(HasFluidCondition.INSTANCE);
+    }
+
+    static Condition notContainsFluid() {
+        return new NotCondition(HasFluidCondition.INSTANCE);
     }
 
     static IsPlacematBlockCondition isPlacematBlock(ResourceLocation block) {
@@ -84,6 +134,40 @@ public interface Condition {
                 int range = json.has("range") ? json.get("range").getAsInt() : json.get("range_index").getAsInt();
                 yield new IsPlacementRangeCondition(range);
             }
+            case IS_STACK_SIZE -> {
+                if (json.has("percentage")) {
+                    yield stackSize(json.get("percentage").getAsFloat());
+                } else if (json.has("percent")) {
+                    yield stackSize(json.get("percent").getAsFloat());
+                } else if (json.has("min_percentage")) {
+                    yield stackSize(json.get("min_percentage").getAsFloat());
+                } else if (json.has("count")) {
+                    yield stackSize(json.get("count").getAsInt());
+                } else if (json.has("min_count")) {
+                    yield stackSize(json.get("min_count").getAsInt());
+                } else if (json.has("amount")) {
+                    yield stackSize(json.get("amount").getAsInt());
+                } else if (json.has("value")) {
+                    JsonElement val = json.get("value");
+                    if (val.isJsonPrimitive() && val.getAsJsonPrimitive().isNumber()) {
+                        float f = val.getAsFloat();
+                        if (f <= 1.0f && f > 0.0f && !val.getAsString().matches("^\\d+$")) {
+                            yield stackSize(f);
+                        } else {
+                            yield stackSize(val.getAsInt());
+                        }
+                    } else {
+                        yield stackSize(val.getAsInt());
+                    }
+                } else {
+                    yield stackSize(1);
+                }
+            }
+            case HAS_FLUID -> HasFluidCondition.INSTANCE;
+            case IS_FLUID_CONTAINER -> {
+                boolean notEmpty = json.has("require_not_empty") && json.get("require_not_empty").getAsBoolean();
+                yield isFluidContainer(notEmpty);
+            }
             case HAS_TRAIT -> {
                 ResourceLocation trait = ResourceLocation.parse(json.get("trait").getAsString());
                 yield new HasTraitCondition(trait);
@@ -118,6 +202,9 @@ public interface Condition {
         ConditionType type = buffer.readEnum(ConditionType.class);
         return switch (type) {
             case IS_PLACEMENT_RANGE -> new IsPlacementRangeCondition(buffer.readInt());
+            case IS_STACK_SIZE -> buffer.readBoolean() ? stackSize(buffer.readFloat()) : stackSize(buffer.readInt());
+            case HAS_FLUID -> HasFluidCondition.INSTANCE;
+            case IS_FLUID_CONTAINER -> isFluidContainer(buffer.readBoolean());
             case HAS_TRAIT -> new HasTraitCondition(buffer.readResourceLocation());
             case IS_ROTTEN -> IsRottenCondition.INSTANCE;
             case IS_PLACEMAT_BLOCK -> {

@@ -67,16 +67,47 @@ public class PlaceMatDefinitionProvider implements DataProvider {
                     path = split[1];
                 }
 
-                if (d.width != null) json.addProperty("item_width", d.width);
-                if (d.depth != null) json.addProperty("item_depth", d.depth);
+                if (d.width != null && d.depth != null) {
+                    JsonArray sizeArr = new JsonArray();
+                    sizeArr.add(d.width);
+                    sizeArr.add(d.depth);
+                    if (d.height != null) {
+                        sizeArr.add(d.height);
+                    }
+                    json.add("size", sizeArr);
+                } else {
+                    if (d.width != null) json.addProperty("item_width", d.width);
+                    if (d.depth != null) json.addProperty("item_depth", d.depth);
+                    if (d.height != null) json.addProperty("item_height", d.height);
+                }
 
                 if (d.model != null) json.addProperty("model", d.model);
                 if (d.modelRotten != null) json.addProperty("model_rotten", d.modelRotten);
-                if (d.height != null) json.addProperty("item_height", d.height);
-                if (d.scale != null) json.addProperty("item_scale", d.scale);
+                if (d.scale != null) json.addProperty("scale", d.scale);
                 if (d.flat != null) json.addProperty("lay_flat", d.flat);
                 if (d.stackable != null) json.addProperty("stackable", d.stackable);
                 if (d.allowsStackingOnTop != null) json.addProperty("allows_stacking_on_top", d.allowsStackingOnTop);
+                if (d.ignoreItemTints != null) json.addProperty("ignore_item_tints", d.ignoreItemTints);
+                if (d.fluidTextureIndex != null) json.addProperty("fluid_texture_index", d.fluidTextureIndex);
+                if (!d.tintColors.isEmpty()) {
+                    JsonObject tints = new JsonObject();
+                    d.tintColors.forEach((idx, col) -> tints.addProperty(String.valueOf(idx), col));
+                    json.add("tint_colors", tints);
+                }
+                if (d.pos != null) {
+                    JsonArray arr = new JsonArray();
+                    arr.add(d.pos.x);
+                    arr.add(d.pos.y);
+                    arr.add(d.pos.z);
+                    json.add("pos", arr);
+                }
+                if (d.rot != null) {
+                    JsonArray arr = new JsonArray();
+                    arr.add(d.rot.x);
+                    arr.add(d.rot.y);
+                    arr.add(d.rot.z);
+                    json.add("rot", arr);
+                }
 
                 if (!d.getConditions().isEmpty()) {
                     json.add("conditions", serializeConditions(d.getConditions()));
@@ -125,14 +156,45 @@ public class PlaceMatDefinitionProvider implements DataProvider {
         for (ConditionDefinition cd : conditions) {
             JsonObject condObj = cd.condition().toJson();
             Definition def = cd.definition();
-            if (def.width != null) condObj.addProperty("item_width", def.width);
-            if (def.depth != null) condObj.addProperty("item_depth", def.depth);
+            if (def.width != null && def.depth != null) {
+                JsonArray sizeArr = new JsonArray();
+                sizeArr.add(def.width);
+                sizeArr.add(def.depth);
+                if (def.height != null) {
+                    sizeArr.add(def.height);
+                }
+                condObj.add("size", sizeArr);
+            } else {
+                if (def.width != null) condObj.addProperty("item_width", def.width);
+                if (def.depth != null) condObj.addProperty("item_depth", def.depth);
+                if (def.height != null) condObj.addProperty("item_height", def.height);
+            }
             if (def.model != null) condObj.addProperty("model", def.model);
-            if (def.height != null) condObj.addProperty("item_height", def.height);
-            if (def.scale != null) condObj.addProperty("item_scale", def.scale);
+            if (def.scale != null) condObj.addProperty("scale", def.scale);
             if (def.flat != null) condObj.addProperty("lay_flat", def.flat);
             if (def.stackable != null) condObj.addProperty("stackable", def.stackable);
             if (def.allowsStackingOnTop != null) condObj.addProperty("allows_stacking_on_top", def.allowsStackingOnTop);
+            if (def.ignoreItemTints != null) condObj.addProperty("ignore_item_tints", def.ignoreItemTints);
+            if (def.fluidTextureIndex != null) condObj.addProperty("fluid_texture_index", def.fluidTextureIndex);
+            if (!def.tintColors.isEmpty()) {
+                JsonObject tints = new JsonObject();
+                def.tintColors.forEach((idx, col) -> tints.addProperty(String.valueOf(idx), col));
+                condObj.add("tint_colors", tints);
+            }
+            if (def.pos != null) {
+                JsonArray arr = new JsonArray();
+                arr.add(def.pos.x);
+                arr.add(def.pos.y);
+                arr.add(def.pos.z);
+                condObj.add("pos", arr);
+            }
+            if (def.rot != null) {
+                JsonArray arr = new JsonArray();
+                arr.add(def.rot.x);
+                arr.add(def.rot.y);
+                arr.add(def.rot.z);
+                condObj.add("rot", arr);
+            }
             if (!def.getConditions().isEmpty()) {
                 condObj.add("conditions", serializeConditions(def.getConditions()));
             }

@@ -1,0 +1,22 @@
+{
+  "conditions": [
+    {
+      "condition": "place_mats:has_fluid",
+      "model": "place_mats:render/tfc/wooden_bucket_filled"
+    }
+  ],
+  "item": "tfc:wooden_bucket",
+  "lay_flat": false,
+  "model": "place_mats:render/tfc/wooden_bucket",
+  "pos": [
+    0.0,
+    -0.26,
+    0.075
+  ],
+  "scale": 1.0,
+  "size": [
+    0.3125,
+    0.3125,
+    0.375
+  ]
+}

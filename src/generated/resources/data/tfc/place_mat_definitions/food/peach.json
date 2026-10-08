@@ -6,9 +6,11 @@
     }
   ],
   "item": "tfc:food/peach",
-  "item_depth": 0.19,
-  "item_scale": 1.0,
-  "item_width": 0.19,
   "lay_flat": false,
-  "model": "place_mats:render/tfc/food/peach"
+  "model": "place_mats:render/tfc/food/peach",
+  "scale": 1.0,
+  "size": [
+    0.19,
+    0.19
+  ]
 }

@@ -81,4 +81,31 @@ public class DefinitionHelpers {
     public static Definition tfcFood3x3(String id, String name) {
         return rottenFood3x3(id, "tfc", name);
     }
+
+    public static Definition bucket(String id, String namespace, String name, boolean isWooden) {
+        String modelPath = "place_mats:render/" + namespace + "/" + name;
+        String texturePath;
+        if (isWooden) {
+            texturePath = "place_mats:item/render/buckets/wood_bucket";
+        } else {
+            texturePath = "place_mats:item/render/buckets/iron_bucket";
+        }
+
+        return new Definition(id)
+            .size(5/16f, 5/16f, 6/16f)
+            .pos(0, -0.26f, 0.075f)
+            .scale(1f)
+            .flat(false)
+            //.fluidTextureIndex(1)
+            .containsFluid(c -> c
+                .model(Definition.parentModel(modelPath + "_filled", "place_mats:render/bucket_parent",
+                    new String[]{"0", texturePath},
+                    new String[]{"1", "place_mats:item/render/white_test"}
+                ))
+            )
+            .model(Definition.parentModel(modelPath, "place_mats:render/bucket_parent",
+                new String[]{"0", texturePath},
+                new String[]{"1", "place_mats:item/render/empty"}
+            ));
+    }
 }

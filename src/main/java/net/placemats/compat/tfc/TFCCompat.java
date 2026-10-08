@@ -5,6 +5,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraftforge.fluids.FluidStack;
 import net.placemats.compat.ModCompat;
 
 import net.minecraft.network.chat.Component;
@@ -34,4 +35,6 @@ public interface TFCCompat {
     Block createPlaceMatBlock(Block.Properties properties, boolean cardinal);
     Block createPlaceMatStairsBlock(Block.Properties properties);
     Block createPlaceMatAttachedStairsBlock(Block.Properties properties);
+    FluidStack getContainedFluid(ItemStack stack);
+    boolean isFluidContainer(ItemStack stack);
 }
