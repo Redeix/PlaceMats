@@ -31,6 +31,7 @@ import org.joml.Matrix4f;
 
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
 import net.placemats.common.data.resource.DefinitionManager;
@@ -61,7 +62,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             poseStack.pushPose();
 
             ItemStack stackToRender = placed.stack;
-            PlaceMatBlock.PlacementRange range = pmb.getPlacementRanges(state).stream()
+            PlacementRange range = pmb.getPlacementRanges(state).stream()
                     .filter(r -> Math.abs(placed.baseHeight - r.box().minY) < 0.001f &&
                             placed.pos.x >= r.box().minX && placed.pos.x <= r.box().maxX &&
                             placed.pos.y >= r.box().minZ && placed.pos.y <= r.box().maxZ)
@@ -127,7 +128,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         poseStack.popPose();
     }
 
-    public static void renderBounds(PoseStack poseStack, MultiBufferSource buffer, PlaceMatBlock.PlacementRange range, float r, float g, float b) {
+    public static void renderBounds(PoseStack poseStack, MultiBufferSource buffer, PlacementRange range, float r, float g, float b) {
         VertexConsumer vertexConsumer = buffer.getBuffer(RenderType.lines());
         LevelRenderer.renderLineBox(poseStack, vertexConsumer, range.box(), r, g, b, 1.0f);
     }
@@ -140,7 +141,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
 
     @SuppressWarnings("deprecation")
     public static void renderPreview(PoseStack poseStack, MultiBufferSource buffer, Vec2 pos, Vec2 size, float scale, float rotation, float pitch, float roll, float height, boolean valid,
-            ItemStack stack, ItemRenderer itemRenderer, PlaceMatBlock.PlacementRange targetRange, PlaceMatBlock pmb) {
+            ItemStack stack, ItemRenderer itemRenderer, PlacementRange targetRange, PlaceMatBlock pmb) {
         poseStack.pushPose();
 
         boolean disableLayFlat = pmb.isDisableLayFlat() || targetRange.disableLayFlat();

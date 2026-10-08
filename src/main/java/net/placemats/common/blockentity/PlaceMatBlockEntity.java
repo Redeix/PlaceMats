@@ -41,6 +41,7 @@ import lombok.Setter;
 
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
@@ -116,8 +117,8 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 // Try to stack into existing item.
                 if (ItemHandlerHelper.canItemStacksStack(target.stack, stack)) {
                     // Find the range this item belongs to.
-                    PlaceMatBlock.PlacementRange range = null;
-                    for (PlaceMatBlock.PlacementRange r : pmb.getPlacementRanges(getBlockState())) {
+                    PlacementRange range = null;
+                    for (PlacementRange r : pmb.getPlacementRanges(getBlockState())) {
                         if (Math.abs(target.baseHeight - r.box().minY) < 0.001f) {
                             float multiplier = getScaleMultiplier(r);
                             DefinitionManager.PlaceMatDefinition targetDef = getEffectiveDefinition(target.stack, r);
@@ -151,7 +152,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
             } else if (slot >= placedItems.size() && slot < getSlots()) {
                 // Try to find a random position for a new item.
                 DefinitionManager.PlaceMatDefinition def = getEffectiveDefinition(stack, null);
-                for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
+                for (PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
                     if (!isInsertable(range, stack))
                         continue;
 
@@ -297,7 +298,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         float[] results = new float[n];
         for (int idx : sortedIndices) {
             PlacedItem item = placedItems.get(idx);
-            PlaceMatBlock.PlacementRange range = getRangeForItem(item);
+            PlacementRange range = getRangeForItem(item);
             DefinitionManager.PlaceMatDefinition def = getEffectiveDefinition(item.stack, range);
             float multiplier = getScaleMultiplier(range);
 
@@ -315,7 +316,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
                     if (Math.abs(other.baseHeight - item.baseHeight) > 0.001f)
                         continue;
 
-                    PlaceMatBlock.PlacementRange otherRange = getRangeForItem(other);
+                    PlacementRange otherRange = getRangeForItem(other);
                     DefinitionManager.PlaceMatDefinition otherDef = getEffectiveDefinition(other.stack, otherRange);
                     float otherMultiplier = getScaleMultiplier(otherRange);
                     if (!otherDef.allowsStackingOnTop())
@@ -343,7 +344,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
      * The height is determined based on stacking rules, the manual height offset, and any
      * placement range restrictions or conditions.
      */
-    public float calculateEffectiveHeight(ItemStack stack, Vec2 pos, float manualHeight, @Nullable PlaceMatBlock.PlacementRange targetRange) {
+    public float calculateEffectiveHeight(ItemStack stack, Vec2 pos, float manualHeight, @Nullable PlacementRange targetRange) {
         DefinitionManager.PlaceMatDefinition def = getEffectiveDefinition(stack, targetRange);
         float multiplier = getScaleMultiplier(targetRange);
 
@@ -375,7 +376,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
                     if (!shouldStackOn(manualHeight, placedItems.size(), placed.manualHeight, i))
                         continue;
 
-                    PlaceMatBlock.PlacementRange otherRange = getRangeForItem(placed);
+                    PlacementRange otherRange = getRangeForItem(placed);
                     DefinitionManager.PlaceMatDefinition placedDef = getEffectiveDefinition(placed.stack, otherRange);
                     float placedMultiplier = getScaleMultiplier(otherRange);
                     if (!placedDef.allowsStackingOnTop())
@@ -405,7 +406,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     /**
      * Determines whether an item can be placed at a specific position and height on the PlaceMatBlock.
      */
-    public boolean canPlace(ItemStack stack, Vec2 pos, float height, @Nullable PlaceMatBlock.PlacementRange targetRange) {
+    public boolean canPlace(ItemStack stack, Vec2 pos, float height, @Nullable PlacementRange targetRange) {
         if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) || getBlockState().getValue(LOCKED).equals(true)) {
             return false;
         }
@@ -481,7 +482,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
 
         boolean ok = true;
         for (PlacedItem placed : placedItems) {
-            PlaceMatBlock.PlacementRange range = getRangeForItem(placed);
+            PlacementRange range = getRangeForItem(placed);
             float pLimit = range != null ? range.maxHeight() : 1.0f;
             DefinitionManager.PlaceMatDefinition pDef = getEffectiveDefinition(placed.stack, range);
             float pMultiplier = getScaleMultiplier(range);
@@ -495,7 +496,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 for (PlacedItem other : placedItems) {
                     if (placed == other)
                         continue;
-                    PlaceMatBlock.PlacementRange otherRange = getRangeForItem(other);
+                    PlacementRange otherRange = getRangeForItem(other);
                     if (otherRange != null && otherRange.collisionDisabled())
                         continue;
 
@@ -525,9 +526,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
      * @param pitch the pitch angle of the item.
      * @param roll the roll angle of the item.
      * @param height the height at which the item is to be placed.
-     * @param targetRange an optional {@link PlaceMatBlock.PlacementRange} providing constraints.
+     * @param targetRange an optional {@link PlacementRange} providing constraints.
      */
-    public void placeItem(ItemStack stack, Vec2 pos, float rotation, float pitch, float roll, float height, @Nullable PlaceMatBlock.PlacementRange targetRange) {
+    public void placeItem(ItemStack stack, Vec2 pos, float rotation, float pitch, float roll, float height, @Nullable PlacementRange targetRange) {
         if (canPlace(stack, pos, height, targetRange)) {
             float finalRotation = rotation;
             float finalPitch = pitch;
@@ -634,7 +635,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         if (pmb.isExtractionDisabled())
             return false;
 
-        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
+        for (PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
             if (Math.abs(item.baseHeight - range.box().minY) < 0.001f) {
                 if (item.pos.x >= range.box().minX && item.pos.x <= range.box().maxX &&
                         item.pos.y >= range.box().minZ && item.pos.y <= range.box().maxZ) {
@@ -648,7 +649,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
     /**
      * Determines whether the {@link ItemStack} can be inserted into the PlaceMatBlock by checking `isInsertionDisabled()`.
      */
-    public boolean isInsertable(PlaceMatBlock.PlacementRange range, ItemStack stack) {
+    public boolean isInsertable(PlacementRange range, ItemStack stack) {
         if (level == null)
             return false;
         if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
@@ -750,7 +751,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         removeTraits(stack, getRangeForItem(item));
     }
 
-    private void applyTraits(ItemStack stack, @Nullable PlaceMatBlock.PlacementRange range) {
+    private void applyTraits(ItemStack stack, @Nullable PlacementRange range) {
         if (level == null || level.isClientSide) {
             return;
         }
@@ -775,7 +776,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
-    private void removeTraits(ItemStack stack, @Nullable PlaceMatBlock.PlacementRange range) {
+    private void removeTraits(ItemStack stack, @Nullable PlacementRange range) {
         if (level == null || level.isClientSide) {
             return;
         }
@@ -807,11 +808,11 @@ public class PlaceMatBlockEntity extends BlockEntity {
     }
 
     @Nullable
-    public PlaceMatBlock.PlacementRange getRangeForItem(PlacedItem item) {
+    public PlacementRange getRangeForItem(PlacedItem item) {
         if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb)) {
             return null;
         }
-        for (PlaceMatBlock.PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
+        for (PlacementRange range : pmb.getPlacementRanges(getBlockState())) {
             if (Math.abs(item.baseHeight - range.box().minY) < 0.001f) {
                 if (item.pos.x >= range.box().minX && item.pos.x <= range.box().maxX &&
                         item.pos.y >= range.box().minZ && item.pos.y <= range.box().maxZ) {
@@ -822,7 +823,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return null;
     }
 
-    public DefinitionManager.PlaceMatDefinition getEffectiveDefinition(ItemStack stack, @Nullable PlaceMatBlock.PlacementRange range) {
+    public DefinitionManager.PlaceMatDefinition getEffectiveDefinition(ItemStack stack, @Nullable PlacementRange range) {
         DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(stack.getItem());
         if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
             if (pmb.isDisableCustomModels() || (range != null && range.disableCustomModels())) {
@@ -832,7 +833,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return def;
     }
 
-    public float getScaleMultiplier(@Nullable PlaceMatBlock.PlacementRange range) {
+    public float getScaleMultiplier(@Nullable PlacementRange range) {
         if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
             float multiplier = pmb.getScaleMultiplier();
             if (range != null) {
@@ -843,7 +844,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return 1.0f;
     }
 
-    public float getEffectiveElevation(@Nullable PlaceMatBlock.PlacementRange range) {
+    public float getEffectiveElevation(@Nullable PlacementRange range) {
         if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
             float elevation = pmb.getDefaultElevation();
             if (range != null) {
@@ -854,7 +855,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return 0.0f;
     }
 
-    public float[] getEffectiveRotation(@Nullable PlaceMatBlock.PlacementRange range) {
+    public float[] getEffectiveRotation(@Nullable PlacementRange range) {
         if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
             float yaw = pmb.getDefaultYaw();
             float pitch = pmb.getDefaultPitch();
@@ -873,7 +874,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
      * Retrieves the targeted PlacedItem based on the given eye position/look vector calculation.
      */
     @Nullable
-    public PlacedItem getTargetedItem(Vec3 eyePos, Vec3 lookVec, BlockPos pos, @Nullable PlaceMatBlock.PlacementRange targetedRange) {
+    public PlacedItem getTargetedItem(Vec3 eyePos, Vec3 lookVec, BlockPos pos, @Nullable PlacementRange targetedRange) {
         double minDistance = Double.MAX_VALUE;
         PlacedItem targeted = null;
 
@@ -1131,7 +1132,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
 
         public AABB getLogicalBox() {
-            PlaceMatBlock.PlacementRange range = parent.getRangeForItem(this);
+            PlacementRange range = parent.getRangeForItem(this);
             float multiplier = parent.getScaleMultiplier(range);
             float elevation = parent.getEffectiveElevation(range);
             float y = baseHeight + targetHeight + elevation;
@@ -1140,7 +1141,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
 
         public AABB getVisualBox() {
-            PlaceMatBlock.PlacementRange range = parent.getRangeForItem(this);
+            PlacementRange range = parent.getRangeForItem(this);
             float multiplier = parent.getScaleMultiplier(range);
             float elevation = parent.getEffectiveElevation(range);
             float y = baseHeight + visualHeight + elevation;

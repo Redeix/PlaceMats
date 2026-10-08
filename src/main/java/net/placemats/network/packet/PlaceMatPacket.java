@@ -10,6 +10,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent;
 
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 
 public class PlaceMatPacket {
@@ -61,7 +62,7 @@ public class PlaceMatPacket {
         context.enqueueWork(() -> {
             if (context.getSender() != null) {
                 if (context.getSender().level().getBlockEntity(message.pos) instanceof PlaceMatBlockEntity foodPlacer) {
-                    final PlaceMatBlock.PlacementRange[] targetedRange = { null };
+                    final PlacementRange[] targetedRange = { null };
                     if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         targetedRange[0] = pmb.getTargetedPlacementRange(foodPlacer.getBlockState(), message.hitLocation);
                     }

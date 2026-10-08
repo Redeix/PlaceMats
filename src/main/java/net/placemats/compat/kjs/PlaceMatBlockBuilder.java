@@ -21,7 +21,9 @@ import net.minecraftforge.registries.ForgeRegistries;
 
 import dev.latvian.mods.kubejs.typings.Info;
 
+import net.placemats.common.block.IPlacementRangeProvider;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.compat.tfc.TFCCompat;
 
@@ -44,7 +46,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     private ResourceLocation foodTrait = null;
     private final List<PlacementRangeBuilder> ranges = new ArrayList<>();
     private final List<StateRangeEntry> stateRanges = new ArrayList<>();
-    private final List<PlaceMatBlock.RangeAdjuster> rangeAdjusters = new ArrayList<>();
+    private final List<IPlacementRangeProvider.RangeAdjuster> rangeAdjusters = new ArrayList<>();
 
     public record StateRangeEntry(int index, @Nullable Predicate<BlockState> predicate, PlacementRangeBuilder builder) {}
 
@@ -373,20 +375,24 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
             PlacementRangeBuilder rangeBuilder = ranges.get(i);
             if (rangeBuilder != null) {
                 block.addRange(i, rangeBuilder.build());
-                for (PlaceMatBlock.RangeAdjuster adjuster : rangeBuilder.rangeAdjusters) {
+                for (IPlacementRangeProvider.RangeAdjuster adjuster : rangeBuilder.rangeAdjusters) {
                     int targetIndex = i;
                     block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
                 }
             }
         }
         for (StateRangeEntry entry : stateRanges) {
-            block.addRange(entry.index(), entry.predicate(), entry.builder().build());
-            for (PlaceMatBlock.RangeAdjuster adjuster : entry.builder().rangeAdjusters) {
-                int targetIndex = entry.index();
-                block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
+            if (entry.predicate() != null)
+            {
+                block.addRange(entry.index(), entry.predicate(), entry.builder().build());
+                for (IPlacementRangeProvider.RangeAdjuster adjuster : entry.builder().rangeAdjusters)
+                {
+                    int targetIndex = entry.index();
+                    block.addRangeAdjuster((state, range, index) -> index == targetIndex ? adjuster.adjust(state, range, index) : range);
+                }
             }
         }
-        for (PlaceMatBlock.RangeAdjuster adjuster : rangeAdjusters) {
+        for (IPlacementRangeProvider.RangeAdjuster adjuster : rangeAdjusters) {
             block.addRangeAdjuster(adjuster);
         }
         PlaceMatBlockEntities.addValidBEBlock(PlaceMatBlockEntities.PLACE_MAT, block);
@@ -415,7 +421,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         private float defaultPitch = 0;
         private float defaultRoll = 0;
         private float defaultElevation = 0;
-        private final List<PlaceMatBlock.RangeAdjuster> rangeAdjusters = new ArrayList<>();
+        private final List<IPlacementRangeProvider.RangeAdjuster> rangeAdjusters = new ArrayList<>();
 
         @Info("Adjusts this placement range when a blockstate condition matches using a new bounding box.")
         public PlacementRangeBuilder adjustForState(Predicate<BlockState> predicate, AABB newBox) {
@@ -590,8 +596,8 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
             return this;
         }
 
-        public PlaceMatBlock.PlacementRange build() {
-            return new PlaceMatBlock.PlacementRange(
+        public PlacementRange build() {
+            return new PlacementRange(
                     box,
                     (float) box.maxY,
                     disableRoll,

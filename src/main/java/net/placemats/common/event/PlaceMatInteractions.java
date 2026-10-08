@@ -6,6 +6,7 @@ import java.util.Objects;
 
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlacementRange;
 import org.jetbrains.annotations.Nullable;
 
 import net.placemats.compat.tfc.TFCCompat;
@@ -263,7 +264,7 @@ public class PlaceMatInteractions {
                 if (result.isEmpty()) continue;
                 if (targeted != null && targetDepleted) {
                     // Try to put it back on the mat.
-                    PlaceMatBlock.PlacementRange range = placeMat.getRangeForItem(targeted);
+                    PlacementRange range = placeMat.getRangeForItem(targeted);
                     if (range != null && placeMat.isInsertable(range, result)) {
                         targeted.stack = result;
                         targetDepleted = false;
@@ -362,7 +363,7 @@ public class PlaceMatInteractions {
                             foodPlacer.removeTraitsFromStack(result, targeted);
                             if (stack.isEmpty()) {
                                 // Put it back on the mat.
-                                PlaceMatBlock.PlacementRange range = foodPlacer.getRangeForItem(targeted);
+                                PlacementRange range = foodPlacer.getRangeForItem(targeted);
                                 if (range != null && foodPlacer.isInsertable(range, result)) {
                                     targeted.stack = result;
                                 } else {

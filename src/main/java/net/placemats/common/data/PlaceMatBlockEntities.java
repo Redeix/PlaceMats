@@ -13,7 +13,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked", "ConstantConditions"})
 public class PlaceMatBlockEntities {
     public static final BlockEntityEntry<PlaceMatBlockEntity> PLACE_MAT = PlaceMatRegistries.REGISTRATE.<PlaceMatBlockEntity>blockEntity("place_mat", (type, pos, state) -> FirmaLifeCompat.INSTANCE.createPlaceMatBE(pos, state))
         .validBlock(PlaceMatBlocks.STORAGE_RACK)
@@ -32,7 +32,6 @@ public class PlaceMatBlockEntities {
             if (beType != null) {
                 Field field = BlockEntityType.class.getDeclaredField("validBlocks");
                 field.setAccessible(true);
-                @SuppressWarnings("unchecked")
                 Set<Block> set = (Set<Block>) field.get(beType);
                 try {
                     set.add(block);

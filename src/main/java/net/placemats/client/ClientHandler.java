@@ -44,6 +44,7 @@ import net.placemats.PlaceMatMain;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatTags;
@@ -129,7 +130,7 @@ public class ClientHandler {
                 if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
                     Vec3 location = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
 
-                    final PlaceMatBlock.PlacementRange[] targetedRange = { null };
+                    final PlacementRange[] targetedRange = { null };
                     if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         pmb.addPlacementRanges(pmbe.getBlockState(), range -> {
                             PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
@@ -306,7 +307,7 @@ public class ClientHandler {
             Vec3 location = event.getHitVec().getLocation().subtract(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
 
             // Interaction with existing items.
-            PlaceMatBlock.PlacementRange targetedRange = null;
+            PlacementRange targetedRange = null;
             PlaceMatBlock pmb = null;
             if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock block) {
                 pmb = block;
@@ -330,7 +331,7 @@ public class ClientHandler {
                 }
 
                 if (event.getLevel().isClientSide) {
-                    final PlaceMatBlock.PlacementRange[] targetedRangeArr = { targetedRange };
+                    final PlacementRange[] targetedRangeArr = { targetedRange };
                     if (targetedRangeArr[0] != null) {
                         DefinitionManager.PlaceMatDefinition def = DefinitionManager.getDefinition(held.getItem());
                         if (pmb != null && (pmb.isDisableCustomModels() || targetedRangeArr[0].disableCustomModels())) {
@@ -422,7 +423,7 @@ public class ClientHandler {
         Vec3 localHit = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
 
         PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
-        PlaceMatBlock.PlacementRange targetedRange = (targetedItem != null)
+        PlacementRange targetedRange = (targetedItem != null)
             ? foodPlacer.getRangeForItem(targetedItem)
             : pmb.getTargetedPlacementRange(state, localHit);
 
@@ -504,7 +505,7 @@ public class ClientHandler {
                     if (be instanceof PlaceMatBlockEntity pmbe) {
                         if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                             Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
-                            PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
+                            PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
                             if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
                                 return;
                         }
@@ -535,7 +536,7 @@ public class ClientHandler {
                 if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity) {
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                         Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
-                        PlaceMatBlock.PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
+                        PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
                         if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
                             return;
                     }
@@ -556,7 +557,7 @@ public class ClientHandler {
                 BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
                 if (be instanceof PlaceMatBlockEntity foodPlacer) {
                     PlaceMatBlock pmb;
-                    PlaceMatBlock.PlacementRange targetedRange = null;
+                    PlacementRange targetedRange = null;
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock block) {
                         pmb = block;
                         Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());

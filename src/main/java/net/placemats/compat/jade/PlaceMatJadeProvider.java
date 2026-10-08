@@ -27,6 +27,7 @@ import snownee.jade.api.config.IPluginConfig;
 import snownee.jade.api.ui.IElementHelper;
 
 import net.placemats.common.block.PlaceMatBlock;
+import net.placemats.common.block.PlacementRange;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 
 /**
@@ -46,7 +47,7 @@ public enum PlaceMatJadeProvider implements IBlockComponentProvider {
 
             PlaceMatBlockEntity.PlacedItem targetedItem = pm.getTargetedItem(eyePos, lookVec, accessor.getPosition());
 
-            PlaceMatBlock.PlacementRange targetedRange = null;
+            PlacementRange targetedRange = null;
             if (targetedItem != null) {
                 targetedRange = pm.getRangeForItem(targetedItem);
             } else if (pm.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {

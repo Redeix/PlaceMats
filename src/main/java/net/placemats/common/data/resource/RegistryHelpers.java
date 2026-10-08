@@ -21,6 +21,7 @@ import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
+import net.placemats.common.block.PlacementRange;
 
 /**
  * Helper methods for place mat registration.
@@ -238,8 +239,8 @@ public class RegistryHelpers {
      * @param maxStackSize The maximum stack size for items in the placement range.
      * @return A new PlaceMatBlock.PlacementRange instance.
      */
-    public static PlaceMatBlock.PlacementRange basicPlacementRange(VoxelShape shape, float maxHeight, int maxStackSize) {
-        return new PlaceMatBlock.PlacementRange(
+    public static PlacementRange basicPlacementRange(VoxelShape shape, float maxHeight, int maxStackSize) {
+        return new PlacementRange(
             shape,
             maxHeight,
             false, false, false, false, true, false, null, false, false,
@@ -251,9 +252,9 @@ public class RegistryHelpers {
      * Constructs a basic placement range for a place mat block with default values. And a stack size of 16.
      * @param shape The voxel shape of the placement range.
      * @param maxHeight The maximum height of the placement range.
-     * @return A new PlaceMatBlock.PlacementRange instance.
+     * @return A new PlacementRange instance.
      */
-    public static PlaceMatBlock.PlacementRange basicPlacementRange(VoxelShape shape, float maxHeight) {
+    public static PlacementRange basicPlacementRange(VoxelShape shape, float maxHeight) {
         return basicPlacementRange(shape, maxHeight, 16);
     }
 
