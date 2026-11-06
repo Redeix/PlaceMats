@@ -1,0 +1,71 @@
+package net.placemats.common.block;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.ContainerLevelAccess;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.placemats.common.inventory.CabinetMakerTableContainer;
+import org.jetbrains.annotations.Nullable;
+
+@SuppressWarnings("deprecation")
+public class CabinetMakerTableBlock extends Block {
+
+    public static final DirectionProperty FACING = HorizontalDirectionalBlock.FACING;
+    private static final Component CONTAINER_TITLE = Component.translatable("container.place_mats.cabinet_maker_table");
+
+    private static final VoxelShape SHAPE = Block.box(0.0, 0.0, 0.0, 16.0, 16.0, 16.0);
+
+    public CabinetMakerTableBlock(BlockBehaviour.Properties properties) {
+        super(properties);
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+        return SHAPE;
+    }
+
+    @Override
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+    }
+
+    @Override
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        } else {
+            player.openMenu(state.getMenuProvider(level, pos));
+            return InteractionResult.CONSUME;
+        }
+    }
+
+    @Nullable
+    @Override
+    public MenuProvider getMenuProvider(BlockState state, Level level, BlockPos pos) {
+        return new SimpleMenuProvider((containerId, playerInventory, player) ->
+                new CabinetMakerTableContainer(containerId, playerInventory, ContainerLevelAccess.create(level, pos)), CONTAINER_TITLE);
+    }
+
+    @Override
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+        builder.add(FACING);
+    }
+}
