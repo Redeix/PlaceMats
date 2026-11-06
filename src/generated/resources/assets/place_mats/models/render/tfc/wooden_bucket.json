@@ -1,7 +1,0 @@
-{
-  "parent": "place_mats:render/bucket_parent",
-  "textures": {
-    "0": "place_mats:item/render/buckets/wood_bucket",
-    "1": "place_mats:item/render/empty"
-  }
-}

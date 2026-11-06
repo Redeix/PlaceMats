@@ -17,8 +17,8 @@ public enum TFCDefinitions implements IPlaceMatDefinition
     SQUASH(tfcFood3x3("tfc:food/squash","squash")),
     TOMATO(tfcFood3x3("tfc:food/tomato","tomato")),
     RED_APPLE(tfcFood3x3("tfc:food/red_apple","red_apple")),
-    GREEN_APPLE(tfcFood3x3("tfc:food/green_apple","green_apple")),
-    WOODEN_BUCKET(bucket("tfc:wooden_bucket","tfc", "wooden_bucket", true));
+    GREEN_APPLE(tfcFood3x3("tfc:food/green_apple","green_apple"));
+    //WOODEN_BUCKET(bucket("tfc:wooden_bucket","tfc", "wooden_bucket", true))
 
     private final Definition definition;
 
