@@ -1,7 +1,10 @@
 package net.placemats.common.blockentity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import net.minecraft.core.Direction;
@@ -30,6 +33,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -39,6 +43,8 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import lombok.Setter;
 
+import net.placemats.client.renderer.DynamicShelfBakedModel;
+import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -61,6 +67,7 @@ import static net.placemats.common.block.PlaceMatBlock.*;
 public class PlaceMatBlockEntity extends BlockEntity {
 
     private final List<PlacedItem> placedItems = new ArrayList<>();
+    private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     @Setter
     private float currentRotation = 0;
     @Setter
@@ -76,6 +83,35 @@ public class PlaceMatBlockEntity extends BlockEntity {
     @Getter
     @Nullable
     private UUID lockedBy = null;
+
+    public Map<String, ResourceLocation> getDynamicTextures() {
+        return Collections.unmodifiableMap(dynamicTextures);
+    }
+
+    public void setDynamicTextures(Map<String, ResourceLocation> textures) {
+        this.dynamicTextures.clear();
+        if (textures != null) {
+            this.dynamicTextures.putAll(textures);
+        }
+        setChanged();
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
+    public boolean hasDynamicTextures() {
+        return !dynamicTextures.isEmpty();
+    }
+
+    @Override
+    public @NotNull ModelData getModelData() {
+        if (!dynamicTextures.isEmpty()) {
+            return ModelData.builder()
+                    .with(DynamicShelfBakedModel.DYNAMIC_TEXTURES_PROPERTY, new HashMap<>(dynamicTextures))
+                    .build();
+        }
+        return super.getModelData();
+    }
 
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new IItemHandler() {
         @Override
@@ -973,6 +1009,15 @@ public class PlaceMatBlockEntity extends BlockEntity {
         if (lockedBy != null) {
             tag.putUUID("lockedBy", lockedBy);
         }
+        if (!dynamicTextures.isEmpty()) {
+            CompoundTag dtTag = new CompoundTag();
+            dynamicTextures.forEach((k, v) -> {
+                if (v != null) {
+                    dtTag.putString(k, v.toString());
+                }
+            });
+            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES, dtTag);
+        }
         ListTag list = new ListTag();
         for (PlacedItem placed : placedItems) {
             CompoundTag itemTag = new CompoundTag();
@@ -997,6 +1042,19 @@ public class PlaceMatBlockEntity extends BlockEntity {
             this.lockedBy = tag.getUUID("lockedBy");
         } else {
             this.lockedBy = null;
+        }
+        this.dynamicTextures.clear();
+        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES, Tag.TAG_COMPOUND)) {
+            CompoundTag dtTag = tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES);
+            for (String key : dtTag.getAllKeys()) {
+                ResourceLocation rl = ResourceLocation.tryParse(dtTag.getString(key));
+                if (rl != null) {
+                    this.dynamicTextures.put(key, rl);
+                }
+            }
+        }
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
         }
         List<PlacedItem> oldItems = new ArrayList<>(placedItems);
         placedItems.clear();

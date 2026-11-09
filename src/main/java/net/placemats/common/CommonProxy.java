@@ -8,6 +8,7 @@ import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatCreativeTab;
 import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.data.PlaceMatItems;
+import net.placemats.common.data.PlaceMatContainers;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.RecipeSerializers;
 import net.placemats.network.PlaceMatsNetworkHandler;
@@ -21,6 +22,8 @@ public class CommonProxy {
         bus.addListener(this::setup);
 
         PlaceMatsNetworkHandler.init();
+        PlaceMatContainers.register(bus);
+        PlaceMatContainers.init();
         PlaceMatBlocks.init();
         PlaceMatBlockEntities.init();
         PlaceMatItems.init();

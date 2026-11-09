@@ -1,5 +1,9 @@
 package net.placemats.common.block;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -8,11 +12,14 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.BlockGetter;
@@ -26,6 +33,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -45,7 +54,7 @@ import net.placemats.common.event.PlaceMatInteractions;
  * Handles game-related interactions while placement range and collision/shape handling is done through interfaces.
  */
 @SuppressWarnings({"deprecation", "UnusedReturnValue", "unused"})
-public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRangeProvider, IPlaceMatShapeProvider {
+public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRangeProvider, IPlaceMatShapeProvider, IDynamicTexturedBlock {
 
     public static final BooleanProperty LOCKED = BlockStateProperties.LOCKED;
 
@@ -54,9 +63,60 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Getter
     private final PlaceMatShapeDefinition shapeDefinition = new PlaceMatShapeDefinition();
 
+    @Getter
+    private boolean dynamic = false;
+    private int textureKeyCount = 0;
+    private List<String> textureKeys = new ArrayList<>();
+    private Map<String, ResourceLocation> defaultTextures = new HashMap<>();
+    private Map<Integer, Component> textureKeyLabels = new HashMap<>();
+
     public PlaceMatBlock(Properties properties) {
         super(properties);
         registerDefaultState(getStateDefinition().any().setValue(LOCKED, false));
+    }
+
+    public PlaceMatBlock dynamicShelf(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels) {
+        this.dynamic = true;
+        this.textureKeyCount = keyCount;
+        this.defaultTextures = new HashMap<>(defaults);
+        this.textureKeys = new ArrayList<>(defaults.keySet());
+        this.textureKeyLabels = new HashMap<>(labels);
+        return this;
+    }
+
+    @Override
+    public int getTextureKeyCount() {
+        return textureKeyCount;
+    }
+
+    @Override
+    public List<String> getTextureKeys() {
+        return Collections.unmodifiableList(textureKeys);
+    }
+
+    @Override
+    public ResourceLocation getDefaultTexture(String key) {
+        return defaultTextures.get(key);
+    }
+
+    @Override
+    public Component getTextureKeyName(int keyIndex) {
+        if (textureKeyLabels.containsKey(keyIndex)) {
+            return textureKeyLabels.get(keyIndex);
+        }
+        return Component.translatable("gui.place_mats.cabinet_maker.key.generic", keyIndex + 1);
+    }
+
+    @Override
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        super.setPlacedBy(level, pos, state, placer, stack);
+        if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
+            Map<String, ResourceLocation> textures = IDynamicTexturedBlock.getDynamicTextures(stack);
+            if (!textures.isEmpty()) {
+                pmbe.setDynamicTextures(textures);
+                level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
+            }
+        }
     }
 
     /* ======================== Game Interactions ========================== */
@@ -135,8 +195,27 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
             if (targeted != null) {
                 return targeted.stack.copy();
             }
+            ItemStack stack = super.getCloneItemStack(state, target, level, pos, player);
+            if (pmbe.hasDynamicTextures()) {
+                IDynamicTexturedBlock.setDynamicTextures(stack, pmbe.getDynamicTextures());
+            }
+            return stack;
         }
         return super.getCloneItemStack(state, target, level, pos, player);
+    }
+
+    @Override
+    public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
+        List<ItemStack> drops = super.getDrops(state, params);
+        BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
+        if (be instanceof PlaceMatBlockEntity pmbe && pmbe.hasDynamicTextures()) {
+            for (ItemStack drop : drops) {
+                if (drop.getItem() == this.asItem()) {
+                    IDynamicTexturedBlock.setDynamicTextures(drop, pmbe.getDynamicTextures());
+                }
+            }
+        }
+        return drops;
     }
 
     @Override

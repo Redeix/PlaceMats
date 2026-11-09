@@ -1,7 +1,12 @@
 package net.placemats.common.data;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.tterrag.registrate.providers.loot.RegistrateBlockLootTables;
 import com.tterrag.registrate.util.entry.BlockEntry;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.Block;
@@ -10,12 +15,10 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.WoodType;
 
 import net.placemats.PlaceMatMain;
+import net.placemats.common.block.CabinetMakerTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.compat.tfc.TFCCompat;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import static net.minecraft.world.level.block.Block.box;
 import static net.placemats.common.data.resource.RegistryHelpers.*;
@@ -30,6 +33,16 @@ public final class PlaceMatBlocks {
             block.disableZoneRotation();
             block.addRange(basicPlacementRange(box(0, 0, 0, 16, 7, 16), 7 / 16F));
             block.addRange(basicPlacementRange(box(0, 8, 0, 16, 15, 16), 15 / 16F));
+            block.dynamicShelf(2,
+                Map.of(
+                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
+                ),
+                Map.of(
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.bars")
+                )
+            );
         })
         .blockstate((ctx, prov) -> {
             var model = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/storage_rack_parent"))
@@ -40,7 +53,20 @@ public final class PlaceMatBlocks {
         .loot(RegistrateBlockLootTables::dropSelf)
         .item()
         .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.STORAGE_RACKS, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES)
-        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/storage_rack")))
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+        .build()
+        .register();
+
+    public static final BlockEntry<CabinetMakerTableBlock> CABINETMAKER_TABLE = PlaceMatRegistries.REGISTRATE.block("cabinetmaker_table", CabinetMakerTableBlock::new)
+        .properties(WOOD_PROPERTIES)
+        .blockstate((ctx, prov) -> {
+            var model = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/cabinetmaker_table_parent"));
+            prov.horizontalBlock(ctx.getEntry(), model);
+        })
+        .tag(BlockTags.MINEABLE_WITH_AXE)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
         .build()
         .register();
 
@@ -195,6 +221,16 @@ public final class PlaceMatBlocks {
         block.disableZoneRotation();
         block.addRange(basicPlacementRange(box(0, 0, 0, 16, 7, 16), 7 / 16F));
         block.addRange(basicPlacementRange(box(0, 8, 0, 16, 15, 16), 15 / 16F));
+        block.dynamicShelf(2,
+            Map.of(
+                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
+            ),
+            Map.of(
+                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                1, Component.translatable("gui.place_mats.cabinet_maker.key.bars")
+            )
+        );
         return block;
     }
 
