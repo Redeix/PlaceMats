@@ -1,0 +1,33 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:true"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shaped",
+        "category": "misc",
+        "key": {
+          "I": {
+            "tag": "forge:ingots/iron"
+          },
+          "W": {
+            "tag": "minecraft:planks"
+          }
+        },
+        "pattern": [
+          "II",
+          "WW",
+          "WW"
+        ],
+        "result": {
+          "item": "place_mats:cabinetmaker_table"
+        },
+        "show_notification": true
+      }
+    }
+  ]
+}
