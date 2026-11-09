@@ -147,6 +147,8 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
 
         if (keyCount > 0 && dynamicBlock != null) {
+            ItemStack input = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
+            Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(input);
             List<String> keys = dynamicBlock.getTextureKeys();
             for (int i = 0; i < keyCount && i < keys.size(); i++) {
                 String key = keys.get(i);
@@ -159,9 +161,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     if (current == null || !extracted.contains(current)) {
                         chosenTextures.put(key, extracted.get(0));
                     }
-                } else if (!chosenTextures.containsKey(key)) {
-                    ResourceLocation def = dynamicBlock.getDefaultTexture(key);
-                    chosenTextures.put(key, def);
+                } else {
+                    ResourceLocation current = existing.get(key);
+                    if (current == null) {
+                        current = dynamicBlock.getDefaultTexture(key);
+                    }
+                    chosenTextures.put(key, current);
                 }
             }
         } else {
