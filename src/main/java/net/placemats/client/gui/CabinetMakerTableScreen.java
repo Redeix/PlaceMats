@@ -36,6 +36,8 @@ import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.ApplyCabinetMakerCraftPacket;
+import net.placemats.network.packet.SetCabinetMakerGhostSlotPacket;
+import net.placemats.common.data.PlaceMatTags;
 import org.jetbrains.annotations.NotNull;
 
 public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMakerTableContainer> {
@@ -97,8 +99,10 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     protected void init() {
         super.init();
 
-        this.confirmButton = Button.builder(Component.literal("▼"), btn -> PlaceMatsNetworkHandler.INSTANCE
-            .sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures))))
+        this.confirmButton = Button.builder(Component.literal("▼"), btn -> {
+            boolean transformAll = hasShiftDown();
+            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), transformAll));
+        })
             .bounds(this.leftPos + BUTTON_X, this.topPos + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
             .tooltip(Tooltip.create(Component.translatable("gui.place_mats.cabinet_maker.confirm")))
             .build();
@@ -150,7 +154,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 List<ResourceLocation> extracted = BlockTextureExtractor.extract16x16Textures(matStack);
                 availableTexturesPerKey.put(i, extracted);
 
-                if (!chosenTextures.containsKey(key)) {
+                if (!extracted.isEmpty()) {
+                    ResourceLocation current = chosenTextures.get(key);
+                    if (current == null || !extracted.contains(current)) {
+                        chosenTextures.put(key, extracted.get(0));
+                    }
+                } else if (!chosenTextures.containsKey(key)) {
                     ResourceLocation def = dynamicBlock.getDefaultTexture(key);
                     chosenTextures.put(key, def);
                 }
@@ -160,7 +169,87 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         }
 
         if (confirmButton != null) {
-            confirmButton.active = keyCount > 0 && !this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT).isEmpty();
+            updateConfirmButton();
+        }
+    }
+
+    private void updateConfirmButton() {
+        if (confirmButton != null) {
+            int keyCount = this.menu.getDynamicKeyCount();
+            IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
+            ItemStack inputStack = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
+            confirmButton.active = keyCount > 0 && !inputStack.isEmpty() && hasTextureChanges(inputStack, dynamicBlock, chosenTextures);
+        }
+    }
+
+    public static boolean hasTextureChanges(ItemStack input, IDynamicTexturedBlock dynamicBlock, Map<String, ResourceLocation> chosenTextures) {
+        if (input.isEmpty() || dynamicBlock == null || chosenTextures == null || chosenTextures.isEmpty()) {
+            return false;
+        }
+        Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(input);
+        for (String key : dynamicBlock.getTextureKeys()) {
+            ResourceLocation chosen = chosenTextures.get(key);
+            ResourceLocation current = existing.get(key);
+            if (current == null) {
+                current = dynamicBlock.getDefaultTexture(key);
+            }
+            if (chosen != null && !chosen.equals(current)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int getMaterialSlotIndexAt(double mouseX, double mouseY) {
+        int keyCount = this.menu.getDynamicKeyCount();
+        if (keyCount <= 0) {
+            return -1;
+        }
+        int matStartX = this.leftPos + MATERIAL_SLOT_X;
+        int matSpacing = SLOT_SIZE + 3;
+        int slotY = this.topPos + MATERIAL_SLOT_Y;
+        int columnHeight = SLOT_SIZE + 3 + 6 * (TEXTURE_SWATCH_SIZE + 3);
+
+        for (int i = 0; i < keyCount; i++) {
+            int colX = matStartX + (i * matSpacing);
+            if (mouseX >= colX && mouseX < colX + SLOT_SIZE && mouseY >= slotY && mouseY < slotY + columnHeight) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    public boolean setGhostMaterial(int keyIndex, ItemStack stack) {
+        if (keyIndex < 0 || keyIndex >= this.menu.getDynamicKeyCount()) {
+            return false;
+        }
+        if (stack != null && !stack.isEmpty() && stack.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST)) {
+            return false;
+        }
+        ItemStack ghost = (stack == null || stack.isEmpty()) ? ItemStack.EMPTY : stack.copyWithCount(1);
+        this.menu.setGhostSlot(keyIndex, ghost);
+        PlaceMatsNetworkHandler.INSTANCE.sendToServer(new SetCabinetMakerGhostSlotPacket(keyIndex, ghost));
+        checkInputsChanged();
+        if (Minecraft.getInstance().player != null) {
+            Minecraft.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 1.2f);
+        }
+        return true;
+    }
+
+    public void renderGhostDropTargets(GuiGraphics graphics, int mouseX, int mouseY) {
+        int keyCount = this.menu.getDynamicKeyCount();
+        if (keyCount <= 0) {
+            return;
+        }
+        int hoveredIndex = getMaterialSlotIndexAt(mouseX, mouseY);
+        int matStartX = this.leftPos + MATERIAL_SLOT_X;
+        int matSpacing = SLOT_SIZE + 3;
+        int slotY = this.topPos + MATERIAL_SLOT_Y;
+
+        for (int i = 0; i < keyCount; i++) {
+            int colX = matStartX + (i * matSpacing);
+            int color = (i == hoveredIndex) ? 0x80ff9d26 : 0x40FFFFFF;
+            graphics.fill(colX + 1, slotY + 1, colX + SLOT_SIZE - 1, slotY + SLOT_SIZE - 1, color);
         }
     }
 
@@ -186,6 +275,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                                 mouseY >= swatchY && mouseY < swatchY + TEXTURE_SWATCH_SIZE) {
                             ResourceLocation clickedTex = textures.get(tIdx);
                             chosenTextures.put(key, clickedTex);
+                            updateConfirmButton();
                             if (Minecraft.getInstance().player != null) {
                                 Minecraft.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 1.2f);
                             }
@@ -340,6 +430,10 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         if (baseModel instanceof DynamicShelfBakedModel dsbm) {
             if (!textures.isEmpty()) {
                 modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsbm, textures);
+            }
+        } else if (baseModel instanceof DynamicShelfBakedModel.DynamicShelfItemBakedModel dsibm) {
+            if (!textures.isEmpty()) {
+                modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsibm.getParent(), textures);
             }
         } else if (shelfStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
             DynamicShelfBakedModel tempDsbm = new DynamicShelfBakedModel(baseModel, dtb);

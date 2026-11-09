@@ -1,11 +1,14 @@
 package net.placemats.compat.emi;
 
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
+import dev.emi.emi.api.EmiDragDropHandler;
 import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiIngredient;
@@ -15,6 +18,7 @@ import dev.emi.emi.api.widget.TextureWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 
 import net.placemats.PlaceMatMain;
+import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.PlaceMatBlocks;
@@ -38,6 +42,33 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
         for (PlaceMatRecipe recipe : emiRegistry.getRecipeManager().getAllRecipesFor(PlaceMatRecipeTypes.PLACE_MAT.get())) {
             emiRegistry.addRecipe(new PlaceMatEmiRecipe(recipe));
         }
+        emiRegistry.addDragDropHandler(CabinetMakerTableScreen.class, new EmiDragDropHandler<>()
+        {
+            @Override
+            public boolean dropStack(CabinetMakerTableScreen screen, EmiIngredient stack, int x, int y)
+            {
+                int slotIndex = screen.getMaterialSlotIndexAt(x, y);
+                if (slotIndex == -1)
+                {
+                    return false;
+                }
+                for (EmiStack emiStack : stack.getEmiStacks())
+                {
+                    ItemStack itemStack = emiStack.getItemStack();
+                    if (itemStack != null && !itemStack.isEmpty())
+                    {
+                        return screen.setGhostMaterial(slotIndex, itemStack);
+                    }
+                }
+                return false;
+            }
+
+            @Override
+            public void render(CabinetMakerTableScreen screen, EmiIngredient dragged, GuiGraphics draw, int mouseX, int mouseY, float delta)
+            {
+                screen.renderGhostDropTargets(draw, mouseX, mouseY);
+            }
+        });
     }
 
     private static final ResourceLocation ARROW = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,

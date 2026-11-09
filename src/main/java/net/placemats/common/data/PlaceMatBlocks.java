@@ -35,12 +35,12 @@ public final class PlaceMatBlocks {
             block.addRange(basicPlacementRange(box(0, 8, 0, 16, 15, 16), 15 / 16F));
             block.dynamicShelf(2,
                 Map.of(
-                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
-                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
                 ),
                 Map.of(
-                    1, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
-                    0, Component.translatable("gui.place_mats.cabinet_maker.key.bars")
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.bars")
                 )
             );
         })

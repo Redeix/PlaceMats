@@ -18,8 +18,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.state.BlockState;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraftforge.client.model.BakedModelWrapper;
 import net.minecraftforge.client.model.IQuadTransformer;
 import net.minecraftforge.client.model.QuadTransformers;
@@ -43,6 +45,11 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     @Override
+    public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
+        return super.getQuads(state, side, rand);
+    }
+
+    @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
         List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
@@ -50,6 +57,12 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
             return quads;
         }
         return remapQuads(quads, customTextures);
+    }
+
+    @Override
+    public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
+        BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
+        return model == this.originalModel ? this : new DynamicShelfBakedModel(model, this.dynamicBlock);
     }
 
     @Override
@@ -108,8 +121,7 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
             if (defaultTex.equals(spriteLoc)) {
                 return key;
             }
-            if (defaultTex.getPath().equals(spriteLoc.getPath()) || spriteLoc.getPath().endsWith(defaultTex.getPath()))
-            {
+            if (defaultTex.getPath().equals(spriteLoc.getPath()) || spriteLoc.getPath().endsWith(defaultTex.getPath())) {
                 return key;
             }
         }
@@ -159,8 +171,8 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     public static class DynamicShelfItemBakedModel extends BakedModelWrapper<BakedModel> {
-        private final DynamicShelfBakedModel parent;
-        private final Map<String, ResourceLocation> customTextures;
+        @Getter private final DynamicShelfBakedModel parent;
+        @Getter private final Map<String, ResourceLocation> customTextures;
 
         public DynamicShelfItemBakedModel(DynamicShelfBakedModel parent, Map<String, ResourceLocation> customTextures) {
             super(parent.originalModel);
@@ -178,6 +190,12 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
             List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
             return parent.remapQuads(quads, customTextures);
+        }
+
+        @Override
+        public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
+            BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
+            return model == this.originalModel ? this : new DynamicShelfItemBakedModel(new DynamicShelfBakedModel(model, this.parent.getDynamicBlock()), this.customTextures);
         }
 
         @Override

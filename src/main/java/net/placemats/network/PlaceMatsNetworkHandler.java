@@ -7,6 +7,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 import net.placemats.PlaceMatMain;
 import net.placemats.network.packet.ApplyCabinetMakerCraftPacket;
 import net.placemats.network.packet.PlaceMatPacket;
+import net.placemats.network.packet.SetCabinetMakerGhostSlotPacket;
 import net.placemats.network.packet.SyncPlaceMatDefinitionsPacket;
 
 public class PlaceMatsNetworkHandler {
@@ -42,5 +43,11 @@ public class PlaceMatsNetworkHandler {
                 ApplyCabinetMakerCraftPacket::encode,
                 ApplyCabinetMakerCraftPacket::decode,
                 ApplyCabinetMakerCraftPacket::handle);
+        INSTANCE.registerMessage(
+                id(),
+                SetCabinetMakerGhostSlotPacket.class,
+                SetCabinetMakerGhostSlotPacket::encode,
+                SetCabinetMakerGhostSlotPacket::decode,
+                SetCabinetMakerGhostSlotPacket::handle);
     }
 }

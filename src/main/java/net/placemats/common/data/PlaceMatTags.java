@@ -16,6 +16,7 @@ public final class PlaceMatTags {
     public static final class Items {
 
         public static final TagKey<Item> PLACE_MAT_BLACKLIST = createItemTag("place_mat_blacklist");
+        public static final TagKey<Item> CABINET_MAKER_MATERIAL_BLACKLIST = createItemTag("cabinet_maker_material_blacklist");
         public static final TagKey<Item> DOUBLE_SHELVES = createItemTag("place_mats/double_shelves");
         public static final TagKey<Item> SINGLE_SHELVES = createItemTag("place_mats/single_shelves");
         public static final TagKey<Item> PLACE_MATS = createItemTag("place_mats");

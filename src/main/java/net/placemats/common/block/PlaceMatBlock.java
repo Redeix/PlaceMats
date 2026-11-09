@@ -79,7 +79,15 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         this.dynamic = true;
         this.textureKeyCount = keyCount;
         this.defaultTextures = new HashMap<>(defaults);
-        this.textureKeys = new ArrayList<>(defaults.keySet());
+        List<String> keys = new ArrayList<>(defaults.keySet());
+        keys.sort((a, b) -> {
+            try {
+                return Integer.compare(Integer.parseInt(a), Integer.parseInt(b));
+            } catch (NumberFormatException e) {
+                return a.compareTo(b);
+            }
+        });
+        this.textureKeys = keys;
         this.textureKeyLabels = new HashMap<>(labels);
         return this;
     }

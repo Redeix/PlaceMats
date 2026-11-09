@@ -10,6 +10,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
@@ -18,6 +19,7 @@ import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.data.PlaceMatContainers;
+import net.placemats.common.data.PlaceMatTags;
 import org.jetbrains.annotations.NotNull;
 
 public class CabinetMakerTableContainer extends AbstractContainerMenu {
@@ -83,6 +85,16 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
                 public boolean isActive() {
                     return keyIndex < getDynamicKeyCount();
                 }
+
+                @Override
+                public boolean mayPlace(@NotNull ItemStack stack) {
+                    return !stack.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST);
+                }
+
+                @Override
+                public boolean mayPickup(@NotNull Player playerIn) {
+                    return false;
+                }
             });
         }
 
@@ -115,31 +127,83 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         return null;
     }
 
+    public void setGhostSlot(int slotIndex, ItemStack stack) {
+        if (slotIndex >= 0 && slotIndex < getDynamicKeyCount()) {
+            if (stack == null || stack.isEmpty()) {
+                this.container.setItem(MATERIAL_SLOT_START + slotIndex, ItemStack.EMPTY);
+            } else if (!stack.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST)) {
+                ItemStack ghost = stack.copy();
+                ghost.setCount(1);
+                this.container.setItem(MATERIAL_SLOT_START + slotIndex, ghost);
+            }
+            broadcastChanges();
+        }
+    }
+
+    @Override
+    public void clicked(int slotId, int button, @NotNull ClickType clickType, @NotNull Player player) {
+        if (slotId >= MATERIAL_SLOT_START && slotId < MATERIAL_SLOT_START + MATERIAL_SLOT_COUNT) {
+            Slot slot = this.slots.get(slotId);
+            if (!slot.isActive()) {
+                return;
+            }
+            ItemStack carried = this.getCarried();
+            if (carried.isEmpty()) {
+                slot.set(ItemStack.EMPTY);
+            } else {
+                if (!carried.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST)) {
+                    ItemStack ghost = carried.copy();
+                    ghost.setCount(1);
+                    slot.set(ghost);
+                }
+            }
+            return;
+        }
+        super.clicked(slotId, button, clickType, player);
+    }
+
     public void executeCraft(Map<String, ResourceLocation> chosenTextures) {
+        executeCraft(chosenTextures, false);
+    }
+
+    public void executeCraft(Map<String, ResourceLocation> chosenTextures, boolean transformAll) {
         ItemStack input = this.container.getItem(INPUT_SLOT);
-        if (input.isEmpty() || !(input.getItem() instanceof BlockItem bi) || !(bi.getBlock() instanceof IDynamicTexturedBlock)) {
+        if (input.isEmpty() || !(input.getItem() instanceof BlockItem bi) || !(bi.getBlock() instanceof IDynamicTexturedBlock dtb)) {
             return;
         }
 
-        ItemStack output = input.copy();
-        output.setCount(1);
-        IDynamicTexturedBlock.setDynamicTextures(output, chosenTextures);
+        if (!CabinetMakerTableScreen.hasTextureChanges(input, dtb, chosenTextures)) {
+            return;
+        }
+
+        int toCraft = transformAll ? input.getCount() : 1;
+
+        ItemStack outputTemplate = input.copy();
+        outputTemplate.setCount(1);
+        IDynamicTexturedBlock.setDynamicTextures(outputTemplate, chosenTextures);
 
         ItemStack currentOutput = this.container.getItem(OUTPUT_SLOT);
         if (currentOutput.isEmpty()) {
-            this.container.setItem(OUTPUT_SLOT, output);
-            input.shrink(1);
+            int craftedAmount = Math.min(toCraft, outputTemplate.getMaxStackSize());
+            ItemStack newOutput = outputTemplate.copy();
+            newOutput.setCount(craftedAmount);
+            this.container.setItem(OUTPUT_SLOT, newOutput);
+            input.shrink(craftedAmount);
             this.container.setItem(INPUT_SLOT, input);
             access.execute((level, pos) ->
                     level.playSound(null, pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS, 1.0f, 1.0f));
             broadcastChanges();
-        } else if (ItemStack.isSameItemSameTags(currentOutput, output) && currentOutput.getCount() < currentOutput.getMaxStackSize()) {
-            currentOutput.grow(1);
-            input.shrink(1);
-            this.container.setItem(INPUT_SLOT, input);
-            access.execute((level, pos) ->
-                    level.playSound(null, pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS, 1.0f, 1.0f));
-            broadcastChanges();
+        } else if (ItemStack.isSameItemSameTags(currentOutput, outputTemplate)) {
+            int space = currentOutput.getMaxStackSize() - currentOutput.getCount();
+            int craftedAmount = Math.min(toCraft, space);
+            if (craftedAmount > 0) {
+                currentOutput.grow(craftedAmount);
+                input.shrink(craftedAmount);
+                this.container.setItem(INPUT_SLOT, input);
+                access.execute((level, pos) ->
+                        level.playSound(null, pos, SoundEvents.UI_STONECUTTER_TAKE_RESULT, SoundSource.BLOCKS, 1.0f, 1.0f));
+                broadcastChanges();
+            }
         }
     }
 
@@ -151,6 +215,9 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
     @Override
     public void removed(@NotNull Player player) {
         super.removed(player);
+        for (int i = 0; i < MATERIAL_SLOT_COUNT; i++) {
+            this.container.setItem(MATERIAL_SLOT_START + i, ItemStack.EMPTY);
+        }
         this.access.execute((level, pos) -> this.clearContainer(player, this.container));
     }
 
@@ -178,15 +245,20 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
                     if (!this.moveItemStackTo(slotStack, INPUT_SLOT, INPUT_SLOT + 1, false)) {
                         return ItemStack.EMPTY;
                     }
-                } else {
+                } else if (!slotStack.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST)) {
                     int activeKeys = getDynamicKeyCount();
-                    if (activeKeys > 0) {
-                        if (!this.moveItemStackTo(slotStack, MATERIAL_SLOT_START, MATERIAL_SLOT_START + activeKeys, false)) {
+                    for (int i = 0; i < activeKeys; i++) {
+                        Slot matSlot = this.slots.get(MATERIAL_SLOT_START + i);
+                        if (!matSlot.hasItem()) {
+                            ItemStack ghost = slotStack.copy();
+                            ghost.setCount(1);
+                            matSlot.set(ghost);
                             return ItemStack.EMPTY;
                         }
-                    } else {
-                        return ItemStack.EMPTY;
                     }
+                    return ItemStack.EMPTY;
+                } else {
+                    return ItemStack.EMPTY;
                 }
             }
 
