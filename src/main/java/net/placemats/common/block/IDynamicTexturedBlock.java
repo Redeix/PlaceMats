@@ -16,6 +16,7 @@ import net.minecraft.world.item.ItemStack;
 public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
+    String NBT_DYNAMIC_COLORS = "DynamicColors";
 
     /**
      * @return Number of texture key slots this block supports (1 to 5).
@@ -83,6 +84,49 @@ public interface IDynamicTexturedBlock {
             dtTag.putString(entry.getKey(), entry.getValue().toString());
         }
         stack.addTagElement(NBT_DYNAMIC_TEXTURES, dtTag);
+    }
+
+    /**
+     * Extracts dynamic color overrides from an ItemStack's NBT.
+     */
+    static Map<String, Integer> getDynamicColors(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(NBT_DYNAMIC_COLORS, Tag.TAG_COMPOUND)) {
+            return Collections.emptyMap();
+        }
+        CompoundTag dcTag = tag.getCompound(NBT_DYNAMIC_COLORS);
+        Map<String, Integer> map = new HashMap<>();
+        for (String key : dcTag.getAllKeys()) {
+            map.put(key, dcTag.getInt(key));
+        }
+        return map;
+    }
+
+    /**
+     * Saves dynamic color overrides to an ItemStack's NBT.
+     */
+    static void setDynamicColors(ItemStack stack, Map<String, Integer> colors) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        if (colors.isEmpty()) {
+            if (stack.hasTag()) {
+                assert stack.getTag() != null;
+                stack.getTag().remove(NBT_DYNAMIC_COLORS);
+                if (stack.getTag().isEmpty()) {
+                    stack.setTag(null);
+                }
+            }
+            return;
+        }
+        CompoundTag dcTag = new CompoundTag();
+        for (Map.Entry<String, Integer> entry : colors.entrySet()) {
+            dcTag.putInt(entry.getKey(), entry.getValue());
+        }
+        stack.addTagElement(NBT_DYNAMIC_COLORS, dcTag);
     }
 
     /**

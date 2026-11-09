@@ -68,6 +68,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
 
     private final List<PlacedItem> placedItems = new ArrayList<>();
     private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
+    private final Map<String, Integer> dynamicColors = new HashMap<>();
     @Setter
     private float currentRotation = 0;
     @Setter
@@ -99,15 +100,31 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
+    public Map<String, Integer> getDynamicColors() {
+        return Collections.unmodifiableMap(dynamicColors);
+    }
+
+    public void setDynamicColors(Map<String, Integer> colors) {
+        this.dynamicColors.clear();
+        if (colors != null) {
+            this.dynamicColors.putAll(colors);
+        }
+        setChanged();
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
     public boolean hasDynamicTextures() {
         return !dynamicTextures.isEmpty();
     }
 
     @Override
     public @NotNull ModelData getModelData() {
-        if (!dynamicTextures.isEmpty()) {
+        if (!dynamicTextures.isEmpty() || !dynamicColors.isEmpty()) {
             return ModelData.builder()
                     .with(DynamicShelfBakedModel.DYNAMIC_TEXTURES_PROPERTY, new HashMap<>(dynamicTextures))
+                    .with(DynamicShelfBakedModel.DYNAMIC_COLORS_PROPERTY, new HashMap<>(dynamicColors))
                     .build();
         }
         return super.getModelData();
@@ -1018,6 +1035,15 @@ public class PlaceMatBlockEntity extends BlockEntity {
             });
             tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES, dtTag);
         }
+        if (!dynamicColors.isEmpty()) {
+            CompoundTag dcTag = new CompoundTag();
+            dynamicColors.forEach((k, v) -> {
+                if (v != null) {
+                    dcTag.putInt(k, v);
+                }
+            });
+            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, dcTag);
+        }
         ListTag list = new ListTag();
         for (PlacedItem placed : placedItems) {
             CompoundTag itemTag = new CompoundTag();
@@ -1051,6 +1077,13 @@ public class PlaceMatBlockEntity extends BlockEntity {
                 if (rl != null) {
                     this.dynamicTextures.put(key, rl);
                 }
+            }
+        }
+        this.dynamicColors.clear();
+        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, Tag.TAG_COMPOUND)) {
+            CompoundTag dcTag = tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS);
+            for (String key : dcTag.getAllKeys()) {
+                this.dynamicColors.put(key, dcTag.getInt(key));
             }
         }
         if (level != null && level.isClientSide) {

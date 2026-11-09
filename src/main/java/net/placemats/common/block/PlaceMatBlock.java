@@ -120,8 +120,10 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         super.setPlacedBy(level, pos, state, placer, stack);
         if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
             Map<String, ResourceLocation> textures = IDynamicTexturedBlock.getDynamicTextures(stack);
-            if (!textures.isEmpty()) {
+            Map<String, Integer> colors = IDynamicTexturedBlock.getDynamicColors(stack);
+            if (!textures.isEmpty() || !colors.isEmpty()) {
                 pmbe.setDynamicTextures(textures);
+                pmbe.setDynamicColors(colors);
                 level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
             }
         }
@@ -207,6 +209,9 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
             if (pmbe.hasDynamicTextures()) {
                 IDynamicTexturedBlock.setDynamicTextures(stack, pmbe.getDynamicTextures());
             }
+            if (!pmbe.getDynamicColors().isEmpty()) {
+                IDynamicTexturedBlock.setDynamicColors(stack, pmbe.getDynamicColors());
+            }
             return stack;
         }
         return super.getCloneItemStack(state, target, level, pos, player);
@@ -216,10 +221,15 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         List<ItemStack> drops = super.getDrops(state, params);
         BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
-        if (be instanceof PlaceMatBlockEntity pmbe && pmbe.hasDynamicTextures()) {
+        if (be instanceof PlaceMatBlockEntity pmbe && (pmbe.hasDynamicTextures() || !pmbe.getDynamicColors().isEmpty())) {
             for (ItemStack drop : drops) {
                 if (drop.getItem() == this.asItem()) {
-                    IDynamicTexturedBlock.setDynamicTextures(drop, pmbe.getDynamicTextures());
+                    if (pmbe.hasDynamicTextures()) {
+                        IDynamicTexturedBlock.setDynamicTextures(drop, pmbe.getDynamicTextures());
+                    }
+                    if (!pmbe.getDynamicColors().isEmpty()) {
+                        IDynamicTexturedBlock.setDynamicColors(drop, pmbe.getDynamicColors());
+                    }
                 }
             }
         }

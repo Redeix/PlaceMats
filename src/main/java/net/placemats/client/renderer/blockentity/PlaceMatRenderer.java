@@ -591,9 +591,6 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             v[offset + 1] = Float.floatToRawIntBits(targetV);
 
             if (tintColor != -1) {
-                if ((tintColor & 0xFF000000) == 0) {
-                    tintColor |= 0xFF000000;
-                }
                 int abgr = QuadTransformers.toABGR(tintColor);
                 v[i * stride + IQuadTransformer.COLOR] = abgr;
             }
@@ -603,9 +600,6 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
     }
 
     private static BakedQuad applyQuadColor(BakedQuad quad, int argbColor) {
-        if ((argbColor & 0xFF000000) == 0) {
-            argbColor |= 0xFF000000;
-        }
         int[] v = Arrays.copyOf(quad.getVertices(), quad.getVertices().length);
         int stride = IQuadTransformer.STRIDE;
         int abgr = QuadTransformers.toABGR(argbColor);

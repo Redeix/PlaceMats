@@ -34,6 +34,7 @@ import org.jetbrains.annotations.Nullable;
 public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
 
     public static final ModelProperty<Map<String, ResourceLocation>> DYNAMIC_TEXTURES_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<Map<String, Integer>> DYNAMIC_COLORS_PROPERTY = new ModelProperty<>();
 
     @Getter private final IDynamicTexturedBlock dynamicBlock;
     private final ItemOverrides itemOverrides;
@@ -53,10 +54,11 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
         List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
-        if (customTextures == null || customTextures.isEmpty()) {
+        Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
+        if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty())) {
             return quads;
         }
-        return remapQuads(quads, customTextures);
+        return remapQuads(quads, customTextures, customColors);
     }
 
     @Override
@@ -74,33 +76,47 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         @Override
         public BakedModel resolve(@NotNull BakedModel model, @NotNull ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
             Map<String, ResourceLocation> customTextures = IDynamicTexturedBlock.getDynamicTextures(stack);
-            if (customTextures.isEmpty()) {
+            Map<String, Integer> customColors = IDynamicTexturedBlock.getDynamicColors(stack);
+            if (customTextures.isEmpty() && customColors.isEmpty()) {
                 return DynamicShelfBakedModel.this;
             }
-            return new DynamicShelfItemBakedModel(DynamicShelfBakedModel.this, customTextures);
+            return new DynamicShelfItemBakedModel(DynamicShelfBakedModel.this, customTextures, customColors);
         }
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures) {
-        if (quads.isEmpty() || customTextures == null || customTextures.isEmpty()) {
+        return remapQuads(quads, customTextures, Collections.emptyMap());
+    }
+
+    public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
+        if (quads.isEmpty() || ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()))) {
             return quads;
         }
         List<BakedQuad> remapped = new ArrayList<>(quads.size());
         for (BakedQuad quad : quads) {
-            remapped.add(remapQuad(quad, customTextures));
+            remapped.add(remapQuad(quad, customTextures, customColors));
         }
         return remapped;
     }
 
     public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures) {
+        return remapQuad(quad, customTextures, Collections.emptyMap());
+    }
+
+    public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
         String matchedKey = findMatchingKey(quad);
-        if (matchedKey != null && customTextures.containsKey(matchedKey)) {
-            ResourceLocation targetTex = customTextures.get(matchedKey);
+        if (matchedKey != null) {
+            ResourceLocation targetTex = customTextures != null ? customTextures.get(matchedKey) : null;
+            Integer tintColor = customColors != null ? customColors.get(matchedKey) : null;
+            int tint = tintColor != null ? tintColor : -1;
+
             if (targetTex != null) {
                 TextureAtlasSprite newSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(targetTex);
                 if (newSprite != null) {
-                    return remapSprite(quad, newSprite, -1);
+                    return remapSprite(quad, newSprite, tint);
                 }
+            } else if (tint != -1) {
+                return remapSprite(quad, quad.getSprite(), tint);
             }
         }
         return quad;
@@ -159,9 +175,6 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
             v[offset + 1] = Float.floatToRawIntBits(targetV);
 
             if (tintColor != -1) {
-                if ((tintColor & 0xFF000000) == 0) {
-                    tintColor |= 0xFF000000;
-                }
                 int abgr = QuadTransformers.toABGR(tintColor);
                 v[i * stride + IQuadTransformer.COLOR] = abgr;
             }
@@ -173,29 +186,35 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
     public static class DynamicShelfItemBakedModel extends BakedModelWrapper<BakedModel> {
         @Getter private final DynamicShelfBakedModel parent;
         @Getter private final Map<String, ResourceLocation> customTextures;
+        @Getter private final Map<String, Integer> customColors;
 
         public DynamicShelfItemBakedModel(DynamicShelfBakedModel parent, Map<String, ResourceLocation> customTextures) {
+            this(parent, customTextures, Collections.emptyMap());
+        }
+
+        public DynamicShelfItemBakedModel(DynamicShelfBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
             super(parent.originalModel);
             this.parent = parent;
-            this.customTextures = customTextures;
+            this.customTextures = customTextures != null ? customTextures : Collections.emptyMap();
+            this.customColors = customColors != null ? customColors : Collections.emptyMap();
         }
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
             List<BakedQuad> quads = super.getQuads(state, side, rand);
-            return parent.remapQuads(quads, customTextures);
+            return parent.remapQuads(quads, customTextures, customColors);
         }
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
             List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
-            return parent.remapQuads(quads, customTextures);
+            return parent.remapQuads(quads, customTextures, customColors);
         }
 
         @Override
         public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
             BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
-            return model == this.originalModel ? this : new DynamicShelfItemBakedModel(new DynamicShelfBakedModel(model, this.parent.getDynamicBlock()), this.customTextures);
+            return model == this.originalModel ? this : new DynamicShelfItemBakedModel(new DynamicShelfBakedModel(model, this.parent.getDynamicBlock()), this.customTextures, this.customColors);
         }
 
         @Override

@@ -5,9 +5,12 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import com.mojang.blaze3d.platform.Lighting;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -31,6 +34,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.util.BlockTextureExtractor;
+import net.placemats.client.gui.util.ColorPickerWidget;
 import net.placemats.client.renderer.DynamicShelfBakedModel;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
@@ -78,13 +82,17 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     private static final int SELECTION_OVERLAY_SIZE = SLOT_SIZE + 2;
 
     private static final int TEXTURE_SWATCH_SIZE = 16;
+    public static final int MAX_TEXTURE_SWATCHES = 5;
 
     private final Map<String, ResourceLocation> chosenTextures = new HashMap<>();
+    private final Map<String, Integer> chosenColors = new HashMap<>();
     private final Map<Integer, List<ResourceLocation>> availableTexturesPerKey = new HashMap<>();
     private ItemStack lastInputStack = ItemStack.EMPTY;
     private final ItemStack[] lastMaterialStacks = new ItemStack[CabinetMakerTableContainer.MATERIAL_SLOT_COUNT];
 
     private Button confirmButton;
+    @Getter private ColorPickerWidget colorPickerWidget;
+    private int activeColorKeyIndex = -1;
 
     public CabinetMakerTableScreen(CabinetMakerTableContainer menu, Inventory playerInventory, Component title) {
         super(menu, playerInventory, title);
@@ -101,19 +109,74 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         this.confirmButton = Button.builder(Component.literal("▼"), btn -> {
             boolean transformAll = hasShiftDown();
-            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), transformAll));
+            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), new HashMap<>(chosenColors), transformAll));
         })
             .bounds(this.leftPos + BUTTON_X, this.topPos + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
             .tooltip(Tooltip.create(Component.translatable("gui.place_mats.cabinet_maker.confirm")))
             .build();
 
         this.addRenderableWidget(this.confirmButton);
+
+        this.colorPickerWidget = new ColorPickerWidget(this.font, this.leftPos + this.imageWidth, this.topPos + MATERIAL_SLOT_Y, this::onColorPickerChanged);
+        this.colorPickerWidget.visible = false;
+        this.addRenderableWidget(this.colorPickerWidget);
+
         updateState();
+    }
+
+    private void onColorPickerChanged(int color) {
+        int keyCount = this.menu.getDynamicKeyCount();
+        IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
+        if (dynamicBlock != null && activeColorKeyIndex >= 0 && activeColorKeyIndex < keyCount && activeColorKeyIndex < dynamicBlock.getTextureKeys().size()) {
+            String key = dynamicBlock.getTextureKeys().get(activeColorKeyIndex);
+            chosenColors.put(key, color);
+            updateConfirmButton();
+        }
+    }
+
+    /**
+     * Turns a hex color string into ARGB.
+     * @param text the hex color.
+     * @return the ARGB color.
+     */
+    @SuppressWarnings("DuplicateExpressions")
+    public static Integer parseHexColor(String text) {
+        if (text == null) {
+            return null;
+        }
+        String clean = text.trim();
+        if (clean.isEmpty()) {
+            return null;
+        }
+        try {
+            if (clean.length() == 3) {
+                int r = Integer.parseInt(clean.substring(0, 1), 16) * 17;
+                int g = Integer.parseInt(clean.substring(1, 2), 16) * 17;
+                int b = Integer.parseInt(clean.substring(2, 3), 16) * 17;
+                return 0xFF000000 | (r << 16) | (g << 8) | b;
+            } else if (clean.length() == 4) {
+                int a = Integer.parseInt(clean.substring(0, 1), 16) * 17;
+                int r = Integer.parseInt(clean.substring(1, 2), 16) * 17;
+                int g = Integer.parseInt(clean.substring(2, 3), 16) * 17;
+                int b = Integer.parseInt(clean.substring(3, 4), 16) * 17;
+                return (a << 24) | (r << 16) | (g << 8) | b;
+            } else if (clean.length() == 6) {
+                int rgb = (int) Long.parseLong(clean, 16);
+                return 0xFF000000 | (rgb & 0xFFFFFF);
+            } else if (clean.length() == 8) {
+                return (int) Long.parseLong(clean, 16);
+            }
+        } catch (NumberFormatException ignored) {
+        }
+        return null;
     }
 
     @Override
     protected void containerTick() {
         super.containerTick();
+        if (this.colorPickerWidget != null) {
+            this.colorPickerWidget.tick();
+        }
         checkInputsChanged();
     }
 
@@ -134,8 +197,11 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             if (inputChanged) {
                 lastInputStack = currentInput.copy();
                 chosenTextures.clear();
+                chosenColors.clear();
                 Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(currentInput);
                 chosenTextures.putAll(existing);
+                Map<String, Integer> existingColors = IDynamicTexturedBlock.getDynamicColors(currentInput);
+                chosenColors.putAll(existingColors);
             }
             updateState();
         }
@@ -169,8 +235,26 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     chosenTextures.put(key, current);
                 }
             }
+
+            if (colorPickerWidget != null) {
+                if (activeColorKeyIndex >= keyCount) {
+                    colorPickerWidget.visible = false;
+                    colorPickerWidget.getHexEditBox().setFocused(false);
+                    activeColorKeyIndex = -1;
+                } else if (colorPickerWidget.visible && activeColorKeyIndex >= 0 && activeColorKeyIndex < keys.size()) {
+                    String activeKey = keys.get(activeColorKeyIndex);
+                    Integer col = chosenColors.get(activeKey);
+                    colorPickerWidget.setColor(col != null ? col : 0xFFFFFFFF);
+                }
+            }
         } else {
             chosenTextures.clear();
+            chosenColors.clear();
+            if (colorPickerWidget != null) {
+                colorPickerWidget.visible = false;
+                colorPickerWidget.getHexEditBox().setFocused(false);
+                activeColorKeyIndex = -1;
+            }
         }
 
         if (confirmButton != null) {
@@ -183,22 +267,30 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             int keyCount = this.menu.getDynamicKeyCount();
             IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
             ItemStack inputStack = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
-            confirmButton.active = keyCount > 0 && !inputStack.isEmpty() && hasTextureChanges(inputStack, dynamicBlock, chosenTextures);
+            confirmButton.active = keyCount > 0 && !inputStack.isEmpty() && hasCraftChanges(inputStack, dynamicBlock, chosenTextures, chosenColors);
         }
     }
 
-    public static boolean hasTextureChanges(ItemStack input, IDynamicTexturedBlock dynamicBlock, Map<String, ResourceLocation> chosenTextures) {
-        if (input.isEmpty() || dynamicBlock == null || chosenTextures == null || chosenTextures.isEmpty()) {
+    public static boolean hasCraftChanges(ItemStack input, IDynamicTexturedBlock dynamicBlock, Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors) {
+        if (input.isEmpty() || dynamicBlock == null) {
             return false;
         }
-        Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(input);
+        Map<String, ResourceLocation> existingTextures = IDynamicTexturedBlock.getDynamicTextures(input);
+        Map<String, Integer> existingColors = IDynamicTexturedBlock.getDynamicColors(input);
+
         for (String key : dynamicBlock.getTextureKeys()) {
-            ResourceLocation chosen = chosenTextures.get(key);
-            ResourceLocation current = existing.get(key);
+            ResourceLocation chosen = chosenTextures != null ? chosenTextures.get(key) : null;
+            ResourceLocation current = existingTextures.get(key);
             if (current == null) {
                 current = dynamicBlock.getDefaultTexture(key);
             }
             if (chosen != null && !chosen.equals(current)) {
+                return true;
+            }
+
+            Integer chosenCol = chosenColors != null ? chosenColors.get(key) : null;
+            Integer currentCol = existingColors.get(key);
+            if (!Objects.equals(chosenCol, currentCol)) {
                 return true;
             }
         }
@@ -213,7 +305,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         int matStartX = this.leftPos + MATERIAL_SLOT_X;
         int matSpacing = SLOT_SIZE + 3;
         int slotY = this.topPos + MATERIAL_SLOT_Y;
-        int columnHeight = SLOT_SIZE + 3 + 6 * (TEXTURE_SWATCH_SIZE + 3);
+        int columnHeight = SLOT_SIZE + 3 + MAX_TEXTURE_SWATCHES * (TEXTURE_SWATCH_SIZE + 3);
 
         for (int i = 0; i < keyCount; i++) {
             int colX = matStartX + (i * matSpacing);
@@ -259,8 +351,56 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     }
 
     @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int button, double dragX, double dragY) {
+        if (this.colorPickerWidget != null && this.colorPickerWidget.visible) {
+            if (this.colorPickerWidget.mouseDragged(mouseX, mouseY, button, dragX, dragY)) {
+                return true;
+            }
+        }
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+        if (this.colorPickerWidget != null && this.colorPickerWidget.visible) {
+            if (this.colorPickerWidget.mouseReleased(mouseX, mouseY, button)) {
+                return true;
+            }
+        }
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+        if (this.colorPickerWidget != null && this.colorPickerWidget.visible) {
+            if (this.colorPickerWidget.keyPressed(keyCode, scanCode, modifiers)) {
+                return true;
+            }
+        }
+        return super.keyPressed(keyCode, scanCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char codePoint, int modifiers) {
+        if (this.colorPickerWidget != null && this.colorPickerWidget.visible) {
+            if (this.colorPickerWidget.charTyped(codePoint, modifiers)) {
+                return true;
+            }
+        }
+        return super.charTyped(codePoint, modifiers);
+    }
+
+    @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        // Texture Selection Buttons
+        if (this.colorPickerWidget != null && this.colorPickerWidget.visible) {
+            int wx = this.colorPickerWidget.getX();
+            int wy = this.colorPickerWidget.getY();
+            if (mouseX < wx || mouseX >= wx + this.colorPickerWidget.getWidth() || mouseY < wy || mouseY >= wy + this.colorPickerWidget.getHeight()) {
+                this.colorPickerWidget.getHexEditBox().setFocused(false);
+            }
+        }
+
+        // Tab Buttons and Texture Selection
         if (button == 0) {
             int keyCount = this.menu.getDynamicKeyCount();
             IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
@@ -268,13 +408,40 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 List<String> keys = dynamicBlock.getTextureKeys();
                 int matSpacing = SLOT_SIZE + 3;
 
+                // Open Tab Buttons
+                int btnY = this.topPos + 146;
+                for (int keyIdx = 0; keyIdx < keyCount && keyIdx < keys.size(); keyIdx++) {
+                    int colX = this.leftPos + MATERIAL_SLOT_X + (keyIdx * matSpacing);
+                    int btnX = colX + 1;
+                    if (mouseX >= btnX && mouseX < btnX + ColorPickerWidget.OPEN_TAB_WIDTH &&
+                            mouseY >= btnY && mouseY < btnY + ColorPickerWidget.OPEN_TAB_HEIGHT) {
+                        if (this.colorPickerWidget != null && this.colorPickerWidget.visible && this.activeColorKeyIndex == keyIdx) {
+                            this.colorPickerWidget.visible = false;
+                            this.colorPickerWidget.getHexEditBox().setFocused(false);
+                            this.activeColorKeyIndex = -1;
+                        } else if (this.colorPickerWidget != null) {
+                            this.activeColorKeyIndex = keyIdx;
+                            String key = keys.get(keyIdx);
+                            Integer currentTint = this.chosenColors.get(key);
+                            this.colorPickerWidget.setColor(currentTint != null ? currentTint : 0xFFFFFFFF);
+                            this.colorPickerWidget.visible = true;
+                            this.colorPickerWidget.getHexEditBox().setFocused(false);
+                        }
+                        if (Minecraft.getInstance().player != null) {
+                            Minecraft.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 1.2f);
+                        }
+                        return true;
+                    }
+                }
+
+                // Texture Selection Buttons
                 for (int keyIdx = 0; keyIdx < keyCount && keyIdx < keys.size(); keyIdx++) {
                     String key = keys.get(keyIdx);
                     List<ResourceLocation> textures = availableTexturesPerKey.getOrDefault(keyIdx, List.of());
                     int colX = this.leftPos + MATERIAL_SLOT_X + (keyIdx * matSpacing);
                     int startY = this.topPos + MATERIAL_SLOT_Y + SLOT_SIZE + 3;
 
-                    for (int tIdx = 0; tIdx < textures.size() && tIdx < 6; tIdx++) {
+                    for (int tIdx = 0; tIdx < textures.size() && tIdx < MAX_TEXTURE_SWATCHES; tIdx++) {
                         int swatchY = startY + (tIdx * (TEXTURE_SWATCH_SIZE + 3));
                         if (mouseX >= colX && mouseX < colX + TEXTURE_SWATCH_SIZE &&
                                 mouseY >= swatchY && mouseY < swatchY + TEXTURE_SWATCH_SIZE) {
@@ -336,7 +503,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     // No Texture Label
                     graphics.drawCenteredString(this.font, "⏷", colX + 9, startY + 4, 0xFF888888);
                 } else {
-                    for (int tIdx = 0; tIdx < textures.size() && tIdx < 6; tIdx++) {
+                    for (int tIdx = 0; tIdx < textures.size() && tIdx < MAX_TEXTURE_SWATCHES; tIdx++) {
                         ResourceLocation tex = textures.get(tIdx);
                         int swatchY = startY + (tIdx * (TEXTURE_SWATCH_SIZE + 3));
                         boolean isSelected = tex.equals(currentChoice);
@@ -345,7 +512,19 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
                         TextureAtlasSprite sprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(tex);
                         if (sprite != null) {
-                            graphics.blit(colX + 1, swatchY + 1, 0, TEXTURE_SWATCH_SIZE, TEXTURE_SWATCH_SIZE, sprite);
+                            RenderSystem.enableBlend();
+                            RenderSystem.defaultBlendFunc();
+                            Integer tint = chosenColors.get(key);
+                            if (tint != null) {
+                                float a = ((tint >> 24) & 0xFF) / 255.0f;
+                                float r = ((tint >> 16) & 0xFF) / 255.0f;
+                                float g = ((tint >> 8) & 0xFF) / 255.0f;
+                                float b = (tint & 0xFF) / 255.0f;
+                                graphics.blit(colX + 1, swatchY + 1, 0, TEXTURE_SWATCH_SIZE, TEXTURE_SWATCH_SIZE, sprite, r, g, b, a);
+                            } else {
+                                graphics.blit(colX + 1, swatchY + 1, 0, TEXTURE_SWATCH_SIZE, TEXTURE_SWATCH_SIZE, sprite, 1.0f, 1.0f, 1.0f, 1.0f);
+                            }
+                            RenderSystem.disableBlend();
                         }
 
                         if (mouseX >= colX + 1 && mouseX < colX + SLOT_SIZE && mouseY >= swatchY && mouseY + 1 < swatchY + SLOT_SIZE) {
@@ -359,13 +538,31 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     }
                 }
             }
+
+            // Color Tab Buttons
+            int btnY = this.topPos + 146;
+            for (int keyIdx = 0; keyIdx < keyCount && keyIdx < keys.size(); keyIdx++) {
+                int colX = matStartX + (keyIdx * matSpacing);
+                int btnX = colX + 1;
+
+                // Unpressed
+                graphics.blit(ColorPickerWidget.TEXTURE, btnX, btnY, 0, ColorPickerWidget.OPEN_TAB_BUTTON_U, ColorPickerWidget.OPEN_TAB_BUTTON_V, ColorPickerWidget.OPEN_TAB_WIDTH, ColorPickerWidget.OPEN_TAB_HEIGHT, ColorPickerWidget.TEXTURE_SIZE, ColorPickerWidget.TEXTURE_SIZE);
+                // Pressed
+                if (this.colorPickerWidget != null && this.colorPickerWidget.visible && this.activeColorKeyIndex == keyIdx) {
+                    graphics.blit(ColorPickerWidget.TEXTURE, btnX, btnY, 0, ColorPickerWidget.CLOSE_TAB_BUTTON_U, ColorPickerWidget.CLOSE_TAB_BUTTON_V, ColorPickerWidget.OPEN_TAB_WIDTH, ColorPickerWidget.OPEN_TAB_HEIGHT, ColorPickerWidget.TEXTURE_SIZE, ColorPickerWidget.TEXTURE_SIZE);
+                }
+                // Hover
+                if (mouseX >= btnX && mouseX < btnX + ColorPickerWidget.OPEN_TAB_WIDTH && mouseY >= btnY && mouseY < btnY + ColorPickerWidget.OPEN_TAB_HEIGHT) {
+                    graphics.fill(btnX, btnY, btnX + ColorPickerWidget.OPEN_TAB_WIDTH, btnY + ColorPickerWidget.OPEN_TAB_HEIGHT, 0x40FFFFFF);
+                }
+            }
         }
 
         // 3D Preview
         ItemStack inputStack = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
         if (!inputStack.isEmpty()) {
             float rotY = (Minecraft.getInstance().level != null ? (Minecraft.getInstance().level.getGameTime() + partialTick) : 0.0f) % 360.0f;
-            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, chosenTextures);
+            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, chosenTextures, chosenColors);
         }
     }
 
@@ -396,7 +593,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 int startY = this.topPos + MATERIAL_SLOT_Y + SLOT_SIZE + 3;
 
                 // Texture Swatch Tooltips
-                for (int tIdx = 0; tIdx < textures.size() && tIdx < 6; tIdx++) {
+                for (int tIdx = 0; tIdx < textures.size() && tIdx < MAX_TEXTURE_SWATCHES; tIdx++) {
                     int swatchY = startY + (tIdx * (TEXTURE_SWATCH_SIZE + 3));
                     if (mouseX >= colX && mouseX < colX + TEXTURE_SWATCH_SIZE &&
                             mouseY >= swatchY && mouseY < swatchY + TEXTURE_SWATCH_SIZE) {
@@ -419,11 +616,36 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
                     return;
                 }
+
+                // Open Tab Button Tooltips
+                int btnY = this.topPos + 146;
+                int btnX = colX + 1;
+                if (mouseX >= btnX && mouseX < btnX + ColorPickerWidget.OPEN_TAB_WIDTH &&
+                        mouseY >= btnY && mouseY < btnY + ColorPickerWidget.OPEN_TAB_HEIGHT) {
+                    Component keyName = dynamicBlock.getTextureKeyName(keyIdx);
+                    List<Component> tooltip = new ArrayList<>();
+                    tooltip.add(Component.translatable("gui.place_mats.cabinet_maker.color_picker_tab", keyName).withStyle(ChatFormatting.YELLOW));
+                    guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+                    return;
+                }
             }
         }
     }
 
-    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack shelfStack, Map<String, ResourceLocation> textures) {
+    /**
+     * Renders a 3D preview of the dynamic block item in the GUI using the supplied
+     * textures and color selections.
+     *
+     * @param guiGraphics the GUI graphics context.
+     * @param x the x-cords.
+     * @param y the y-cords.
+     * @param size the base size used to scale the rendered preview.
+     * @param rotationY the rotation angle, in degrees, applied around the Y axis.
+     * @param shelfStack the item stack to render.
+     * @param textures the texture selections to apply.
+     * @param colors the color selections to apply.
+     */
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack shelfStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
         if (shelfStack.isEmpty()) {
             return;
         }
@@ -433,20 +655,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         BakedModel modelToRender = baseModel;
         if (baseModel instanceof DynamicShelfBakedModel dsbm) {
-            if (!textures.isEmpty()) {
-                modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsbm, textures);
-            }
+            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsbm, textures, colors);
         } else if (baseModel instanceof DynamicShelfBakedModel.DynamicShelfItemBakedModel dsibm) {
-            if (!textures.isEmpty()) {
-                modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsibm.getParent(), textures);
-            }
+            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsibm.getParent(), textures, colors);
         } else if (shelfStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
             DynamicShelfBakedModel tempDsbm = new DynamicShelfBakedModel(baseModel, dtb);
-            if (!textures.isEmpty()) {
-                modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(tempDsbm, textures);
-            } else {
-                modelToRender = tempDsbm;
-            }
+            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(tempDsbm, textures, colors);
         }
 
         PoseStack poseStack = guiGraphics.pose();
@@ -458,15 +672,16 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         poseStack.mulPose(Axis.XP.rotationDegrees(25.0f));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationY));
 
-        MultiBufferSource.BufferSource bufferSource =  mc.renderBuffers().bufferSource();
+        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
 
+        Lighting.setupForFlatItems();
         mc.getItemRenderer().render(
             shelfStack,
             ItemDisplayContext.NONE,
             false,
             poseStack,
             bufferSource,
-            LightTexture.FULL_BLOCK,
+            LightTexture.FULL_SKY,
             OverlayTexture.NO_OVERLAY,
             modelToRender
         );
@@ -474,7 +689,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         bufferSource.endBatch(RenderType.translucent());
         bufferSource.endBatch();
 
-        Lighting.setupForFlatItems();
+        Lighting.setupFor3DItems();
         poseStack.popPose();
     }
 }

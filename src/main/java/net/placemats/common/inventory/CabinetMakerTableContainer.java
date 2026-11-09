@@ -162,17 +162,13 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         super.clicked(slotId, button, clickType, player);
     }
 
-    public void executeCraft(Map<String, ResourceLocation> chosenTextures) {
-        executeCraft(chosenTextures, false);
-    }
-
-    public void executeCraft(Map<String, ResourceLocation> chosenTextures, boolean transformAll) {
+    public void executeCraft(Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, boolean transformAll) {
         ItemStack input = this.container.getItem(INPUT_SLOT);
         if (input.isEmpty() || !(input.getItem() instanceof BlockItem bi) || !(bi.getBlock() instanceof IDynamicTexturedBlock dtb)) {
             return;
         }
 
-        if (!CabinetMakerTableScreen.hasTextureChanges(input, dtb, chosenTextures)) {
+        if (!CabinetMakerTableScreen.hasCraftChanges(input, dtb, chosenTextures, chosenColors)) {
             return;
         }
 
@@ -181,6 +177,7 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         ItemStack outputTemplate = input.copy();
         outputTemplate.setCount(1);
         IDynamicTexturedBlock.setDynamicTextures(outputTemplate, chosenTextures);
+        IDynamicTexturedBlock.setDynamicColors(outputTemplate, chosenColors);
 
         ItemStack currentOutput = this.container.getItem(OUTPUT_SLOT);
         if (currentOutput.isEmpty()) {

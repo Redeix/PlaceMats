@@ -13,12 +13,14 @@ import dev.emi.emi.api.EmiRegistry;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
+import dev.emi.emi.api.widget.Bounds;
 import dev.emi.emi.api.widget.SlotWidget;
 import dev.emi.emi.api.widget.TextureWidget;
 import dev.emi.emi.api.widget.WidgetHolder;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.CabinetMakerTableScreen;
+import net.placemats.client.gui.util.ColorPickerWidget;
 import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.PlaceMatBlocks;
@@ -67,6 +69,17 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
             public void render(CabinetMakerTableScreen screen, EmiIngredient dragged, GuiGraphics draw, int mouseX, int mouseY, float delta)
             {
                 screen.renderGhostDropTargets(draw, mouseX, mouseY);
+            }
+        });
+
+        registerExclusionZones(emiRegistry);
+    }
+
+    private void registerExclusionZones(EmiRegistry registry) {
+        registry.addExclusionArea(CabinetMakerTableScreen.class, (screen, consumer) -> {
+            ColorPickerWidget widget = screen.getColorPickerWidget();
+            if (widget != null && widget.visible) {
+                consumer.accept(new Bounds(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight()));
             }
         });
     }
