@@ -43,8 +43,6 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import lombok.Setter;
 
-import net.placemats.client.renderer.DynamicShelfBakedModel;
-import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -64,7 +62,7 @@ import static net.placemats.common.block.PlaceMatBlock.*;
  */
 @SuppressWarnings("unused")
 @Getter
-public class PlaceMatBlockEntity extends BlockEntity {
+public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTexturedBlockEntity {
 
     private final List<PlacedItem> placedItems = new ArrayList<>();
     private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
@@ -115,28 +113,9 @@ public class PlaceMatBlockEntity extends BlockEntity {
         }
     }
 
-    public boolean hasDynamicTextures() {
-        return !dynamicTextures.isEmpty();
-    }
-
-    public boolean hasRedeixColor() {
-        for (Integer color : dynamicColors.values()) {
-            if (IDynamicTexturedBlock.isRainbowColor(color)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     @Override
     public @NotNull ModelData getModelData() {
-        if (!dynamicTextures.isEmpty() || !dynamicColors.isEmpty()) {
-            return ModelData.builder()
-                    .with(DynamicShelfBakedModel.DYNAMIC_TEXTURES_PROPERTY, new HashMap<>(dynamicTextures))
-                    .with(DynamicShelfBakedModel.DYNAMIC_COLORS_PROPERTY, new HashMap<>(dynamicColors))
-                    .build();
-        }
-        return super.getModelData();
+        return getDynamicModelData(super.getModelData());
     }
 
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new IItemHandler() {
@@ -1035,24 +1014,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         if (lockedBy != null) {
             tag.putUUID("lockedBy", lockedBy);
         }
-        if (!dynamicTextures.isEmpty()) {
-            CompoundTag dtTag = new CompoundTag();
-            dynamicTextures.forEach((k, v) -> {
-                if (v != null) {
-                    dtTag.putString(k, v.toString());
-                }
-            });
-            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES, dtTag);
-        }
-        if (!dynamicColors.isEmpty()) {
-            CompoundTag dcTag = new CompoundTag();
-            dynamicColors.forEach((k, v) -> {
-                if (v != null) {
-                    dcTag.putInt(k, v);
-                }
-            });
-            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, dcTag);
-        }
+        saveDynamicData(tag);
         ListTag list = new ListTag();
         for (PlacedItem placed : placedItems) {
             CompoundTag itemTag = new CompoundTag();
@@ -1078,23 +1040,7 @@ public class PlaceMatBlockEntity extends BlockEntity {
         } else {
             this.lockedBy = null;
         }
-        this.dynamicTextures.clear();
-        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES, Tag.TAG_COMPOUND)) {
-            CompoundTag dtTag = tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_TEXTURES);
-            for (String key : dtTag.getAllKeys()) {
-                ResourceLocation rl = ResourceLocation.tryParse(dtTag.getString(key));
-                if (rl != null) {
-                    this.dynamicTextures.put(key, rl);
-                }
-            }
-        }
-        this.dynamicColors.clear();
-        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, Tag.TAG_COMPOUND)) {
-            CompoundTag dcTag = tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS);
-            for (String key : dcTag.getAllKeys()) {
-                this.dynamicColors.put(key, dcTag.getInt(key));
-            }
-        }
+        loadDynamicData(tag);
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();
         }

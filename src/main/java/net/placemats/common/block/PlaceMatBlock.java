@@ -34,7 +34,6 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
-import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -44,6 +43,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import lombok.Getter;
 
+import net.placemats.common.blockentity.IDynamicTexturedBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatTags;
@@ -118,14 +118,9 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public void setPlacedBy(Level level, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
         super.setPlacedBy(level, pos, state, placer, stack);
-        if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
-            Map<String, ResourceLocation> textures = IDynamicTexturedBlock.getDynamicTextures(stack);
-            Map<String, Integer> colors = IDynamicTexturedBlock.getDynamicColors(stack);
-            if (!textures.isEmpty() || !colors.isEmpty()) {
-                pmbe.setDynamicTextures(textures);
-                pmbe.setDynamicColors(colors);
-                level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
-            }
+        onDynamicBlockPlacedBy(level, pos, stack);
+        if (level.getBlockEntity(pos) instanceof IDynamicTexturedBlockEntity) {
+            level.sendBlockUpdated(pos, state, state, Block.UPDATE_ALL_IMMEDIATE);
         }
     }
 
@@ -206,13 +201,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
                 return targeted.stack.copy();
             }
             ItemStack stack = super.getCloneItemStack(state, target, level, pos, player);
-            if (pmbe.hasDynamicTextures()) {
-                IDynamicTexturedBlock.setDynamicTextures(stack, pmbe.getDynamicTextures());
-            }
-            if (!pmbe.getDynamicColors().isEmpty()) {
-                IDynamicTexturedBlock.setDynamicColors(stack, pmbe.getDynamicColors());
-            }
-            return stack;
+            return IDynamicTexturedBlock.applyDynamicDataToItemStack(stack, pmbe);
         }
         return super.getCloneItemStack(state, target, level, pos, player);
     }
@@ -220,19 +209,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public List<ItemStack> getDrops(BlockState state, LootParams.Builder params) {
         List<ItemStack> drops = super.getDrops(state, params);
-        BlockEntity be = params.getOptionalParameter(LootContextParams.BLOCK_ENTITY);
-        if (be instanceof PlaceMatBlockEntity pmbe && (pmbe.hasDynamicTextures() || !pmbe.getDynamicColors().isEmpty())) {
-            for (ItemStack drop : drops) {
-                if (drop.getItem() == this.asItem()) {
-                    if (pmbe.hasDynamicTextures()) {
-                        IDynamicTexturedBlock.setDynamicTextures(drop, pmbe.getDynamicTextures());
-                    }
-                    if (!pmbe.getDynamicColors().isEmpty()) {
-                        IDynamicTexturedBlock.setDynamicColors(drop, pmbe.getDynamicColors());
-                    }
-                }
-            }
-        }
+        applyDynamicDrops(drops, params, this);
         return drops;
     }
 

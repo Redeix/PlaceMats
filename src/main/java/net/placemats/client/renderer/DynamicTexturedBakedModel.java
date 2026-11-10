@@ -32,7 +32,12 @@ import net.placemats.common.block.IDynamicTexturedBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
+/**
+ * Baked model wrapper that dynamically remaps textures and colors
+ * for any block implementing {@link IDynamicTexturedBlock}.
+ */
+@SuppressWarnings("unused")
+public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     public static final ModelProperty<Map<String, ResourceLocation>> DYNAMIC_TEXTURES_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<Map<String, Integer>> DYNAMIC_COLORS_PROPERTY = new ModelProperty<>();
@@ -44,10 +49,10 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         return this.originalModel;
     }
 
-    public DynamicShelfBakedModel(BakedModel originalModel, IDynamicTexturedBlock dynamicBlock) {
+    public DynamicTexturedBakedModel(BakedModel originalModel, IDynamicTexturedBlock dynamicBlock) {
         super(originalModel);
         this.dynamicBlock = dynamicBlock;
-        this.itemOverrides = new DynamicShelfItemOverrides();
+        this.itemOverrides = new DynamicTexturedItemOverrides();
     }
 
     @Override
@@ -72,7 +77,7 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
     @Override
     public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
         BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
-        return model == this.originalModel ? this : new DynamicShelfBakedModel(model, this.dynamicBlock);
+        return model == this.originalModel ? this : new DynamicTexturedBakedModel(model, this.dynamicBlock);
     }
 
     @Override
@@ -80,15 +85,15 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         return itemOverrides;
     }
 
-    private class DynamicShelfItemOverrides extends ItemOverrides {
+    private class DynamicTexturedItemOverrides extends ItemOverrides {
         @Override
         public BakedModel resolve(@NotNull BakedModel model, @NotNull ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
             Map<String, ResourceLocation> customTextures = IDynamicTexturedBlock.getDynamicTextures(stack);
             Map<String, Integer> customColors = IDynamicTexturedBlock.getDynamicColors(stack);
             if (customTextures.isEmpty() && customColors.isEmpty()) {
-                return DynamicShelfBakedModel.this;
+                return DynamicTexturedBakedModel.this;
             }
-            return new DynamicShelfItemBakedModel(DynamicShelfBakedModel.this, customTextures, customColors);
+            return new DynamicTexturedItemBakedModel(DynamicTexturedBakedModel.this, customTextures, customColors);
         }
     }
 
@@ -194,16 +199,16 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         return new BakedQuad(v, -1, quad.getDirection(), newSprite, quad.isShade(), quad.hasAmbientOcclusion());
     }
 
-    public static class DynamicShelfItemBakedModel extends BakedModelWrapper<BakedModel> {
-        @Getter private final DynamicShelfBakedModel parent;
+    public static class DynamicTexturedItemBakedModel extends BakedModelWrapper<BakedModel> {
+        @Getter private final DynamicTexturedBakedModel parent;
         @Getter private final Map<String, ResourceLocation> customTextures;
         @Getter private final Map<String, Integer> customColors;
 
-        public DynamicShelfItemBakedModel(DynamicShelfBakedModel parent, Map<String, ResourceLocation> customTextures) {
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures) {
             this(parent, customTextures, Collections.emptyMap());
         }
 
-        public DynamicShelfItemBakedModel(DynamicShelfBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
             super(parent.originalModel);
             this.parent = parent;
             this.customTextures = customTextures != null ? customTextures : Collections.emptyMap();
@@ -225,7 +230,7 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         @Override
         public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
             BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
-            return model == this.originalModel ? this : new DynamicShelfItemBakedModel(new DynamicShelfBakedModel(model, this.parent.getDynamicBlock()), this.customTextures, this.customColors);
+            return model == this.originalModel ? this : new DynamicTexturedItemBakedModel(new DynamicTexturedBakedModel(model, this.parent.getDynamicBlock()), this.customTextures, this.customColors);
         }
 
         @Override

@@ -36,7 +36,7 @@ import net.minecraft.world.item.ItemStack;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.util.BlockTextureExtractor;
 import net.placemats.client.gui.util.ColorPickerWidget;
-import net.placemats.client.renderer.DynamicShelfBakedModel;
+import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
 import net.placemats.network.PlaceMatsNetworkHandler;
@@ -655,26 +655,26 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
      * @param y the y-cords.
      * @param size the base size used to scale the rendered preview.
      * @param rotationY the rotation angle, in degrees, applied around the Y axis.
-     * @param shelfStack the item stack to render.
+     * @param inputStack the item stack to render.
      * @param textures the texture selections to apply.
      * @param colors the color selections to apply.
      */
-    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack shelfStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        if (shelfStack.isEmpty()) {
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+        if (inputStack.isEmpty()) {
             return;
         }
 
         Minecraft mc = Minecraft.getInstance();
-        BakedModel baseModel = mc.getItemRenderer().getModel(shelfStack, mc.level, mc.player, 0);
+        BakedModel baseModel = mc.getItemRenderer().getModel(inputStack, mc.level, mc.player, 0);
 
         BakedModel modelToRender = baseModel;
-        if (baseModel instanceof DynamicShelfBakedModel dsbm) {
-            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsbm, textures, colors);
-        } else if (baseModel instanceof DynamicShelfBakedModel.DynamicShelfItemBakedModel dsibm) {
-            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(dsibm.getParent(), textures, colors);
-        } else if (shelfStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
-            DynamicShelfBakedModel tempDsbm = new DynamicShelfBakedModel(baseModel, dtb);
-            modelToRender = new DynamicShelfBakedModel.DynamicShelfItemBakedModel(tempDsbm, textures, colors);
+        if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, textures, colors);
+        } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), textures, colors);
+        } else if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
+            DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dtb);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, textures, colors);
         }
 
         PoseStack poseStack = guiGraphics.pose();
@@ -690,7 +690,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         Lighting.setupForFlatItems();
         mc.getItemRenderer().render(
-            shelfStack,
+            inputStack,
             ItemDisplayContext.NONE,
             false,
             poseStack,

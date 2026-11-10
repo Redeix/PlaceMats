@@ -6,16 +6,25 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.Getter;
+import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.storage.loot.LootParams;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.placemats.common.blockentity.IDynamicTexturedBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Interface for blocks that support custom dynamic textures per key slot.
+ * Interface for blocks that support custom dynamic textures.
  */
+@SuppressWarnings("unused")
 public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
@@ -210,5 +219,79 @@ public interface IDynamicTexturedBlock {
         }
         CompoundTag tag = stack.getTag();
         return tag != null && tag.contains(NBT_DYNAMIC_TEXTURES, Tag.TAG_COMPOUND) && !tag.getCompound(NBT_DYNAMIC_TEXTURES).isEmpty();
+    }
+
+    /**
+     * Checks if an ItemStack has dynamic color overrides.
+     */
+    static boolean hasDynamicColors(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(NBT_DYNAMIC_COLORS, Tag.TAG_COMPOUND) && !tag.getCompound(NBT_DYNAMIC_COLORS).isEmpty();
+    }
+
+    /**
+     * Applies dynamic textures and colors from an ItemStack to a target BlockEntity.
+     */
+    static void applyDynamicDataToBlockEntity(@Nullable BlockEntity be, ItemStack stack) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe) {
+            if (hasDynamicTextures(stack)) {
+                dtbe.setDynamicTextures(getDynamicTextures(stack));
+            }
+            if (hasDynamicColors(stack)) {
+                dtbe.setDynamicColors(getDynamicColors(stack));
+            }
+        }
+    }
+
+    /**
+     * Copies dynamic textures and colors from a BlockEntity into an ItemStack.
+     */
+    static ItemStack applyDynamicDataToItemStack(ItemStack stack, @Nullable BlockEntity be) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe) {
+            if (dtbe.hasDynamicTextures()) {
+                setDynamicTextures(stack, dtbe.getDynamicTextures());
+            }
+            if (dtbe.hasDynamicColors()) {
+                setDynamicColors(stack, dtbe.getDynamicColors());
+            }
+        }
+        return stack;
+    }
+
+    /**
+     * Applies dynamic textures and colors from a BlockEntity to the dropped item.
+     */
+    static void applyDynamicDataToDrops(List<ItemStack> drops, @Nullable BlockEntity be, Block block) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors())) {
+            for (ItemStack drop : drops) {
+                if (drop.getItem() == block.asItem()) {
+                    applyDynamicDataToItemStack(drop, be);
+                }
+            }
+        }
+    }
+
+    /**
+     * Convenience method to call in Block#setPlacedBy.
+     */
+    default void onDynamicBlockPlacedBy(Level level, BlockPos pos, ItemStack stack) {
+        applyDynamicDataToBlockEntity(level.getBlockEntity(pos), stack);
+    }
+
+    /**
+     * Convenience method to call in Block#getCloneItemStack.
+     */
+    default ItemStack getDynamicCloneItemStack(ItemStack baseStack, BlockGetter level, BlockPos pos) {
+        return applyDynamicDataToItemStack(baseStack, level.getBlockEntity(pos));
+    }
+
+    /**
+     * Convenience method to call in Block#getDrops.
+     */
+    default void applyDynamicDrops(List<ItemStack> drops, LootParams.Builder params, Block block) {
+        applyDynamicDataToDrops(drops, params.getOptionalParameter(LootContextParams.BLOCK_ENTITY), block);
     }
 }

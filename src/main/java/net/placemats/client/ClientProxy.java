@@ -1,6 +1,5 @@
 package net.placemats.client;
 
-import java.util.ArrayList;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
@@ -13,7 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.client.gui.CabinetMakerTableScreen;
-import net.placemats.client.renderer.DynamicShelfBakedModel;
+import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.data.PlaceMatBlockEntities;
@@ -82,8 +81,8 @@ public class ClientProxy extends CommonProxy {
                 for (BlockState state : block.getStateDefinition().getPossibleStates()) {
                     ModelResourceLocation stateLoc = BlockModelShaper.stateToModelLocation(state);
                     BakedModel existing = models.get(stateLoc);
-                    if (existing != null && !(existing instanceof DynamicShelfBakedModel)) {
-                        models.put(stateLoc, new DynamicShelfBakedModel(existing, dynamicBlock));
+                    if (existing != null && !(existing instanceof DynamicTexturedBakedModel)) {
+                        models.put(stateLoc, new DynamicTexturedBakedModel(existing, dynamicBlock));
                     }
                 }
 
@@ -92,8 +91,8 @@ public class ClientProxy extends CommonProxy {
                     if (itemId != null) {
                         ModelResourceLocation itemLoc = new ModelResourceLocation(itemId, "inventory");
                         BakedModel existing = models.get(itemLoc);
-                        if (existing != null && !(existing instanceof DynamicShelfBakedModel)) {
-                            models.put(itemLoc, new DynamicShelfBakedModel(existing, dynamicBlock));
+                        if (existing != null && !(existing instanceof DynamicTexturedBakedModel)) {
+                            models.put(itemLoc, new DynamicTexturedBakedModel(existing, dynamicBlock));
                         }
                     }
                 }
@@ -102,8 +101,8 @@ public class ClientProxy extends CommonProxy {
                     ResourceLocation loc = entry.getKey();
                     if (loc.getNamespace().equals(blockId.getNamespace()) && loc.getPath().equals(blockId.getPath())) {
                         BakedModel existing = entry.getValue();
-                        if (existing != null && !(existing instanceof DynamicShelfBakedModel)) {
-                            entry.setValue(new DynamicShelfBakedModel(existing, dynamicBlock));
+                        if (existing != null && !(existing instanceof DynamicTexturedBakedModel)) {
+                            entry.setValue(new DynamicTexturedBakedModel(existing, dynamicBlock));
                         }
                     }
                 }
