@@ -75,7 +75,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         registerDefaultState(getStateDefinition().any().setValue(LOCKED, false));
     }
 
-    public PlaceMatBlock dynamicShelf(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels) {
+    public PlaceMatBlock dynamicBlock(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels) {
         this.dynamic = true;
         this.textureKeyCount = keyCount;
         this.defaultTextures = new HashMap<>(defaults);

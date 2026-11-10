@@ -33,7 +33,7 @@ public final class PlaceMatBlocks {
             block.disableZoneRotation();
             block.addRange(basicPlacementRange(box(0, 0, 0, 16, 7, 16), 7 / 16F));
             block.addRange(basicPlacementRange(box(0, 8, 0, 16, 15, 16), 15 / 16F));
-            block.dynamicShelf(2,
+            block.dynamicBlock(2,
                 Map.of(
                     "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
                     "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
@@ -221,7 +221,7 @@ public final class PlaceMatBlocks {
         block.disableZoneRotation();
         block.addRange(basicPlacementRange(box(0, 0, 0, 16, 7, 16), 7 / 16F));
         block.addRange(basicPlacementRange(box(0, 8, 0, 16, 15, 16), 15 / 16F));
-        block.dynamicShelf(2,
+        block.dynamicBlock(2,
             Map.of(
                 "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
                 "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
