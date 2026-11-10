@@ -485,7 +485,19 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 int btnY = this.topPos + BLOCKSTATE_BUTTON_Y;
                 if (mouseX >= btnX && mouseX < btnX + BLOCKSTATE_BUTTON_SIZE &&
                         mouseY >= btnY && mouseY < btnY + BLOCKSTATE_BUTTON_SIZE) {
-                    currentBlockStateIndex = (currentBlockStateIndex + 1) % cycleableBlockStates.size();
+                    // If shift is held, cycle back to the default block state.
+                    if (hasShiftDown()) {
+                        ItemStack input = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
+                        if (!input.isEmpty() && input.getItem() instanceof BlockItem bi) {
+                            BlockState def = bi.getBlock().defaultBlockState();
+                            int defIdx = cycleableBlockStates.indexOf(def);
+                            currentBlockStateIndex = Math.max(defIdx, 0);
+                        } else {
+                            currentBlockStateIndex = 0;
+                        }
+                    } else {
+                        currentBlockStateIndex = (currentBlockStateIndex + 1) % cycleableBlockStates.size();
+                    }
                     if (Minecraft.getInstance().player != null) {
                         Minecraft.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 1.2f);
                     }

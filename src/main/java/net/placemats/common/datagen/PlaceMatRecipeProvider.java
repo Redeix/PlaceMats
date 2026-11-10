@@ -9,6 +9,7 @@ import net.minecraft.data.recipes.FinishedRecipe;
 import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.data.recipes.SpecialRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
@@ -23,6 +24,7 @@ import net.minecraftforge.common.crafting.conditions.TrueCondition;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import net.placemats.common.data.PlaceMatBlocks;
+import net.placemats.common.data.RecipeSerializers;
 import org.jetbrains.annotations.NotNull;
 
 public class PlaceMatRecipeProvider extends RecipeProvider {
@@ -212,5 +214,11 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                     .build(consumer, blockReg.getId());
             }
         });
+
+        SpecialRecipeBuilder.special(RecipeSerializers.CLEAR_DYNAMIC_COLOR.get())
+                .save(consumer, "place_mats:clear_dynamic_color");
+
+        SpecialRecipeBuilder.special(RecipeSerializers.COPY_DYNAMIC_COLOR.get())
+                .save(consumer, "place_mats:copy_dynamic_color");
     }
 }
