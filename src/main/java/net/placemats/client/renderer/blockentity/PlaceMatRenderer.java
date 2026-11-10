@@ -17,6 +17,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -53,6 +54,7 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import net.placemats.client.renderer.DynamicShelfBakedModel;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -74,6 +76,23 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         BlockState state = be.getBlockState();
         if (!(state.getBlock() instanceof PlaceMatBlock pmb))
             return;
+
+        if (be.hasRedeixColor()) {
+            BakedModel blockModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
+            if (blockModel instanceof DynamicShelfBakedModel dsbm) {
+                BakedModel orig = dsbm.getOriginalModel();
+                RandomSource rand = RandomSource.create(42L);
+                List<BakedQuad> quads = new ArrayList<>();
+                for (Direction side : Direction.values()) {
+                    quads.addAll(orig.getQuads(state, side, rand, ModelData.EMPTY, null));
+                }
+                quads.addAll(orig.getQuads(state, null, rand, ModelData.EMPTY, null));
+                List<BakedQuad> remapped = dsbm.remapQuads(quads, be.getDynamicTextures(), be.getDynamicColors());
+                VertexConsumer consumer = buffer.getBuffer(Sheets.cutoutBlockSheet());
+                this.itemRenderer.renderQuadList(poseStack, consumer, remapped, ItemStack.EMPTY, packedLight, packedOverlay);
+            }
+        }
+
         Direction facing = (pmb.isRotateZones() && state.hasProperty(PlaceMatCardinalBlock.FACING)) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH;
 
         poseStack.pushPose();
@@ -509,7 +528,6 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         };
     }
 
-    @SuppressWarnings("resource")
     private static boolean matchesFluidIndex(BakedQuad quad, @Nullable String fluidTextureIndex) {
         if (fluidTextureIndex == null) return false;
         String cleanIndex = fluidTextureIndex.startsWith("#") ? fluidTextureIndex.substring(1) : fluidTextureIndex;

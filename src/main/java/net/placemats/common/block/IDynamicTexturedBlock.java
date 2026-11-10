@@ -17,6 +17,31 @@ public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
     String NBT_DYNAMIC_COLORS = "DynamicColors";
+    int RAINBOW_COLOR = 0x00726564;
+    List<String> RAINBOW_KEYWORDS = List.of(
+        "rainbow",
+        "redeix",
+        "pyritie",
+        "tomtom",
+        "gustavo",
+        "ashlen",
+        "xikaro",
+        "zippity",
+        "yan",
+        "airrice",
+        "dmitry",
+        "gamestar",
+        "nebby",
+        "sakura",
+        "tfg"
+    );
+
+    /**
+     * Checks if the color is for the rainbow-cycling Easter egg.
+     */
+    static boolean isRainbowColor(Integer color) {
+        return color == RAINBOW_COLOR;
+    }
 
     /**
      * @return Number of texture key slots this block supports (1 to 5).

@@ -27,6 +27,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.BlockItem;
@@ -148,6 +149,9 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         if (clean.isEmpty()) {
             return null;
         }
+        if (IDynamicTexturedBlock.RAINBOW_KEYWORDS.stream().anyMatch(clean::equalsIgnoreCase)) {
+            return IDynamicTexturedBlock.RAINBOW_COLOR;
+        }
         try {
             if (clean.length() == 3) {
                 int r = Integer.parseInt(clean.substring(0, 1), 16) * 17;
@@ -169,6 +173,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         } catch (NumberFormatException ignored) {
         }
         return null;
+    }
+
+    public static int getRainbowColor() {
+        float hue = (float) ((Util.getMillis() % 4000L) / 4000.0);
+        int rgb = Mth.hsvToRgb(hue, 1.0f, 1.0f);
+        return 0xFF000000 | (rgb & 0xFFFFFF);
     }
 
     @Override

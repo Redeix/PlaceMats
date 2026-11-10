@@ -18,6 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.CabinetMakerTableScreen;
+import net.placemats.common.block.IDynamicTexturedBlock;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -124,6 +125,15 @@ public class ColorPickerWidget extends AbstractWidget {
 
     public void setColor(int argb, boolean updateEditBox) {
         this.currentColor = argb;
+        if (IDynamicTexturedBlock.isRainbowColor(argb)) {
+            if (updateEditBox && !this.updatingFromEditBox) {
+                this.updatingFromEditBox = true;
+                this.hexEditBox.setValue(IDynamicTexturedBlock.RAINBOW_KEYWORDS.get(0));
+                this.updatingFromEditBox = false;
+            }
+            return;
+        }
+
         float a = ((argb >> 24) & 0xFF) / 255.0f;
         float r = ((argb >> 16) & 0xFF) / 255.0f;
         float g = ((argb >> 8) & 0xFF) / 255.0f;
@@ -395,7 +405,11 @@ public class ColorPickerWidget extends AbstractWidget {
         }
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        graphics.fill(previewX, previewY, previewX + COLOR_PREVIEW_SIZE, previewY + COLOR_PREVIEW_SIZE, this.currentColor);
+        int previewColor = this.currentColor;
+        if (IDynamicTexturedBlock.isRainbowColor(previewColor)) {
+            previewColor = CabinetMakerTableScreen.getRainbowColor();
+        }
+        graphics.fill(previewX, previewY, previewX + COLOR_PREVIEW_SIZE, previewY + COLOR_PREVIEW_SIZE, previewColor);
         RenderSystem.disableBlend();
 
         // Hex Text Box

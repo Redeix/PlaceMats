@@ -27,6 +27,7 @@ import net.minecraftforge.client.model.IQuadTransformer;
 import net.minecraftforge.client.model.QuadTransformers;
 import net.minecraftforge.client.model.data.ModelData;
 import net.minecraftforge.client.model.data.ModelProperty;
+import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,6 +39,10 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Getter private final IDynamicTexturedBlock dynamicBlock;
     private final ItemOverrides itemOverrides;
+
+    public BakedModel getOriginalModel() {
+        return this.originalModel;
+    }
 
     public DynamicShelfBakedModel(BakedModel originalModel, IDynamicTexturedBlock dynamicBlock) {
         super(originalModel);
@@ -55,6 +60,9 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
         List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
+        if (customColors != null && customColors.values().stream().anyMatch(IDynamicTexturedBlock::isRainbowColor)) {
+            return Collections.emptyList();
+        }
         if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty())) {
             return quads;
         }
@@ -109,6 +117,9 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
             ResourceLocation targetTex = customTextures != null ? customTextures.get(matchedKey) : null;
             Integer tintColor = customColors != null ? customColors.get(matchedKey) : null;
             int tint = tintColor != null ? tintColor : -1;
+            if (IDynamicTexturedBlock.isRainbowColor(tint)) {
+                tint = CabinetMakerTableScreen.getRainbowColor();
+            }
 
             if (targetTex != null) {
                 TextureAtlasSprite newSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(targetTex);
@@ -207,7 +218,7 @@ public class DynamicShelfBakedModel extends BakedModelWrapper<BakedModel> {
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
-            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
+            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
             return parent.remapQuads(quads, customTextures, customColors);
         }
 

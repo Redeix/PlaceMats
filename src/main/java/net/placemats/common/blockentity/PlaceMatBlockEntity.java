@@ -119,6 +119,15 @@ public class PlaceMatBlockEntity extends BlockEntity {
         return !dynamicTextures.isEmpty();
     }
 
+    public boolean hasRedeixColor() {
+        for (Integer color : dynamicColors.values()) {
+            if (IDynamicTexturedBlock.isRainbowColor(color)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     @Override
     public @NotNull ModelData getModelData() {
         if (!dynamicTextures.isEmpty() || !dynamicColors.isEmpty()) {
