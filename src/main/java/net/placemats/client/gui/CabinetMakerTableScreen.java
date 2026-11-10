@@ -149,8 +149,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         if (clean.isEmpty()) {
             return null;
         }
-        if (IDynamicTexturedBlock.RAINBOW_KEYWORDS.stream().anyMatch(clean::equalsIgnoreCase)) {
-            return IDynamicTexturedBlock.RAINBOW_COLOR;
+        for (IDynamicTexturedBlock.KeywordColor keywordColor : IDynamicTexturedBlock.KeywordColor.values()) {
+            boolean match = keywordColor.getKeywords().stream()
+                .anyMatch(clean::equalsIgnoreCase);
+            if (match) {
+                return keywordColor.getColorCode();
+            }
         }
         try {
             if (clean.length() == 3) {

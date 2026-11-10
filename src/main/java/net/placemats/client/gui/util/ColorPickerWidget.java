@@ -125,10 +125,13 @@ public class ColorPickerWidget extends AbstractWidget {
 
     public void setColor(int argb, boolean updateEditBox) {
         this.currentColor = argb;
-        if (IDynamicTexturedBlock.isRainbowColor(argb)) {
+
+        IDynamicTexturedBlock.KeywordColor matchedColor = IDynamicTexturedBlock.KeywordColor.fromColor(argb);
+
+        if (matchedColor != null) {
             if (updateEditBox && !this.updatingFromEditBox) {
                 this.updatingFromEditBox = true;
-                this.hexEditBox.setValue(IDynamicTexturedBlock.RAINBOW_KEYWORDS.get(0));
+                this.hexEditBox.setValue(matchedColor.getKeywords().get(0));
                 this.updatingFromEditBox = false;
             }
             return;

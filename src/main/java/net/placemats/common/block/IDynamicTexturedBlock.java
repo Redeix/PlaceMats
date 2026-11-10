@@ -1,14 +1,17 @@
 package net.placemats.common.block;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for blocks that support custom dynamic textures per key slot.
@@ -17,30 +20,74 @@ public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
     String NBT_DYNAMIC_COLORS = "DynamicColors";
-    int RAINBOW_COLOR = 0x00726564;
-    List<String> RAINBOW_KEYWORDS = List.of(
-        "rainbow",
-        "redeix",
-        "pyritie",
-        "tomtom",
-        "gustavo",
-        "ashlen",
-        "xikaro",
-        "zippity",
-        "yan",
-        "airrice",
-        "dmitry",
-        "gamestar",
-        "nebby",
-        "sakura",
-        "tfg"
-    );
+
+    /**
+     * Enum for colors by keywords for Easter eggs and faster coloring.
+     * 8-character limit for strings.
+     */
+    @Getter
+    enum KeywordColor {
+        // Easter Eggs
+        RAINBOW(0x00726564, List.of(
+            "rainbow", "redeix", "pyritie", "tomtom", "gustavo",
+            "ashlen", "xikaro", "zippity", "yan", "airrice",
+            "dmitry", "gamestar", "nebby", "sakura", "tfg"
+        )),
+        // Base Colors
+        WHITE(0xFFF9FFFE, List.of("white")),
+        ORANGE(0xFFF9801D, List.of("orange")),
+        MAGENTA(0xFFC74EBD, List.of("magenta")),
+        LIGHT_BLUE(0xFF3AB3DA, List.of("lblue")),
+        YELLOW(0xFFFED83D, List.of("yellow")),
+        LIME(0xFF80C71F, List.of("lime", "lgreen")),
+        PINK(0xFFF38BAA, List.of("pink")),
+        GRAY(0xFF474F52, List.of("gray", "grey")),
+        LIGHT_GRAY(0xFF9D9D97, List.of("lgray", "lgrey")),
+        CYAN(0xFF169C9C, List.of("cyan")),
+        PURPLE(0xFF8932B8, List.of("purple")),
+        BLUE(0xFF3C44AA, List.of("blue")),
+        BROWN(0xFF835432, List.of("brown")),
+        GREEN(0xFF5E7C16, List.of("green")),
+        RED(0xFFB02E26, List.of("red")),
+        BLACK(0xFF1D1D21, List.of("black")),
+        // Wood Colors
+        OAK(0xFFAD8D54, List.of("oak")),
+        SPRUCE(0xFF6E512D, List.of("spruce")),
+        BIRCH(0xFFC5B478, List.of("birch")),
+        JUNGLE(0xFFA87753, List.of("jungle")),
+        ACACIA(0xFFAB5C31, List.of("acacia")),
+        DARK_OAK(0xFF5C3828, List.of("darkoak", "dark oak", "dark_oak", "doak")),
+        BAMBOO(0xFFB4A948, List.of("bamboo")),
+        MANGROVE(0xFF6D292D, List.of("mangrove")),
+        CHERRY(0xFFDA9B95, List.of("cherry")),
+        CRIMSON(0xFF7E3752, List.of("crimson")),
+        WARPED(0xFF308B8A, List.of("warped"));
+
+        private final int colorCode;
+        private final List<String> keywords;
+
+        KeywordColor(int colorCode, List<String> keywords) {
+            this.colorCode = colorCode;
+            this.keywords = keywords;
+        }
+
+        public boolean matches(Integer color) {
+            return color == this.colorCode;
+        }
+
+        public static @Nullable KeywordColor fromColor(Integer color) {
+            return Arrays.stream(values())
+                .filter(c -> c.colorCode == color)
+                .findFirst()
+                .orElse(null);
+        }
+    }
 
     /**
      * Checks if the color is for the rainbow-cycling Easter egg.
      */
     static boolean isRainbowColor(Integer color) {
-        return color == RAINBOW_COLOR;
+        return KeywordColor.RAINBOW.matches(color);
     }
 
     /**
