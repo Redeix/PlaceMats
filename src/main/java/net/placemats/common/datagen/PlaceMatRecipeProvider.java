@@ -10,12 +10,12 @@ import net.minecraft.data.recipes.RecipeCategory;
 import net.minecraft.data.recipes.RecipeProvider;
 import net.minecraft.data.recipes.ShapedRecipeBuilder;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.crafting.ConditionalRecipe;
 import net.minecraftforge.common.crafting.conditions.ModLoadedCondition;
@@ -59,6 +59,19 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                 ForgeRegistries.ITEMS.getValue(tfcAlabaster) == Items.AIR
                         ? Items.SMOOTH_STONE_SLAB : Objects.requireNonNull(ForgeRegistries.ITEMS.getValue(tfcAlabaster))
         ));
+
+        ConditionalRecipe.builder()
+                .addCondition(TrueCondition.INSTANCE)
+                .addRecipe(consumer1 -> ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PlaceMatBlocks.CABINETMAKER_TABLE.get())
+                        .pattern("III")
+                        .pattern("WWW")
+                        .pattern("W W")
+                        .define('I', Tags.Items.INGOTS_IRON)
+                        .define('W', ItemTags.PLANKS)
+                        .unlockedBy("has_iron", has(Tags.Items.INGOTS_IRON))
+                        .save(consumer1))
+                .generateAdvancement()
+                .build(consumer, PlaceMatBlocks.CABINETMAKER_TABLE.getId());
 
 
         ConditionalRecipe.builder()

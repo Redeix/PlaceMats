@@ -19,9 +19,9 @@
           }
         },
         "pattern": [
-          "II",
-          "WW",
-          "WW"
+          "III",
+          "WWW",
+          "W W"
         ],
         "result": {
           "item": "place_mats:cabinetmaker_table"

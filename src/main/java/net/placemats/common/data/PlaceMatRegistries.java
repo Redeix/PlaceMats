@@ -36,6 +36,19 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.key.joke", "Doesn't taste as good as bread...");
             prov.add("place_mats.tooltip.shift_hint", "[Shift]§r...");
             prov.add("place_mats.tooltip.placemat.owner", "Owner: %s");
+            prov.add("container.place_mats.cabinet_maker_table", "Cabinetmaker's Table");
+            prov.add("gui.place_mats.cabinet_maker.confirm", "Apply");
+            prov.add("gui.place_mats.cabinet_maker.preview", "3D Preview");
+            prov.add("gui.place_mats.cabinet_maker.input_tooltip", "Place a customizable shelf here");
+            prov.add("gui.place_mats.cabinet_maker.output_tooltip", "Customized shelf output");
+            prov.add("gui.place_mats.cabinet_maker.material_tooltip", "Place a block to extract 16x16 textures!");
+            prov.add("gui.place_mats.cabinet_maker.no_textures", "⚠ No 16x16 textures found in this block!");
+            prov.add("gui.place_mats.cabinet_maker.click_to_apply", "Click to select this texture");
+            prov.add("gui.place_mats.cabinet_maker.key_slot_title", "Key Slot %s: %s");
+            prov.add("gui.place_mats.cabinet_maker.key.base", "Base Surface");
+            prov.add("gui.place_mats.cabinet_maker.key.bars", "Bars");
+            prov.add("gui.place_mats.cabinet_maker.key.generic", "Key %s");
+            prov.add("gui.place_mats.cabinet_maker.color_picker_tab", "Color Tint (%s)");
         });
     }
 }
