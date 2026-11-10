@@ -88,7 +88,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
                 }
                 quads.addAll(orig.getQuads(state, null, rand, ModelData.EMPTY, null));
                 List<BakedQuad> remapped = dsbm.remapQuads(quads, be.getDynamicTextures(), be.getDynamicColors());
-                VertexConsumer consumer = buffer.getBuffer(Sheets.cutoutBlockSheet());
+                VertexConsumer consumer = buffer.getBuffer(Sheets.translucentCullBlockSheet());
                 this.itemRenderer.renderQuadList(poseStack, consumer, remapped, ItemStack.EMPTY, packedLight, packedOverlay);
             }
         }
