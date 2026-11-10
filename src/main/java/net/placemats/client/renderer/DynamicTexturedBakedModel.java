@@ -201,36 +201,44 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     public static class DynamicTexturedItemBakedModel extends BakedModelWrapper<BakedModel> {
         @Getter private final DynamicTexturedBakedModel parent;
+        @Getter private final BlockState blockState;
         @Getter private final Map<String, ResourceLocation> customTextures;
         @Getter private final Map<String, Integer> customColors;
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures) {
-            this(parent, customTextures, Collections.emptyMap());
+            this(parent, null, customTextures, Collections.emptyMap());
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
+            this(parent, null, customTextures, customColors);
+        }
+
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
             super(parent.originalModel);
             this.parent = parent;
+            this.blockState = blockState;
             this.customTextures = customTextures != null ? customTextures : Collections.emptyMap();
             this.customColors = customColors != null ? customColors : Collections.emptyMap();
         }
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
-            List<BakedQuad> quads = super.getQuads(state, side, rand);
+            BlockState targetState = state != null ? state : this.blockState;
+            List<BakedQuad> quads = super.getQuads(targetState, side, rand);
             return parent.remapQuads(quads, customTextures, customColors);
         }
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
-            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
+            BlockState targetState = state != null ? state : this.blockState;
+            List<BakedQuad> quads = super.getQuads(targetState, side, rand, extraData, null);
             return parent.remapQuads(quads, customTextures, customColors);
         }
 
         @Override
         public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
             BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
-            return model == this.originalModel ? this : new DynamicTexturedItemBakedModel(new DynamicTexturedBakedModel(model, this.parent.getDynamicBlock()), this.customTextures, this.customColors);
+            return model == this.originalModel ? this : new DynamicTexturedItemBakedModel(new DynamicTexturedBakedModel(model, this.parent.getDynamicBlock()), this.blockState, this.customTextures, this.customColors);
         }
 
         @Override

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import com.mojang.blaze3d.platform.Lighting;
@@ -33,6 +34,10 @@ import net.minecraft.world.inventory.InventoryMenu;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.Property;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.util.BlockTextureExtractor;
 import net.placemats.client.gui.util.ColorPickerWidget;
@@ -44,7 +49,9 @@ import net.placemats.network.packet.ApplyCabinetMakerCraftPacket;
 import net.placemats.network.packet.SetCabinetMakerGhostSlotPacket;
 import net.placemats.common.data.PlaceMatTags;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("unused")
 public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMakerTableContainer> {
 
     private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "textures/gui/cabinetmaker_table.png");
@@ -82,12 +89,20 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     private static final int SELECTION_OVERLAY_V = ACTIVE_MATERIAL_SLOT_V + SLOT_SIZE;
     private static final int SELECTION_OVERLAY_SIZE = SLOT_SIZE + 2;
 
+    private static final int BLOCKSTATE_BUTTON_SIZE = 9;
+    private static final int BLOCKSTATE_BUTTON_X = PREVIEW_BOX_X + PREVIEW_BOX_SIZE - BLOCKSTATE_BUTTON_SIZE - 1;
+    private static final int BLOCKSTATE_BUTTON_Y = PREVIEW_BOX_Y + 1;
+    private static final int BLOCKSTATE_BUTTON_U = SELECTION_OVERLAY_U;
+    private static final int BLOCKSTATE_BUTTON_V = SELECTION_OVERLAY_V + SELECTION_OVERLAY_SIZE;
+
     private static final int TEXTURE_SWATCH_SIZE = 16;
     public static final int MAX_TEXTURE_SWATCHES = 5;
 
     private final Map<String, ResourceLocation> chosenTextures = new HashMap<>();
     private final Map<String, Integer> chosenColors = new HashMap<>();
     private final Map<Integer, List<ResourceLocation>> availableTexturesPerKey = new HashMap<>();
+    private final List<BlockState> cycleableBlockStates = new ArrayList<>();
+    private int currentBlockStateIndex = 0;
     private ItemStack lastInputStack = ItemStack.EMPTY;
     private final ItemStack[] lastMaterialStacks = new ItemStack[CabinetMakerTableContainer.MATERIAL_SLOT_COUNT];
 
@@ -185,6 +200,41 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         return 0xFF000000 | (rgb & 0xFFFFFF);
     }
 
+    public static boolean isFacingProperty(Property<?> property) {
+        if (property instanceof DirectionProperty) {
+            return true;
+        }
+        String name = property.getName().toLowerCase(Locale.ROOT);
+        return name.contains("facing") || name.contains("direction") || name.equals("orientation") || name.equals("rotation");
+    }
+
+    public static List<BlockState> getCycleableBlockStates(Block block) {
+        if (block == null) {
+            return List.of();
+        }
+        List<BlockState> possible = block.getStateDefinition().getPossibleStates();
+        if (possible.size() <= 1) {
+            return possible;
+        }
+        BlockState defaultState = block.defaultBlockState();
+        List<BlockState> filtered = new ArrayList<>();
+        for (BlockState state : possible) {
+            boolean match = true;
+            for (Property<?> prop : block.getStateDefinition().getProperties()) {
+                if (isFacingProperty(prop)) {
+                    if (!Objects.equals(state.getValue(prop), defaultState.getValue(prop))) {
+                        match = false;
+                        break;
+                    }
+                }
+            }
+            if (match) {
+                filtered.add(state);
+            }
+        }
+        return filtered.isEmpty() ? possible : filtered;
+    }
+
     @Override
     protected void containerTick() {
         super.containerTick();
@@ -212,6 +262,11 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 lastInputStack = currentInput.copy();
                 chosenTextures.clear();
                 chosenColors.clear();
+                cycleableBlockStates.clear();
+                currentBlockStateIndex = 0;
+                if (!currentInput.isEmpty() && currentInput.getItem() instanceof BlockItem bi) {
+                    cycleableBlockStates.addAll(getCycleableBlockStates(bi.getBlock()));
+                }
                 Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(currentInput);
                 chosenTextures.putAll(existing);
                 Map<String, Integer> existingColors = IDynamicTexturedBlock.getDynamicColors(currentInput);
@@ -226,8 +281,16 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         int keyCount = this.menu.getDynamicKeyCount();
         IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
 
+        ItemStack input = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
+        if (input.isEmpty() || !(input.getItem() instanceof BlockItem)) {
+            cycleableBlockStates.clear();
+            currentBlockStateIndex = 0;
+        } else if (cycleableBlockStates.isEmpty()) {
+            cycleableBlockStates.addAll(getCycleableBlockStates(((BlockItem) input.getItem()).getBlock()));
+            currentBlockStateIndex = 0;
+        }
+
         if (keyCount > 0 && dynamicBlock != null) {
-            ItemStack input = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
             Map<String, ResourceLocation> existing = IDynamicTexturedBlock.getDynamicTextures(input);
             List<String> keys = dynamicBlock.getTextureKeys();
             for (int i = 0; i < keyCount && i < keys.size(); i++) {
@@ -416,6 +479,20 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         // Tab Buttons and Texture Selection
         if (button == 0) {
+            // Blockstate Cycle Button
+            if (cycleableBlockStates.size() > 1) {
+                int btnX = this.leftPos + BLOCKSTATE_BUTTON_X;
+                int btnY = this.topPos + BLOCKSTATE_BUTTON_Y;
+                if (mouseX >= btnX && mouseX < btnX + BLOCKSTATE_BUTTON_SIZE &&
+                        mouseY >= btnY && mouseY < btnY + BLOCKSTATE_BUTTON_SIZE) {
+                    currentBlockStateIndex = (currentBlockStateIndex + 1) % cycleableBlockStates.size();
+                    if (Minecraft.getInstance().player != null) {
+                        Minecraft.getInstance().player.playSound(SoundEvents.UI_BUTTON_CLICK.value(), 0.3f, 1.2f);
+                    }
+                    return true;
+                }
+            }
+
             int keyCount = this.menu.getDynamicKeyCount();
             IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
             if (keyCount > 0 && dynamicBlock != null) {
@@ -572,11 +649,24 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             }
         }
 
+        // Blockstate Cycle Button
+        if (cycleableBlockStates.size() > 1) {
+            int btnX = this.leftPos + BLOCKSTATE_BUTTON_X;
+            int btnY = this.topPos + BLOCKSTATE_BUTTON_Y;
+            graphics.blit(TEXTURE, btnX, btnY, 0, BLOCKSTATE_BUTTON_U, BLOCKSTATE_BUTTON_V, BLOCKSTATE_BUTTON_SIZE, BLOCKSTATE_BUTTON_SIZE, 256, 256);
+            if (mouseX >= btnX && mouseX < btnX + BLOCKSTATE_BUTTON_SIZE && mouseY >= btnY && mouseY < btnY + BLOCKSTATE_BUTTON_SIZE) {
+                graphics.fill(btnX, btnY, btnX + BLOCKSTATE_BUTTON_SIZE, btnY + BLOCKSTATE_BUTTON_SIZE, 0x40FFFFFF);
+            }
+        }
+
         // 3D Preview
         ItemStack inputStack = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
         if (!inputStack.isEmpty()) {
             float rotY = (Minecraft.getInstance().level != null ? (Minecraft.getInstance().level.getGameTime() + partialTick) : 0.0f) % 360.0f;
-            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, chosenTextures, chosenColors);
+            BlockState stateToRender = (!cycleableBlockStates.isEmpty() && currentBlockStateIndex < cycleableBlockStates.size())
+                ? cycleableBlockStates.get(currentBlockStateIndex)
+                : null;
+            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, stateToRender, chosenTextures, chosenColors);
         }
     }
 
@@ -596,6 +686,18 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     }
 
     private void renderCustomTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        // Blockstate Cycle Button Tooltip
+        if (cycleableBlockStates.size() > 1) {
+            int btnX = this.leftPos + BLOCKSTATE_BUTTON_X;
+            int btnY = this.topPos + BLOCKSTATE_BUTTON_Y;
+            if (mouseX >= btnX && mouseX < btnX + BLOCKSTATE_BUTTON_SIZE && mouseY >= btnY && mouseY < btnY + BLOCKSTATE_BUTTON_SIZE) {
+                List<Component> tooltip = new ArrayList<>();
+                tooltip.add(Component.translatable("gui.place_mats.cabinet_maker.cycle_blockstate").withStyle(ChatFormatting.YELLOW));
+                guiGraphics.renderComponentTooltip(this.font, tooltip, mouseX, mouseY);
+                return;
+            }
+        }
+
         int keyCount = this.menu.getDynamicKeyCount();
         IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
         if (keyCount > 0 && dynamicBlock != null) {
@@ -660,21 +762,45 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
      * @param colors the color selections to apply.
      */
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, null, textures, colors);
+    }
+
+    /**
+     * Renders a 3D preview of the dynamic block item in the GUI using the supplied
+     * blockstate, textures, and color selections.
+     *
+     * @param guiGraphics the GUI graphics context.
+     * @param x the x-cords.
+     * @param y the y-cords.
+     * @param size the base size used to scale the rendered preview.
+     * @param rotationY the rotation angle, in degrees, applied around the Y axis.
+     * @param inputStack the item stack to render.
+     * @param blockState the specific blockstate to render.
+     * @param textures the texture selections to apply.
+     * @param colors the color selections to apply.
+     */
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
         if (inputStack.isEmpty()) {
             return;
         }
 
         Minecraft mc = Minecraft.getInstance();
-        BakedModel baseModel = mc.getItemRenderer().getModel(inputStack, mc.level, mc.player, 0);
+        BakedModel baseModel = null;
+        if (blockState != null) {
+            baseModel = mc.getBlockRenderer().getBlockModel(blockState);
+        }
+        if (baseModel == null) {
+            baseModel = mc.getItemRenderer().getModel(inputStack, mc.level, mc.player, 0);
+        }
 
         BakedModel modelToRender = baseModel;
         if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, textures, colors);
         } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, textures, colors);
         } else if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
             DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dtb);
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, textures, colors);
         }
 
         PoseStack poseStack = guiGraphics.pose();
