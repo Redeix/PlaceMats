@@ -49,10 +49,10 @@ public final class PlaceMatBlocks {
                     .texture("0", prov.modLoc("block/storage_rack_base"));
             prov.horizontalBlock(ctx.getEntry(), model);
         })
-        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, PlaceMatTags.Blocks.STORAGE_RACKS, PlaceMatTags.Blocks.DOUBLE_SHELVES)
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, PlaceMatTags.Blocks.STORAGE_RACKS, PlaceMatTags.Blocks.DOUBLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
         .loot(RegistrateBlockLootTables::dropSelf)
         .item()
-        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.STORAGE_RACKS, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES)
+        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.STORAGE_RACKS, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
         .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
         .build()
         .register();

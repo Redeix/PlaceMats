@@ -43,6 +43,7 @@ import net.placemats.client.gui.util.BlockTextureExtractor;
 import net.placemats.client.gui.util.ColorPickerWidget;
 import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.common.block.IDynamicTexturedBlock;
+import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.ApplyCabinetMakerCraftPacket;
@@ -200,8 +201,11 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         return 0xFF000000 | (rgb & 0xFFFFFF);
     }
 
-    public static boolean isFacingProperty(Property<?> property) {
+    public static boolean isBlacklistedProperty(Property<?> property) {
         if (property instanceof DirectionProperty) {
+            return true;
+        }
+        if (property.equals(PlaceMatBlock.LOCKED)) {
             return true;
         }
         String name = property.getName().toLowerCase(Locale.ROOT);
@@ -221,7 +225,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         for (BlockState state : possible) {
             boolean match = true;
             for (Property<?> prop : block.getStateDefinition().getProperties()) {
-                if (isFacingProperty(prop)) {
+                if (isBlacklistedProperty(prop)) {
                     if (!Objects.equals(state.getValue(prop), defaultState.getValue(prop))) {
                         match = false;
                         break;

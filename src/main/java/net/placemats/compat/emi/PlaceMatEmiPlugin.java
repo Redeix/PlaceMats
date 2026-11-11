@@ -32,11 +32,13 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
 
     public static final EmiRecipeCategory PLACE_MAT = new EmiRecipeCategory(PlaceMatMain.id("place_mat"),
             EmiStack.of(PlaceMatBlocks.STORAGE_RACK.get()));
+    public static final EmiRecipeCategory CABINET_MAKER = new EmiRecipeCategory(PlaceMatMain.id("cabinetmaker_table"),
+            EmiStack.of(PlaceMatBlocks.CABINETMAKER_TABLE.get()));
 
     @Override
     public void register(EmiRegistry emiRegistry) {
 
-        // Place Mat
+        // Place Mat Interaction
         emiRegistry.addCategory(PLACE_MAT);
         TagKey<Item> placeMats = PlaceMatTags.Items.PLACE_MATS;
         EmiIngredient workstationIngredient = EmiIngredient.of(placeMats);
@@ -44,6 +46,16 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
         for (PlaceMatRecipe recipe : emiRegistry.getRecipeManager().getAllRecipesFor(PlaceMatRecipeTypes.PLACE_MAT.get())) {
             emiRegistry.addRecipe(new PlaceMatEmiRecipe(recipe));
         }
+
+        // Cabinetmaker's Table Customization
+        emiRegistry.addCategory(CABINET_MAKER);
+        emiRegistry.addWorkstation(CABINET_MAKER, EmiStack.of(PlaceMatBlocks.CABINETMAKER_TABLE.get()));
+        emiRegistry.addRecipe(new CabinetMakerEmiRecipe());
+
+        // Special Crafting Recipes (Clear & Copy Customizations)
+        emiRegistry.addRecipe(new ClearDynamicColorEmiRecipe());
+        emiRegistry.addRecipe(new CopyDynamicColorEmiRecipe());
+
         emiRegistry.addDragDropHandler(CabinetMakerTableScreen.class, new EmiDragDropHandler<>()
         {
             @Override
@@ -89,14 +101,13 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
     private static final ResourceLocation PLUS = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,
             "textures/gui/emi/emi_screen_plus.png");
 
-    public static int createArrowWidget(WidgetHolder holder, int offsetY, int offsetX, int length) {
+    public static void createArrowWidget(WidgetHolder holder, int offsetY, int offsetX, int length) {
         int image_height = 15;
         int image_width = 22;
         int u_start = image_width - length;
 
         TextureWidget widget = new TextureWidget(ARROW, offsetX, offsetY, length, image_height, u_start, 0, length, image_height - 1, image_width, image_height);
         holder.add(widget);
-        return offsetX + 2 + length;
     }
 
     public static void createPlusWidget(WidgetHolder holder, int offsetY, int offsetX, int length) {

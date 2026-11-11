@@ -24,6 +24,7 @@ public final class PlaceMatTags {
         public static final TagKey<Item> ORNATE_SHELVES = createItemTag("place_mats/single_shelves/ornate");
         public static final TagKey<Item> ORNATE_DOUBLE_SHELVES = createItemTag("place_mats/double_shelves/ornate");
         public static final TagKey<Item> FLOATING_SHELVES = createItemTag("place_mats/single_shelves/floating");
+        public static final TagKey<Item> DYNAMIC_MATERIALS = createItemTag("dynamic_materials");
         public static final TagKey<Item> KEY = createItemTag("key");
 
         private static TagKey<Item> createItemTag(String path) {
@@ -45,6 +46,7 @@ public final class PlaceMatTags {
         public static final TagKey<Block> ORNATE_SHELVES = createBlockTag("place_mats/single_shelves/ornate");
         public static final TagKey<Block> ORNATE_DOUBLE_SHELVES = createBlockTag("place_mats/double_shelves/ornate");
         public static final TagKey<Block> FLOATING_SHELVES = createBlockTag("place_mats/single_shelves/floating");
+        public static final TagKey<Block> DYNAMIC_MATERIALS = createBlockTag("dynamic_materials");
 
         private static TagKey<Block> createBlockTag(String path) {
             return createBlockTag(PlaceMatMain.id(path));
