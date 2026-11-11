@@ -201,42 +201,59 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         return 0xFF000000 | (rgb & 0xFFFFFF);
     }
 
-    public static boolean isBlacklistedProperty(Property<?> property) {
-        if (property instanceof DirectionProperty) {
-            return true;
-        }
-        if (property.equals(PlaceMatBlock.LOCKED)) {
-            return true;
-        }
-        String name = property.getName().toLowerCase(Locale.ROOT);
-        return name.contains("facing") || name.contains("direction") || name.equals("orientation") || name.equals("rotation");
-    }
-
     public static List<BlockState> getCycleableBlockStates(Block block) {
         if (block == null) {
             return List.of();
         }
+
         List<BlockState> possible = block.getStateDefinition().getPossibleStates();
         if (possible.size() <= 1) {
             return possible;
         }
+
+        List<Property<?>> blacklistedProps = block.getStateDefinition().getProperties().stream()
+            .filter(CabinetMakerTableScreen::isBlacklistedProperty)
+            .toList();
+
         BlockState defaultState = block.defaultBlockState();
-        List<BlockState> filtered = new ArrayList<>();
-        for (BlockState state : possible) {
-            boolean match = true;
-            for (Property<?> prop : block.getStateDefinition().getProperties()) {
-                if (isBlacklistedProperty(prop)) {
-                    if (!Objects.equals(state.getValue(prop), defaultState.getValue(prop))) {
-                        match = false;
-                        break;
-                    }
-                }
-            }
-            if (match) {
-                filtered.add(state);
+
+        List<BlockState> filtered = possible.stream()
+            .filter(state -> isAllowedState(state, defaultState, blacklistedProps))
+            .toList();
+
+        return filtered.isEmpty() ? possible : filtered;
+    }
+
+    private static boolean isAllowedState(BlockState state, BlockState defaultState, List<Property<?>> blacklistedProps) {
+        for (Property<?> prop : blacklistedProps) {
+            if (!Objects.equals(state.getValue(prop), defaultState.getValue(prop))) {
+                return false;
             }
         }
-        return filtered.isEmpty() ? possible : filtered;
+        for (Property<?> prop : state.getProperties()) {
+            if (isBlacklistedValue(state, prop)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public static boolean isBlacklistedProperty(Property<?> property) {
+        if (property instanceof DirectionProperty || property.equals(PlaceMatBlock.LOCKED)) {
+            return true;
+        }
+        String name = property.getName().toLowerCase(Locale.ROOT);
+        return name.contains("facing")
+            || name.contains("direction")
+            || name.equals("orientation")
+            || name.equals("rotation");
+    }
+
+    private static <T extends Comparable<T>> boolean isBlacklistedValue(BlockState state, Property<T> property) {
+        String valueName = property.getName(state.getValue(property)).toLowerCase(Locale.ROOT);
+
+        return valueName.equals("inner_left")
+            || valueName.equals("outer_right");
     }
 
     @Override
@@ -810,19 +827,27 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         }
 
         BakedModel modelToRender = baseModel;
+        IDynamicTexturedBlock dynamicBlock = null;
         if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
+            dynamicBlock = dtbm.getDynamicBlock();
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, textures, colors);
         } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
+            dynamicBlock = dtibm.getParent().getDynamicBlock();
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, textures, colors);
         } else if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
+            dynamicBlock = dtb;
             DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dtb);
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, textures, colors);
+        } else if (blockState != null && blockState.getBlock() instanceof IDynamicTexturedBlock dtb) {
+            dynamicBlock = dtb;
         }
+
+        float yOffset = dynamicBlock != null ? dynamicBlock.getPreviewYOffset() : 0.0f;
 
         PoseStack poseStack = guiGraphics.pose();
         poseStack.pushPose();
 
-        poseStack.translate(x, y, 100.0f);
+        poseStack.translate(x, y + yOffset, 100.0f);
         poseStack.scale(size * 0.7f, -size * 0.7f, size * 0.7f);
 
         poseStack.mulPose(Axis.XP.rotationDegrees(25.0f));

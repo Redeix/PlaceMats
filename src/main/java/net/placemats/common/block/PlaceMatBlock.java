@@ -69,6 +69,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     private List<String> textureKeys = new ArrayList<>();
     private Map<String, ResourceLocation> defaultTextures = new HashMap<>();
     private Map<Integer, Component> textureKeyLabels = new HashMap<>();
+    private float previewYOffset = 0.0f;
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
@@ -76,6 +77,10 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     }
 
     public PlaceMatBlock dynamicBlock(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels) {
+        return dynamicBlock(keyCount, defaults, labels, 0.0f);
+    }
+
+    public PlaceMatBlock dynamicBlock(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels, float previewYOffset) {
         this.dynamic = true;
         this.textureKeyCount = keyCount;
         this.defaultTextures = new HashMap<>(defaults);
@@ -89,7 +94,18 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         });
         this.textureKeys = keys;
         this.textureKeyLabels = new HashMap<>(labels);
+        this.previewYOffset = previewYOffset;
         return this;
+    }
+
+    public PlaceMatBlock previewYOffset(float offset) {
+        this.previewYOffset = offset;
+        return this;
+    }
+
+    @Override
+    public float getPreviewYOffset() {
+        return this.previewYOffset;
     }
 
     @Override

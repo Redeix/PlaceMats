@@ -42,6 +42,7 @@ public class PlaceMatRegistries {
             prov.add("gui.place_mats.cabinet_maker.key_slot_title", "Key Slot %s: %s");
             prov.add("gui.place_mats.cabinet_maker.key.base", "Base Surface");
             prov.add("gui.place_mats.cabinet_maker.key.bars", "Bars");
+            prov.add("gui.place_mats.cabinet_maker.key.brackets", "Brackets");
             prov.add("gui.place_mats.cabinet_maker.key.generic", "Key %s");
             prov.add("gui.place_mats.cabinet_maker.color_picker_tab", "Color Tint (%s)");
             prov.add("gui.place_mats.cabinet_maker.cycle_blockstate", "Cycle Block State");

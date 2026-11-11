@@ -1,9 +1,6 @@
 package net.placemats.compat.emi;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Stream;
 import dev.emi.emi.api.stack.ListEmiIngredient;
 import net.minecraft.client.Minecraft;
@@ -13,8 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.ItemTags;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.Tags;
 import net.minecraftforge.registries.ForgeRegistries;
 import dev.emi.emi.api.recipe.EmiRecipe;
@@ -25,8 +20,6 @@ import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraftforge.registries.tags.ITagManager;
 import net.placemats.PlaceMatMain;
-import net.placemats.common.block.IDynamicTexturedBlock;
-import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.data.PlaceMatTags;
 
 public class CopyDynamicColorEmiRecipe implements EmiRecipe {

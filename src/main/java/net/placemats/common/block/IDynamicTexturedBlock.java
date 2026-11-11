@@ -116,10 +116,17 @@ public interface IDynamicTexturedBlock {
     ResourceLocation getDefaultTexture(String key);
 
     /**
-     * @param keyIndex Key slot index.
      * @return Label for this key slot.
      */
     Component getTextureKeyName(int keyIndex);
+
+    /**
+     * @return Vertical Y-offset (in GUI pixels) applied when rendering the 3D preview in the cabinetmaker's table screen.
+     * Negative values shift the preview upward, positive values shift downward.
+     */
+    default float getPreviewYOffset() {
+        return 0.0f;
+    }
 
     /**
      * Extracts dynamic texture overrides from an ItemStack's NBT.

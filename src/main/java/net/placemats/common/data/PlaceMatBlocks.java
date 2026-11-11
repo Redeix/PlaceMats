@@ -26,8 +26,9 @@ import static net.placemats.common.data.resource.RegistryHelpers.*;
 @SuppressWarnings({ "unused" })
 public final class PlaceMatBlocks {
 
+    // Dynamic Materials Storage Rack
     public static final BlockEntry<PlaceMatCardinalBlock> STORAGE_RACK = PlaceMatRegistries.REGISTRATE.storageRack("storage_rack", true)
-        .properties(p -> p.sound(SoundType.METAL).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .onRegister(block -> {
             block.containerSize(10);
             block.disableZoneRotation();
@@ -49,7 +50,7 @@ public final class PlaceMatBlocks {
                     .texture("0", prov.modLoc("block/storage_rack_base"));
             prov.horizontalBlock(ctx.getEntry(), model);
         })
-        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, PlaceMatTags.Blocks.STORAGE_RACKS, PlaceMatTags.Blocks.DOUBLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.STORAGE_RACKS, PlaceMatTags.Blocks.DOUBLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
         .loot(RegistrateBlockLootTables::dropSelf)
         .item()
         .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.STORAGE_RACKS, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
@@ -57,8 +58,108 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
+    // Dynamic Materials Ornate Shelf
+    public static final BlockEntry<PlaceMatAttachedStairsBlock> ORNATE_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("ornate_shelf")
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .blockstate(attachedStairsBlockState(
+            List.of(
+                new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,"block/storage_rack_base"))),
+            "ornate_shelf"
+        ))
+        .onRegister(block -> {
+            block.collisionShape(Block.box(0, 0, 0, 16, 2, 16));
+            block.containerSize(10);
+            block.disableZoneRotation();
+            block.addRange(basicPlacementRange(box(0, 2, 0, 16, 16, 16), 16 / 16F));
+            block.dynamicBlock(2,
+                Map.of(
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/ornate_bracket_side")
+                ),
+                Map.of(
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.brackets")
+                )
+            );
+            block.previewYOffset(-28.0f);
+        })
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.ORNATE_SHELVES, PlaceMatTags.Blocks.SINGLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.ORNATE_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.SINGLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
+        .build()
+        .register();
+
+    // Dynamic Materials Floating Shelf
+    public static final BlockEntry<PlaceMatAttachedStairsBlock> FLOATING_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("floating_shelf")
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .blockstate(attachedStairsBlockState(
+            List.of(
+                new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,"block/storage_rack_base")),
+                new TextureConfig("1", ResourceLocation.fromNamespaceAndPath("minecraft","block/smooth_stone"))),
+            "floating_shelf"
+        ))
+        .onRegister(block -> {
+            block.collisionShape(Block.box(0, 0, 0, 16, 2, 16));
+            block.containerSize(10);
+            block.disableZoneRotation();
+            block.addRange(basicPlacementRange(box(0, 2, 0, 16, 16, 16), 16 / 16F));
+            block.dynamicBlock(2,
+                Map.of(
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath("minecraft","block/smooth_stone")
+                ),
+                Map.of(
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.brackets")
+                )
+            );
+            block.previewYOffset(-18.0f);
+        })
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.FLOATING_SHELVES, PlaceMatTags.Blocks.SINGLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.FLOATING_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.SINGLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
+        .build()
+        .register();
+
+    // Dynamic Materials Ornate Double Shelf
+    public static final BlockEntry<PlaceMatAttachedStairsBlock> ORNATE_DOUBLE_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("ornate_double_shelf")
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .blockstate(attachedStairsBlockState(
+            List.of(
+                new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,"block/storage_rack_base"))),
+            "ornate_double_shelf"
+        ))
+        .onRegister(block -> {
+            block.containerSize(10);
+            stairsShelvesShapes().accept(block);
+            block.dynamicBlock(2,
+                Map.of(
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/ornate_bracket_side")
+                ),
+                Map.of(
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.brackets")
+                )
+            );
+            block.previewYOffset(-5.0f);
+        })
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.ORNATE_DOUBLE_SHELVES, PlaceMatTags.Blocks.DOUBLE_SHELVES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.ORNATE_DOUBLE_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
+        .build()
+        .register();
+
+    // Cabinetmaker's Table
     public static final BlockEntry<CabinetMakerTableBlock> CABINETMAKER_TABLE = PlaceMatRegistries.REGISTRATE.block("cabinetmaker_table", CabinetMakerTableBlock::new)
         .properties(WOOD_PROPERTIES)
+        .lang("Cabinetmaker's Table")
         .blockstate((ctx, prov) -> {
             var model = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/cabinetmaker_table_parent"));
             prov.horizontalBlock(ctx.getEntry(), model);

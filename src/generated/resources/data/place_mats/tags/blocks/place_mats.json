@@ -1,6 +1,9 @@
 {
   "values": [
     "place_mats:storage_rack",
+    "place_mats:ornate_shelf",
+    "place_mats:floating_shelf",
+    "place_mats:ornate_double_shelf",
     "place_mats:oak_storage_rack",
     "place_mats:spruce_storage_rack",
     "place_mats:birch_storage_rack",
