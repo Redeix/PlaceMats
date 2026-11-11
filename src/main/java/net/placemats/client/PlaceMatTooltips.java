@@ -1,19 +1,24 @@
 package net.placemats.client;
 
+import com.mojang.datafixers.util.Either;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.event.RenderTooltipEvent;
 import net.minecraftforge.event.entity.player.ItemTooltipEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.placemats.PlaceMatMain;
+import net.placemats.client.gui.tooltip.TextureTooltip;
+import net.placemats.client.gui.tooltip.TextureTooltipHelper;
 import net.placemats.common.block.CabinetMakerTableBlock;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.compat.ModCompat;
@@ -31,6 +36,10 @@ public class PlaceMatTooltips{
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();
         Block block = Block.byItem(stack.getItem());
+        
+        if (stack.isEmpty()) {
+            return;
+        }
 
         // Cabinetmaker's table
         if (block instanceof CabinetMakerTableBlock) {
@@ -49,6 +58,10 @@ public class PlaceMatTooltips{
     public static void onItemTooltip(ItemTooltipEvent event) {
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();
+
+        if (stack.isEmpty()) {
+            return;
+        }
 
         // Key
         if (stack.is(PlaceMatTags.Items.KEY)) {
@@ -69,6 +82,23 @@ public class PlaceMatTooltips{
             }
             tooltip.add(1, text);
         }
+    }
+
+    // Texture Provider Tooltips
+    @SubscribeEvent
+    public static void onGatherTooltipComponents(RenderTooltipEvent.GatherComponents event) {
+        ItemStack stack = event.getItemStack();
+        if (stack.isEmpty() || !stack.is(PlaceMatTags.Items.TEXTURE_PROVIDERS)) {
+            return;
+        }
+
+        List<ResourceLocation> textures = TextureTooltipHelper.getTooltipTextures(stack);
+        if (textures.isEmpty()) {
+            return;
+        }
+
+        int insertIndex = Math.min(1, event.getTooltipElements().size());
+        event.getTooltipElements().add(insertIndex, Either.right(new TextureTooltip(textures)));
     }
 
     /**

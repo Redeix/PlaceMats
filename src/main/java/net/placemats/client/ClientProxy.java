@@ -22,13 +22,16 @@ import org.jetbrains.annotations.NotNull;
 import net.minecraftforge.client.event.EntityRenderersEvent;
 import net.minecraftforge.client.event.ModelEvent;
 import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
+import net.minecraftforge.client.event.RegisterClientTooltipComponentFactoriesEvent;
 import net.minecraftforge.client.event.RegisterParticleProvidersEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-
+import net.placemats.client.gui.tooltip.ClientTextureTooltip;
+import net.placemats.client.gui.tooltip.TextureTooltip;
+import net.placemats.client.gui.tooltip.TextureTooltipHelper;
 import net.placemats.common.CommonProxy;
 import net.placemats.common.data.resource.DefinitionManager;
 
@@ -44,11 +47,16 @@ public class ClientProxy extends CommonProxy {
         bus.addListener(this::registerClientReloadListeners);
         bus.addListener(this::registerSpecialModels);
         bus.addListener(this::registerRenderers);
+        bus.addListener(this::registerTooltipFactories);
         bus.addListener(this::onModifyBakingResult);
     }
 
     public void clientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> MenuScreens.register(PlaceMatContainers.CABINET_MAKER_TABLE.get(), CabinetMakerTableScreen::new));
+    }
+
+    public void registerTooltipFactories(RegisterClientTooltipComponentFactoriesEvent event) {
+        event.register(TextureTooltip.class, ClientTextureTooltip::new);
     }
 
     public void registerRenderers(EntityRenderersEvent.RegisterRenderers event) {
@@ -70,6 +78,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
+        TextureTooltipHelper.clearCache();
         Map<ResourceLocation, BakedModel> models = event.getModels();
         for (Block block : ForgeRegistries.BLOCKS) {
             if (block instanceof IDynamicTexturedBlock dynamicBlock && dynamicBlock.getTextureKeyCount() > 0) {
