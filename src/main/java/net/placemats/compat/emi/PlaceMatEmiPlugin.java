@@ -1,6 +1,8 @@
 package net.placemats.compat.emi;
 
+import dev.emi.emi.config.EmiConfig;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
@@ -29,6 +31,7 @@ import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.recipe.PlaceMatRecipe;
 
 // TODO: Remake EMI compat.
+@SuppressWarnings("unused")
 @EmiEntrypoint
 public class PlaceMatEmiPlugin implements EmiPlugin {
 
@@ -130,5 +133,27 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
     public static void createItemWidget(WidgetHolder holder, int offsetY, int offsetX, EmiIngredient stack) {
         SlotWidget widget = new SlotWidget(stack, offsetX, offsetY);
         holder.add(widget);
+    }
+
+    /**
+     * Gets the key name for the EMI view uses button. (Default "U")
+     */
+    public static String getUsesKeyName() {
+        Component keyName = EmiConfig.viewUses.isBound()
+            ? EmiConfig.viewUses.boundKeys.get(0).key().getDisplayName()
+            : EmiConfig.viewUses.defaultKeys.get(0).key().getDisplayName();
+
+        return keyName.getString();
+    }
+
+    /**
+     * Gets the key name for the EMI view recipes button. (Default "R")
+     */
+    public static String getRecipesKeyName() {
+        Component keyName =  EmiConfig.viewRecipes.isBound()
+            ? EmiConfig.viewRecipes.boundKeys.get(0).key().getDisplayName()
+            : EmiConfig.viewRecipes.defaultKeys.get(0).key().getDisplayName();
+
+        return keyName.getString();
     }
 }

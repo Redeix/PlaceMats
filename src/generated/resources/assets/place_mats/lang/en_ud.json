@@ -85,6 +85,7 @@
   "place_mats.emi.placemat.required_block": "ɟןǝɥS ɹo ʇɐW ǝɔɐןԀ pǝɹınbǝᴚ",
   "place_mats.emi.placemat.target_input": "ɟןǝɥS / ʇɐW uo pǝɔɐןԀ ɯǝʇI",
   "place_mats.emi.placemat.zone": "%s ǝuoZ",
+  "place_mats.tooltip.dynamic_materials": "˙buıʇuıʇ puɐ sǝɹnʇxǝʇ s,ʇı ǝzıɯoʇsnɔ oʇ ɹ§ǝןqɐ⟘ s,ɹǝʞɐɯʇǝuıqɐƆo§ ɐ ǝs∩ ɹ§¡ʇɹoddns sןɐıɹǝʇɐɯ ɔıɯɐuʎp sɐɥ ʞɔoןq sıɥ⟘Ɛ§",
   "place_mats.tooltip.key.explain": "˙uoıʇɔɐɹʇxǝ puɐ uoıʇɹǝsuı ɯǝʇı buıʇuǝʌǝɹԀ ˙sʇɐW ǝɔɐןԀ ʞɔoןun/ʞɔoן oʇ ɹ§ᗺWᴚƐ§",
   "place_mats.tooltip.key.joke": "˙˙˙pɐǝɹq sɐ poob sɐ ǝʇsɐʇ ʇ,usǝoᗡ",
   "place_mats.tooltip.placemat.elevation": " ˙ɹǝʍoꞀ oʇ ɹ§ǝɔɐdS+ןɹʇƆ+ʇɟıɥSƐ§ ˙ǝsıɐᴚ oʇ ɹ§ǝɔɐdS+ʇɟıɥSƐ§",
@@ -99,5 +100,6 @@
   "place_mats.tooltip.placemat.placing": "˙ʎɐןdsıp oʇ ɹ§ᗺWᴚƐ§ puɐ ɯǝʇı uɐ pןoH",
   "place_mats.tooltip.placemat.roll": " ˙ןןoᴚ ɹoɟ ɹ§ןןoɹɔS+ʇןⱯ+ʇɟıɥSƐ§",
   "place_mats.tooltip.placemat.yaw": " ˙ʍɐʎ ɹoɟ ɹ§ןןoɹɔS+ʇɟıɥSƐ§",
+  "place_mats.tooltip.press_for_info": "˙uoıʇɐɯɹoɟuı ǝɹoɯ ɹoɟ ɹ§]9§%s[ ssǝɹԀ9§",
   "place_mats.tooltip.shift_hint": "˙˙˙ɹ§]ʇɟıɥS["
 }

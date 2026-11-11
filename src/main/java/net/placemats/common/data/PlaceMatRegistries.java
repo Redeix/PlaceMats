@@ -58,6 +58,8 @@ public class PlaceMatRegistries {
             prov.add("place_mats.emi.placemat.required_block", "Required Place Mat or Shelf");
             prov.add("place_mats.emi.placemat.target_input", "Item Placed on Mat / Shelf");
             prov.add("place_mats.emi.placemat.zone", "Zone %s");
+            prov.add("place_mats.tooltip.dynamic_materials", "§3This block has dynamic materials support!§r Use a §oCabinetmaker's Table§r to customize it's textures and tinting.");
+            prov.add("place_mats.tooltip.press_for_info", "§6Press [%s§6]§r for more information.");
         });
     }
 }
