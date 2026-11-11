@@ -24,20 +24,22 @@ import net.placemats.common.data.PlaceMatTags;
 
 public class ClearDynamicColorEmiRecipe implements EmiRecipe {
 
-    private static final ResourceLocation ID = PlaceMatMain.id("/clear_dynamic_color");
-
+    private final ResourceLocation id;
     private final List<EmiIngredient> inputs;
     private final List<EmiStack> outputs;
 
-    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
-    public ClearDynamicColorEmiRecipe() {
-        ITagManager<Item> itemTags = ForgeRegistries.ITEMS.tags();
+    public ClearDynamicColorEmiRecipe(Item item, EmiIngredient hiddenMaterialTextures) {
+        ResourceLocation itemKey = ForgeRegistries.ITEMS.getKey(item);
+        this.id = PlaceMatMain.id("/clear_dynamic_color/" + (itemKey != null ? itemKey.getNamespace() + "/" + itemKey.getPath() : "unknown"));
 
-        List<EmiStack> cleanBaseStacks = (itemTags != null
-            ? itemTags.getTag(PlaceMatTags.Items.DYNAMIC_MATERIALS).stream()
-            : Stream.<Item>empty())
-            .map(EmiStack::of)
-            .toList();
+        EmiStack baseStack = EmiStack.of(item);
+        this.inputs = List.of(new DynamicTextureStack(baseStack, hiddenMaterialTextures));
+        this.outputs = List.of(baseStack);
+    }
+
+    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
+    public static EmiIngredient createMaterialIngredient() {
+        ITagManager<Item> itemTags = ForgeRegistries.ITEMS.tags();
 
         List<EmiStack> rawMaterialStacks = Stream.of(
                 ItemTags.LOGS,
@@ -51,12 +53,7 @@ public class ClearDynamicColorEmiRecipe implements EmiRecipe {
             .map(EmiStack::of)
             .toList();
 
-        EmiIngredient dynamicBaseList = new ListEmiIngredient(cleanBaseStacks, 1);
-        EmiIngredient hiddenMaterialTextures = new ListEmiIngredient(rawMaterialStacks, 1);
-
-        this.inputs = List.of(new DynamicTextureStack(dynamicBaseList, hiddenMaterialTextures));
-
-        this.outputs = List.of(new DynamicTextureStack(dynamicBaseList, EmiStack.EMPTY));
+        return new ListEmiIngredient(rawMaterialStacks, 1);
     }
 
     @Override
@@ -66,7 +63,7 @@ public class ClearDynamicColorEmiRecipe implements EmiRecipe {
 
     @Override
     public ResourceLocation getId() {
-        return ID;
+        return id;
     }
 
     @Override

@@ -1,16 +1,12 @@
 package net.placemats.compat.emi;
 
 import java.util.List;
-import java.util.stream.Stream;
-import dev.emi.emi.api.stack.ListEmiIngredient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.tags.ItemTags;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.Item;
-import net.minecraftforge.common.Tags;
 import net.minecraftforge.registries.ForgeRegistries;
 import dev.emi.emi.api.recipe.EmiRecipe;
 import dev.emi.emi.api.recipe.EmiRecipeCategory;
@@ -18,48 +14,25 @@ import dev.emi.emi.api.recipe.VanillaEmiRecipeCategories;
 import dev.emi.emi.api.stack.EmiIngredient;
 import dev.emi.emi.api.stack.EmiStack;
 import dev.emi.emi.api.widget.WidgetHolder;
-import net.minecraftforge.registries.tags.ITagManager;
 import net.placemats.PlaceMatMain;
-import net.placemats.common.data.PlaceMatTags;
 
 public class CopyDynamicColorEmiRecipe implements EmiRecipe {
 
-    private static final ResourceLocation ID = PlaceMatMain.id("/copy_dynamic_color");
-
+    private final ResourceLocation id;
     private final List<EmiIngredient> inputs;
     private final List<EmiStack> outputs;
 
-    @SuppressWarnings({"deprecation", "UnstableApiUsage"})
-    public CopyDynamicColorEmiRecipe() {
-        ITagManager<Item> itemTags = ForgeRegistries.ITEMS.tags();
+    public CopyDynamicColorEmiRecipe(Item item, EmiIngredient hiddenMaterialTextures) {
+        ResourceLocation itemKey = ForgeRegistries.ITEMS.getKey(item);
+        this.id = PlaceMatMain.id("/copy_dynamic_color/" + (itemKey != null ? itemKey.getNamespace() + "/" + itemKey.getPath() : "unknown"));
 
-        List<EmiStack> cleanBaseStacks = (itemTags != null
-            ? itemTags.getTag(PlaceMatTags.Items.DYNAMIC_MATERIALS).stream()
-            : Stream.<Item>empty())
-            .map(EmiStack::of)
-            .toList();
-
-        List<EmiStack> rawMaterialStacks = Stream.of(
-                ItemTags.LOGS,
-                ItemTags.WOOL,
-                Tags.Items.STONE,
-                Tags.Items.GLASS
-            )
-            .flatMap(tag -> itemTags != null ? itemTags.getTag(tag).stream() : Stream.empty())
-            .filter(item -> !item.builtInRegistryHolder().is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST))
-            .distinct()
-            .map(EmiStack::of)
-            .toList();
-
-        EmiIngredient dynamicBaseList = new ListEmiIngredient(cleanBaseStacks, 1);
-        EmiIngredient hiddenMaterialTextures = new ListEmiIngredient(rawMaterialStacks, 1);
-
+        EmiStack baseStack = EmiStack.of(item);
         this.inputs = List.of(
-            new DynamicTextureStack(dynamicBaseList, hiddenMaterialTextures),
-            new DynamicTextureStack(dynamicBaseList, EmiStack.EMPTY)
+            new DynamicTextureStack(baseStack, hiddenMaterialTextures),
+            baseStack
         );
 
-        EmiStack outputStack = new DynamicTextureStack(dynamicBaseList, hiddenMaterialTextures).setAmount(2);
+        EmiStack outputStack = new DynamicTextureStack(baseStack, hiddenMaterialTextures).setAmount(2);
         this.outputs = List.of(outputStack);
     }
 
@@ -70,7 +43,7 @@ public class CopyDynamicColorEmiRecipe implements EmiRecipe {
 
     @Override
     public ResourceLocation getId() {
-        return ID;
+        return id;
     }
 
     @Override

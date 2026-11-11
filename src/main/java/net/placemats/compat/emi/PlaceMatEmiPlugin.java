@@ -5,6 +5,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.tags.ITagManager;
 
 import dev.emi.emi.api.EmiEntrypoint;
 import dev.emi.emi.api.EmiPlugin;
@@ -53,8 +55,14 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
         emiRegistry.addRecipe(new CabinetMakerEmiRecipe());
 
         // Special Crafting Recipes (Clear & Copy Customizations)
-        emiRegistry.addRecipe(new ClearDynamicColorEmiRecipe());
-        emiRegistry.addRecipe(new CopyDynamicColorEmiRecipe());
+        ITagManager<Item> itemTags = ForgeRegistries.ITEMS.tags();
+        if (itemTags != null) {
+            EmiIngredient hiddenMaterialTextures = ClearDynamicColorEmiRecipe.createMaterialIngredient();
+            for (Item item : itemTags.getTag(PlaceMatTags.Items.DYNAMIC_MATERIALS)) {
+                emiRegistry.addRecipe(new ClearDynamicColorEmiRecipe(item, hiddenMaterialTextures));
+                emiRegistry.addRecipe(new CopyDynamicColorEmiRecipe(item, hiddenMaterialTextures));
+            }
+        }
 
         emiRegistry.addDragDropHandler(CabinetMakerTableScreen.class, new EmiDragDropHandler<>()
         {
