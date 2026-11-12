@@ -7,11 +7,13 @@ import net.minecraft.client.renderer.block.BlockModelShaper;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.client.gui.CabinetMakerTableScreen;
+import net.placemats.client.renderer.CyclicLayerBakedModel;
 import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
 import net.placemats.common.block.IDynamicTexturedBlock;
@@ -80,7 +82,9 @@ public class ClientProxy extends CommonProxy {
     public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {
         TextureTooltipHelper.clearCache();
         Map<ResourceLocation, BakedModel> models = event.getModels();
+
         for (Block block : ForgeRegistries.BLOCKS) {
+            // Dynamic Materials Blocks
             if (block instanceof IDynamicTexturedBlock dynamicBlock && dynamicBlock.getTextureKeyCount() > 0) {
                 ResourceLocation blockId = ForgeRegistries.BLOCKS.getKey(block);
                 if (blockId == null) {
@@ -114,6 +118,18 @@ public class ClientProxy extends CommonProxy {
                             entry.setValue(new DynamicTexturedBakedModel(existing, dynamicBlock));
                         }
                     }
+                }
+            }
+        }
+
+        // Cyclic Layer Models
+        for (Map.Entry<ResourceLocation, BakedModel> entry : models.entrySet()) {
+            if (entry.getKey() instanceof ModelResourceLocation mrl && "inventory".equals(mrl.getVariant())) {
+                ResourceLocation itemId = ResourceLocation.fromNamespaceAndPath(mrl.getNamespace(), mrl.getPath());
+                Item item = ForgeRegistries.ITEMS.getValue(itemId);
+
+                if (item != null) {
+                    entry.setValue(new CyclicLayerBakedModel(entry.getValue(), item));
                 }
             }
         }

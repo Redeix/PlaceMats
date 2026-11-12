@@ -26,6 +26,7 @@ public final class PlaceMatTags {
         public static final TagKey<Item> FLOATING_SHELVES = createItemTag("place_mats/single_shelves/floating");
         public static final TagKey<Item> DYNAMIC_MATERIALS = createItemTag("dynamic_materials");
         public static final TagKey<Item> TEXTURE_PROVIDERS = createItemTag("texture_providers");
+        public static final TagKey<Item> TEXTURE_BUNDLES = createItemTag("texture_bundles");
         public static final TagKey<Item> KEY = createItemTag("key");
 
         private static TagKey<Item> createItemTag(String path) {
@@ -60,7 +61,6 @@ public final class PlaceMatTags {
 
     public static void addExistingTags(AbstractRegistrate<?> registrate) {
         registrate.addDataGenerator(ProviderType.ITEM_TAGS, provider -> {
-            provider.addTag(Items.TEXTURE_PROVIDERS).addTag(Items.DYNAMIC_MATERIALS);
             provider.addTag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST).add(net.minecraft.world.item.Items.DEBUG_STICK);
         });
     }

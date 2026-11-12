@@ -72,6 +72,7 @@
   "gui.place_mats.cabinet_maker.material_tooltip": "Place an item to extract 16x16 textures!",
   "gui.place_mats.cabinet_maker.preview": "3D Preview",
   "item.place_mats.key": "Key",
+  "item.place_mats.texture_bundle_1": "Texture Bundle [1]",
   "itemGroup.place_mats.place_mats": "Place Mats",
   "place_mats.creative_tab.place_mats": "Place Mats",
   "place_mats.emi.cabinet_maker.desc1": "⏵ A Cabinetmaker's Table allows you to customize certain dynamic blocks using extracted textures from any block or item.",
@@ -101,5 +102,6 @@
   "place_mats.tooltip.placemat.roll": "§3Shift+Alt+Scroll§r for Roll. ",
   "place_mats.tooltip.placemat.yaw": "§3Shift+Scroll§r for Yaw. ",
   "place_mats.tooltip.press_for_info": "§6Press [%s§6]§r for more information.",
-  "place_mats.tooltip.shift_hint": "[Shift]§r..."
+  "place_mats.tooltip.shift_hint": "[Shift]§r...",
+  "place_mats.tooltip.texture_bundles": "This item is intended as a source of textures for the §oCabinetmaker's Table§r. Simply §6drag and drop§r it into a material slot and tint away!"
 }

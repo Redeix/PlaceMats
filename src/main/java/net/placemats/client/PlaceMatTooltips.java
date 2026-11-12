@@ -36,7 +36,7 @@ public class PlaceMatTooltips{
         ItemStack stack = event.getItemStack();
         List<Component> tooltip = event.getToolTip();
         Block block = Block.byItem(stack.getItem());
-        
+
         if (stack.isEmpty()) {
             return;
         }
@@ -80,6 +80,12 @@ public class PlaceMatTooltips{
                 text.append(CommonComponents.NEW_LINE);
                 text.append(Component.translatable("place_mats.tooltip.press_for_info", PlaceMatEmiPlugin.getUsesKeyName()));
             }
+            tooltip.add(1, text);
+        }
+
+        // Texture Bundles
+        if (stack.is(PlaceMatTags.Items.TEXTURE_BUNDLES)) {
+            MutableComponent text = Component.translatable("place_mats.tooltip.texture_bundles");
             tooltip.add(1, text);
         }
     }

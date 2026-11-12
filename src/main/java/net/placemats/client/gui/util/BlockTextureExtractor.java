@@ -4,7 +4,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -16,6 +18,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.placemats.client.renderer.CyclicLayerBakedModel;
 import net.placemats.common.data.PlaceMatTags;
 
 /**
@@ -26,13 +29,14 @@ import net.placemats.common.data.PlaceMatTags;
 public class BlockTextureExtractor {
 
     private static final RandomSource RANDOM = RandomSource.create();
+    private static final int MAX_BASE_LAYERS = 5;
 
     public static List<ResourceLocation> extract16x16Textures(ItemStack stack) {
         if (stack == null || stack.isEmpty() || stack.is(PlaceMatTags.Items.CABINET_MAKER_MATERIAL_BLACKLIST)) {
             return Collections.emptyList();
         }
 
-        Set<ResourceLocation> textures = new LinkedHashSet<>();
+        List<ResourceLocation> textures = new ArrayList<>();
         Minecraft mc = Minecraft.getInstance();
 
         // BlockItem model quads.
@@ -53,58 +57,92 @@ public class BlockTextureExtractor {
         } catch (Exception ignored) {
         }
 
-        return new ArrayList<>(textures);
+        return textures;
     }
 
-    private static void extractFromModel(BakedModel model, BlockState state, Set<ResourceLocation> out) {
+    private static void extractFromModel(BakedModel model, BlockState state, List<ResourceLocation> out) {
         if (model == null) {
             return;
         }
 
+        // Unwrap CyclicLayerBakedModel so inactive animation frames aren't hidden.
+        while (model instanceof CyclicLayerBakedModel cyclic) {
+            model = cyclic.getOriginalModel();
+        }
+
+        List<BakedQuad> allQuads = new ArrayList<>();
+
         // Directional quads.
         for (Direction side : Direction.values()) {
             try {
-                List<BakedQuad> quads = model.getQuads(state, side, RANDOM);
-                for (BakedQuad quad : quads) {
-                    addValidSprite(quad.getSprite(), out);
-                }
+                allQuads.addAll(model.getQuads(state, side, RANDOM));
             } catch (Exception ignored) {
             }
         }
 
         // Unculled quads.
         try {
-            List<BakedQuad> unculled = model.getQuads(state, null, RANDOM);
-            for (BakedQuad quad : unculled) {
-                addValidSprite(quad.getSprite(), out);
-            }
+            allQuads.addAll(model.getQuads(state, null, RANDOM));
         } catch (Exception ignored) {
+        }
+
+        Map<Integer, ResourceLocation> layeredTextures = new TreeMap<>();
+        Set<ResourceLocation> unlayeredTextures = new LinkedHashSet<>();
+
+        for (BakedQuad quad : allQuads) {
+            TextureAtlasSprite sprite = quad.getSprite();
+            if (!isValid16x16Sprite(sprite)) {
+                continue;
+            }
+
+            ResourceLocation name = sprite.contents().name();
+            int layer = quad.getTintIndex();
+
+            if (layer >= 0 && layer < MAX_BASE_LAYERS) {
+                layeredTextures.putIfAbsent(layer, name);
+            } else if (layer < 0) {
+                unlayeredTextures.add(name);
+            }
+        }
+
+        if (!layeredTextures.isEmpty()) {
+            out.addAll(layeredTextures.values());
+            return;
+        }
+
+        for (ResourceLocation tex : unlayeredTextures) {
+            if (!out.contains(tex)) {
+                out.add(tex);
+            }
         }
 
         // Particles.
         try {
             TextureAtlasSprite particle = model.getParticleIcon();
-            addValidSprite(particle, out);
+            if (isValid16x16Sprite(particle)) {
+                ResourceLocation particleName = particle.contents().name();
+                if (!out.contains(particleName)) {
+                    out.add(particleName);
+                }
+            }
         } catch (Exception ignored) {
         }
     }
 
-    private static void addValidSprite(TextureAtlasSprite sprite, Set<ResourceLocation> out) {
+    private static boolean isValid16x16Sprite(TextureAtlasSprite sprite) {
         if (sprite == null) {
-            return;
+            return false;
         }
         ResourceLocation name = sprite.contents().name();
         // Oops, no Mew for you.
         if (name.getPath().equals("missingno") || name.toString().equals("minecraft:missingno")) {
-            return;
+            return false;
         }
 
         int width = sprite.contents().width();
         int height = sprite.contents().height();
 
         // Standard 16x16 textures.
-        if (width == 16 && height == 16) {
-            out.add(name);
-        }
+        return width == 16 && height == 16;
     }
 }

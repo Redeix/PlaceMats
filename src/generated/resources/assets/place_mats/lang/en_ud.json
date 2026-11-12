@@ -72,6 +72,7 @@
   "gui.place_mats.cabinet_maker.material_tooltip": "¡sǝɹnʇxǝʇ 9Ɩx9Ɩ ʇɔɐɹʇxǝ oʇ ɯǝʇı uɐ ǝɔɐןԀ",
   "gui.place_mats.cabinet_maker.preview": "ʍǝıʌǝɹԀ ᗡƐ",
   "item.place_mats.key": "ʎǝʞ",
+  "item.place_mats.texture_bundle_1": "]Ɩ[ ǝןpunᗺ ǝɹnʇxǝ⟘",
   "itemGroup.place_mats.place_mats": "sʇɐW ǝɔɐןԀ",
   "place_mats.creative_tab.place_mats": "sʇɐW ǝɔɐןԀ",
   "place_mats.emi.cabinet_maker.desc1": "˙ɯǝʇı ɹo ʞɔoןq ʎuɐ ɯoɹɟ sǝɹnʇxǝʇ pǝʇɔɐɹʇxǝ buısn sʞɔoןq ɔıɯɐuʎp uıɐʇɹǝɔ ǝzıɯoʇsnɔ oʇ noʎ sʍoןןɐ ǝןqɐ⟘ s,ɹǝʞɐɯʇǝuıqɐƆ Ɐ ⏵",
@@ -101,5 +102,6 @@
   "place_mats.tooltip.placemat.roll": " ˙ןןoᴚ ɹoɟ ɹ§ןןoɹɔS+ʇןⱯ+ʇɟıɥSƐ§",
   "place_mats.tooltip.placemat.yaw": " ˙ʍɐʎ ɹoɟ ɹ§ןןoɹɔS+ʇɟıɥSƐ§",
   "place_mats.tooltip.press_for_info": "˙uoıʇɐɯɹoɟuı ǝɹoɯ ɹoɟ ɹ§]9§%s[ ssǝɹԀ9§",
-  "place_mats.tooltip.shift_hint": "˙˙˙ɹ§]ʇɟıɥS["
+  "place_mats.tooltip.shift_hint": "˙˙˙ɹ§]ʇɟıɥS[",
+  "place_mats.tooltip.texture_bundles": "¡ʎɐʍɐ ʇuıʇ puɐ ʇoןs ןɐıɹǝʇɐɯ ɐ oʇuı ʇı ɹ§doɹp puɐ bɐɹp9§ ʎןdɯıS ˙ɹ§ǝןqɐ⟘ s,ɹǝʞɐɯʇǝuıqɐƆo§ ǝɥʇ ɹoɟ sǝɹnʇxǝʇ ɟo ǝɔɹnos ɐ sɐ pǝpuǝʇuı sı ɯǝʇı sıɥ⟘"
 }

@@ -60,6 +60,7 @@ public class PlaceMatRegistries {
             prov.add("place_mats.emi.placemat.zone", "Zone %s");
             prov.add("place_mats.tooltip.dynamic_materials", "§3This block has dynamic materials support!§r Use a §oCabinetmaker's Table§r to customize it's textures and tinting.");
             prov.add("place_mats.tooltip.press_for_info", "§6Press [%s§6]§r for more information.");
+            prov.add("place_mats.tooltip.texture_bundles", "This item is intended as a source of textures for the §oCabinetmaker's Table§r. Simply §6drag and drop§r it into a material slot and tint away!");
         });
     }
 }

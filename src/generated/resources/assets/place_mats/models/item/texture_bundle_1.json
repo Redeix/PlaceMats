@@ -1,0 +1,10 @@
+{
+  "parent": "minecraft:item/generated",
+  "textures": {
+    "layer0": "place_mats:item/texture_bundles/b1/b1_0",
+    "layer1": "place_mats:item/texture_bundles/b1/b1_1",
+    "layer2": "place_mats:item/texture_bundles/b1/b1_2",
+    "layer3": "place_mats:item/texture_bundles/b1/b1_3",
+    "layer4": "place_mats:item/texture_bundles/b1/b1_4"
+  }
+}
