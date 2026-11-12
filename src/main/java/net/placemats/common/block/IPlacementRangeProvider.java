@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.properties.Property;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.placemats.common.data.resource.RegistryHelpers;
 
 /**
  * Interface providing placement range definitions, zone calculations, and transformation methods.
@@ -184,6 +185,11 @@ public interface IPlacementRangeProvider {
     }
 
     /* ======================== Range Addition ========================== */
+
+
+    default <T extends IPlacementRangeProvider> T addChairRange(VoxelShape shape) {
+        return addRange(RegistryHelpers.chairPlacementRange(shape));
+    }
 
     default <T extends IPlacementRangeProvider> T addRange(int index, PlacementRange range) {
         while (getPlacementDefinition().getPlacementRanges().size() <= index) {

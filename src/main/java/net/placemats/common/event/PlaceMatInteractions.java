@@ -25,9 +25,13 @@ import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.items.ItemHandlerHelper;
+import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.data.PlaceMatEntities;
+import net.placemats.common.entity.SeatEntity;
 
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.blockentity.PlaceMatBlockEntity.PlacedItem;
@@ -82,6 +86,59 @@ public class PlaceMatInteractions {
                     return onPickup(placeMat, player, targeted);
                 }
             }
+        }
+
+        // Sitting interaction
+        if (placeMat.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+            Vec3 relativeHit = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+            PlacementRange targetedRange = pmb.getTargetedPlacementRange(placeMat.getBlockState(), relativeHit);
+            if (targetedRange != null && targetedRange.chair()) {
+                if (!player.isShiftKeyDown()) {
+                    return sitPlayer(level, pos, placeMat.getBlockState(), targetedRange, player);
+                }
+            }
+        }
+
+        return InteractionResult.PASS;
+    }
+
+    /**
+     * Attempts to sit the player in the targeted placement range.
+     */
+    public static InteractionResult sitPlayer(Level level, BlockPos pos, BlockState state, PlacementRange range, Player player) {
+        double localCenterX = (range.box().minX + range.box().maxX) / 2.0;
+        double localCenterY = range.box().minY;
+        double localCenterZ = (range.box().minZ + range.box().maxZ) / 2.0;
+
+        Vec3 worldHit = PlaceMatBlock.getWorldHitVec(state, new Vec3(localCenterX, localCenterY, localCenterZ));
+        double x = pos.getX() + worldHit.x;
+        double y = pos.getY() + worldHit.y;
+        double z = pos.getZ() + worldHit.z;
+
+        List<SeatEntity> seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(x - 0.2, y - 0.2, z - 0.2, x + 0.2, y + 0.2, z + 0.2));
+        for (SeatEntity seat : seats) {
+            if (seat.isVehicle()) {
+                return InteractionResult.CONSUME;
+            }
+        }
+
+        if (level.isClientSide) {
+            return InteractionResult.SUCCESS;
+        }
+
+        for (SeatEntity seat : seats) {
+            seat.discard();
+        }
+
+        SeatEntity seat = PlaceMatEntities.SEAT.get().create(level);
+        if (seat != null) {
+            seat.setPos(x, y, z);
+            if (state.hasProperty(PlaceMatCardinalBlock.FACING)) {
+                seat.setYRot(state.getValue(PlaceMatCardinalBlock.FACING).toYRot());
+            }
+            level.addFreshEntity(seat);
+            player.startRiding(seat, true);
+            return InteractionResult.SUCCESS;
         }
 
         return InteractionResult.PASS;

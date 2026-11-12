@@ -164,7 +164,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
             Vec3 location = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
             PlacementRange targetedRange = getTargetedPlacementRange(state, location);
             if (targetedRange != null) {
-                if (targetedRange.whitelistTag() == null || held.is(targetedRange.whitelistTag())) {
+                if (!targetedRange.chair() && (targetedRange.whitelistTag() == null || held.is(targetedRange.whitelistTag()))) {
                     return InteractionResult.SUCCESS;
                 }
             } else if (getPlacementRanges(state).isEmpty()) {

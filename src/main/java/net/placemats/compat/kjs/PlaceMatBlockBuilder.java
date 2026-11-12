@@ -251,6 +251,61 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
         return addRestrictedPlacementRange(index, state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
     }
 
+    @Info("Adds a chair placement range bounding box with custom parameters.")
+    public PlaceMatBlockBuilder addChairPlacementRange(Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        builder.chair = true;
+        consumer.accept(builder);
+        this.ranges.add(builder);
+        return this;
+    }
+
+    @Info("Adds a chair placement range bounding box at a specific index with custom parameters.")
+    public PlaceMatBlockBuilder addChairPlacementRange(int index, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        builder.chair = true;
+        consumer.accept(builder);
+        while (this.ranges.size() <= index) {
+            this.ranges.add(null);
+        }
+        this.ranges.set(index, builder);
+        return this;
+    }
+
+    @Info("Adds a chair placement range bounding box with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addChairPlacementRange(Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        return addChairPlacementRange(getNextRangeIndex(), predicate, consumer);
+    }
+
+    @Info("Adds a chair placement range bounding box at a specific index with custom parameters when a blockstate condition matches.")
+    public PlaceMatBlockBuilder addChairPlacementRange(int index, Predicate<BlockState> predicate, Consumer<PlacementRangeBuilder> consumer) {
+        PlacementRangeBuilder builder = new PlacementRangeBuilder();
+        builder.chair = true;
+        consumer.accept(builder);
+        this.stateRanges.add(new StateRangeEntry(index, predicate, builder));
+        return this;
+    }
+
+    @Info("Adds a chair placement range bounding box when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addChairPlacementRange(Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addChairPlacementRange(state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a chair placement range bounding box at a specific index when a blockstate property matches.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addChairPlacementRange(int index, Property<T> property, T value, Consumer<PlacementRangeBuilder> consumer) {
+        return addChairPlacementRange(index, state -> state.hasProperty(property) && Objects.equals(state.getValue(property), value), consumer);
+    }
+
+    @Info("Adds a chair placement range bounding box when a blockstate property matches a value.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addChairPlacementRange(Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addChairPlacementRange(state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
+    }
+
+    @Info("Adds a chair placement range bounding box at a specific index when a blockstate property matches a value.")
+    public <T extends Comparable<T>> PlaceMatBlockBuilder addChairPlacementRange(int index, Property<T> property, Collection<T> values, Consumer<PlacementRangeBuilder> consumer) {
+        return addChairPlacementRange(index, state -> state.hasProperty(property) && values.contains(state.getValue(property)), consumer);
+    }
+
     @Info("Adds a custom range adjuster to modify placement ranges based on blockstate.")
     public PlaceMatBlockBuilder addRangeAdjuster(PlaceMatBlock.RangeAdjuster adjuster) {
         this.rangeAdjusters.add(adjuster);
@@ -596,6 +651,14 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
             return this;
         }
 
+        public boolean chair = false;
+
+        @Info("Marks this placement range as a chair zone.")
+        public PlacementRangeBuilder chair() {
+            this.chair = true;
+            return this;
+        }
+
         public PlacementRange build() {
             return new PlacementRange(
                     box,
@@ -619,7 +682,8 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
                     defaultYaw,
                     defaultPitch,
                     defaultRoll,
-                    defaultElevation);
+                    defaultElevation,
+                    chair);
         }
     }
 }

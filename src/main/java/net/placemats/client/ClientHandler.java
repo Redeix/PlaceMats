@@ -133,11 +133,18 @@ public class ClientHandler {
                     final PlacementRange[] targetedRange = { null };
                     if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         pmb.addPlacementRanges(pmbe.getBlockState(), range -> {
-                            PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
+                            if (range.chair()) {
+                                // Chair Range
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, range, 1.0f, 1.0f, 0.0f);
+                            } else {
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
+                            }
                         });
                         targetedRange[0] = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
                         if (targetedRange[0] != null) {
-                            if (targetedRange[0].restricted()) {
+                            if (targetedRange[0].chair()) {
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 1.0f, 1.0f, 0.0f);
+                            } else if (targetedRange[0].restricted()) {
                                 PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 1, 0, 1);
                             } else {
                                 PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 0, 0, 1);
@@ -145,7 +152,7 @@ public class ClientHandler {
                         }
                     }
 
-                    if (targetedRange[0] != null && pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                    if (targetedRange[0] != null && !targetedRange[0].chair() && pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRange[0]);
                         if (pmb.isDisableCustomModels() || targetedRange[0].disableCustomModels()) {
                             def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
@@ -205,10 +212,17 @@ public class ClientHandler {
                         PlaceMatRenderer.renderPreview(poseStack, buffer, placementPos, def.size(), def.scale(), pmbe.getCurrentRotation(), pmbe.getCurrentPitch(),
                                 pmbe.getCurrentRoll(), effectiveHeight, valid, held, mc.getItemRenderer(), targetedRange[0], (PlaceMatBlock) pmbe.getBlockState().getBlock());
                     }
-                } else if (held.isEmpty()) {
+                } else {
                     PlaceMatBlockEntity.PlacedItem targeted = pmbe.getTargetedItem(eyePos, lookVec, pos);
                     if (targeted != null) {
                         PlaceMatRenderer.renderItemOutline(poseStack, buffer, targeted, 1, 0.84f, 0);
+                    } else if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                        // Chair Zone Render
+                        Vec3 location = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
+                        PlacementRange targetedRange = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
+                        if (targetedRange != null && targetedRange.chair()) {
+                            PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange, 1.0f, 1.0f, 0.0f);
+                        }
                     }
                 }
 
@@ -323,6 +337,9 @@ public class ClientHandler {
 
             // Placement logic.
             if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
+                if (targetedRange != null && targetedRange.chair()) {
+                    return;
+                }
                 if (pmb != null) {
                     TagKey<Item> whitelist = targetedRange != null ? targetedRange.whitelistTag() : null;
                     if (whitelist != null && !held.is(whitelist)) {
@@ -431,6 +448,8 @@ public class ClientHandler {
             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
         } else if (targetedItem != null) {
             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+        } else if (targetedRange != null && targetedRange.chair()) {
+            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.sit").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
         } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
 
             int maxCapacity = pmb.getContainerSize();

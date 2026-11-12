@@ -7,6 +7,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.placemats.common.data.PlaceMatBlockEntities;
 import net.placemats.common.data.PlaceMatCreativeTab;
 import net.placemats.common.data.PlaceMatBlocks;
+import net.placemats.common.data.PlaceMatEntities;
 import net.placemats.common.data.PlaceMatItems;
 import net.placemats.common.data.PlaceMatContainers;
 import net.placemats.common.data.PlaceMatRecipeTypes;
@@ -25,6 +26,7 @@ public class CommonProxy {
         PlaceMatContainers.register(bus);
         PlaceMatContainers.init();
         PlaceMatBlocks.init();
+        PlaceMatEntities.init();
         PlaceMatBlockEntities.init();
         PlaceMatItems.init();
         PlaceMatRecipeTypes.init();

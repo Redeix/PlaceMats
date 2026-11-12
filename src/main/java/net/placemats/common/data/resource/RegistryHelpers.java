@@ -15,6 +15,7 @@ import net.minecraft.world.level.block.state.properties.StairsShape;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
@@ -256,6 +257,20 @@ public class RegistryHelpers {
      */
     public static PlacementRange basicPlacementRange(VoxelShape shape, float maxHeight) {
         return basicPlacementRange(shape, maxHeight, 16);
+    }
+
+    /**
+     * Constructs a chair placement range for a place mat block.
+     * @param shape The voxel shape of the chair placement range.
+     * @return A new PlacementRange instance configured as a chair zone.
+     */
+    public static PlacementRange chairPlacementRange(VoxelShape shape) {
+        return new PlacementRange(
+            shape,
+            (float) shape.max(Direction.Axis.Y),
+            true, true, true, true, false, true, null, true, true,
+            0,
+            null, true, true, true, true, 1.0f, 0, 0, 0, 0, true);
     }
 
     public static <T extends PlaceMatStairsBlock> NonNullConsumer<T> stairsShelvesShapes() {

@@ -31,6 +31,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
  * @param defaultPitch Default pitch rotation for placed items.
  * @param defaultRoll Default roll rotation for placed items.
  * @param defaultElevation Default elevation for placed items.
+ * @param chair Whether this placement range is a chair zone that allows players to sit.
  */
 @SuppressWarnings("unused")
 public record PlacementRange(
@@ -55,7 +56,61 @@ public record PlacementRange(
         float defaultYaw,
         float defaultPitch,
         float defaultRoll,
-        float defaultElevation) {
+        float defaultElevation,
+        boolean chair) {
+
+    public PlacementRange(
+            AABB box,
+            float maxHeight,
+            boolean rollDisabled,
+            boolean yawDisabled,
+            boolean pitchDisabled,
+            boolean elevationDisabled,
+            boolean stackingEnabled,
+            boolean collisionDisabled,
+            @Nullable TagKey<Item> whitelistTag,
+            boolean extractionDisabled,
+            boolean insertionDisabled,
+            int maxStackSize,
+            @Nullable ResourceLocation foodTrait,
+            boolean restricted,
+            boolean disableLayFlat,
+            boolean disableCustomModels,
+            boolean snapToCenter,
+            float scaleMultiplier,
+            float defaultYaw,
+            float defaultPitch,
+            float defaultRoll,
+            float defaultElevation) {
+        this(box, maxHeight, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, false);
+    }
+
+    public PlacementRange(
+            VoxelShape shape,
+            float maxHeight,
+            boolean rollDisabled,
+            boolean yawDisabled,
+            boolean pitchDisabled,
+            boolean elevationDisabled,
+            boolean stackingEnabled,
+            boolean collisionDisabled,
+            @Nullable TagKey<Item> whitelistTag,
+            boolean extractionDisabled,
+            boolean insertionDisabled,
+            int maxStackSize,
+            @Nullable ResourceLocation foodTrait,
+            boolean restricted,
+            boolean disableLayFlat,
+            boolean disableCustomModels,
+            boolean snapToCenter,
+            float scaleMultiplier,
+            float defaultYaw,
+            float defaultPitch,
+            float defaultRoll,
+            float defaultElevation,
+            boolean chair) {
+        this(shape.bounds(), maxHeight, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, chair);
+    }
 
     public PlacementRange(
             VoxelShape shape,
@@ -80,7 +135,33 @@ public record PlacementRange(
             float defaultPitch,
             float defaultRoll,
             float defaultElevation) {
-        this(shape.bounds(), maxHeight, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        this(shape.bounds(), maxHeight, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, false);
+    }
+
+    public PlacementRange(
+            VoxelShape shape,
+            boolean rollDisabled,
+            boolean yawDisabled,
+            boolean pitchDisabled,
+            boolean elevationDisabled,
+            boolean stackingEnabled,
+            boolean collisionDisabled,
+            @Nullable TagKey<Item> whitelistTag,
+            boolean extractionDisabled,
+            boolean insertionDisabled,
+            int maxStackSize,
+            @Nullable ResourceLocation foodTrait,
+            boolean restricted,
+            boolean disableLayFlat,
+            boolean disableCustomModels,
+            boolean snapToCenter,
+            float scaleMultiplier,
+            float defaultYaw,
+            float defaultPitch,
+            float defaultRoll,
+            float defaultElevation,
+            boolean chair) {
+        this(shape.bounds(), (float) shape.bounds().maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, chair);
     }
 
     public PlacementRange(
@@ -105,7 +186,33 @@ public record PlacementRange(
             float defaultPitch,
             float defaultRoll,
             float defaultElevation) {
-        this(shape.bounds(), (float) shape.bounds().maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        this(shape.bounds(), (float) shape.bounds().maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, false);
+    }
+
+    public PlacementRange(
+            AABB box,
+            boolean rollDisabled,
+            boolean yawDisabled,
+            boolean pitchDisabled,
+            boolean elevationDisabled,
+            boolean stackingEnabled,
+            boolean collisionDisabled,
+            @Nullable TagKey<Item> whitelistTag,
+            boolean extractionDisabled,
+            boolean insertionDisabled,
+            int maxStackSize,
+            @Nullable ResourceLocation foodTrait,
+            boolean restricted,
+            boolean disableLayFlat,
+            boolean disableCustomModels,
+            boolean snapToCenter,
+            float scaleMultiplier,
+            float defaultYaw,
+            float defaultPitch,
+            float defaultRoll,
+            float defaultElevation,
+            boolean chair) {
+        this(box, (float) box.maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, chair);
     }
 
     public PlacementRange(
@@ -130,11 +237,15 @@ public record PlacementRange(
             float defaultPitch,
             float defaultRoll,
             float defaultElevation) {
-        this(box, (float) box.maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation);
+        this(box, (float) box.maxY, rollDisabled, yawDisabled, pitchDisabled, elevationDisabled, stackingEnabled, collisionDisabled, whitelistTag, extractionDisabled, insertionDisabled, maxStackSize, foodTrait, restricted, disableLayFlat, disableCustomModels, snapToCenter, scaleMultiplier, defaultYaw, defaultPitch, defaultRoll, defaultElevation, false);
+    }
+
+    public boolean isChair() {
+        return chair;
     }
 
     public PlacementRange withBox(AABB newBox) {
-        return new PlacementRange(newBox, (float) newBox.maxY, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        return new PlacementRange(newBox, (float) newBox.maxY, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation, this.chair);
     }
 
     public PlacementRange withBox(VoxelShape newShape) {
@@ -142,11 +253,11 @@ public record PlacementRange(
     }
 
     public PlacementRange withMaxHeight(float newMaxHeight) {
-        return new PlacementRange(this.box, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        return new PlacementRange(this.box, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation, this.chair);
     }
 
     public PlacementRange withBoxAndHeight(AABB newBox, float newMaxHeight) {
-        return new PlacementRange(newBox, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation);
+        return new PlacementRange(newBox, newMaxHeight, this.rollDisabled, this.yawDisabled, this.pitchDisabled, this.elevationDisabled, this.stackingEnabled, this.collisionDisabled, this.whitelistTag, this.extractionDisabled, this.insertionDisabled, this.maxStackSize, this.foodTrait, this.restricted, this.disableLayFlat, this.disableCustomModels, this.snapToCenter, this.scaleMultiplier, this.defaultYaw, this.defaultPitch, this.defaultRoll, this.defaultElevation, this.chair);
     }
 
     public PlacementRange withBoxAndHeight(VoxelShape newShape, float newMaxHeight) {
