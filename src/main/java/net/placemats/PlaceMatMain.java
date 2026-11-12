@@ -1,6 +1,7 @@
 package net.placemats;
 
 import net.placemats.common.data.PlaceMatRegistries;
+import net.placemats.config.PlaceMatConfig;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +34,7 @@ public final class PlaceMatMain {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
         PlaceMatRegistries.REGISTRATE.register(bus);
+        PlaceMatConfig.init();
 
         EveryCompatCompat.INSTANCE.init();
 

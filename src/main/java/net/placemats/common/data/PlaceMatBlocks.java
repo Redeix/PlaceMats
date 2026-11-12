@@ -171,7 +171,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    public static final List<BlockEntry<PlaceMatCardinalBlock>> WOOD_STORAGE_RACKS = registerWoodVariants();
+    public static final List<BlockEntry<PlaceMatCardinalBlock>> WOOD_STORAGE_RACKS = registerWoodStorageRacks();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_ORNATE_SHELVES = registerWoodOrnateShelves();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> ORNATE_SHELVES = WOOD_ORNATE_SHELVES;
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_FLOATING_SHELVES = registerWoodFloatingShelves();
@@ -182,7 +182,7 @@ public final class PlaceMatBlocks {
     public static void init() {
     }
 
-    private static List<BlockEntry<PlaceMatCardinalBlock>> registerWoodVariants() {
+    private static List<BlockEntry<PlaceMatCardinalBlock>> registerWoodStorageRacks() {
         List<BlockEntry<PlaceMatCardinalBlock>> list = new ArrayList<>();
 
         WoodType.values().forEach(woodType -> {
