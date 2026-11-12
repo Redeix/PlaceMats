@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlacementRange;
+import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.Nullable;
 
 import net.placemats.compat.tfc.TFCCompat;
@@ -94,6 +97,23 @@ public class PlaceMatInteractions {
             PlacementRange targetedRange = pmb.getTargetedPlacementRange(placeMat.getBlockState(), relativeHit);
             if (targetedRange != null && targetedRange.chair()) {
                 if (!player.isShiftKeyDown()) {
+                    if (!level.isClientSide) {
+                        // Sit Mob
+                        List<Mob> leashedMobs = level.getEntitiesOfClass(
+                                Mob.class,
+                                player.getBoundingBox().inflate(7.0),
+                                mob -> mob.getLeashHolder() == player && !ConfigHelpers.isMobChairBlacklisted(mob.getType())
+                        );
+                        if (!leashedMobs.isEmpty()) {
+                            Mob leashedMob = leashedMobs.get(0);
+                            InteractionResult sitResult = sitEntity(level, pos, placeMat.getBlockState(), targetedRange, leashedMob);
+                            if (sitResult.consumesAction()) {
+                                leashedMob.dropLeash(true, !player.getAbilities().instabuild);
+                                return sitResult;
+                            }
+                        }
+                    }
+                    // Sit Player
                     return sitPlayer(level, pos, placeMat.getBlockState(), targetedRange, player);
                 }
             }
@@ -106,6 +126,24 @@ public class PlaceMatInteractions {
      * Attempts to sit the player in the targeted placement range.
      */
     public static InteractionResult sitPlayer(Level level, BlockPos pos, BlockState state, PlacementRange range, Player player) {
+        if (player.isSpectator()) {
+            return InteractionResult.PASS;
+        }
+        return sitEntity(level, pos, state, range, player);
+    }
+
+    /**
+     * Attempts to sit an entity in the targeted placement range.
+     */
+    public static InteractionResult sitEntity(Level level, BlockPos pos, BlockState state, PlacementRange range, Entity entity) {
+        if (!range.chair() || (!(entity instanceof Player) && entity.isPassenger()) || entity.isVehicle() || !entity.isAlive()) {
+            return InteractionResult.PASS;
+        }
+
+        if (ConfigHelpers.isMobChairBlacklisted(entity.getType())) {
+            return InteractionResult.PASS;
+        }
+
         double localCenterX = (range.box().minX + range.box().maxX) / 2.0;
         double localCenterY = range.box().minY;
         double localCenterZ = (range.box().minZ + range.box().maxZ) / 2.0;
@@ -137,7 +175,7 @@ public class PlaceMatInteractions {
                 seat.setYRot(state.getValue(PlaceMatCardinalBlock.FACING).toYRot());
             }
             level.addFreshEntity(seat);
-            player.startRiding(seat, true);
+            entity.startRiding(seat, true);
             return InteractionResult.SUCCESS;
         }
 

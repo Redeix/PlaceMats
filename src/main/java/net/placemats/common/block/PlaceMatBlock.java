@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
+import net.minecraft.world.entity.Entity;
+import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.core.BlockPos;
@@ -270,6 +272,52 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public VoxelShape getCollisionShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return getCollisionShape(state);
+    }
+
+    @Override
+    public void entityInside(BlockState state, Level level, BlockPos pos, Entity entity) {
+        super.entityInside(state, level, pos, entity);
+        if (!level.isClientSide && entity instanceof LivingEntity living && !(entity instanceof Player)) {
+            trySitMob(level, pos, state, living);
+        }
+    }
+
+    @Override
+    public void stepOn(Level level, BlockPos pos, BlockState state, Entity entity) {
+        super.stepOn(level, pos, state, entity);
+        if (!level.isClientSide && entity instanceof LivingEntity living && !(entity instanceof Player)) {
+            trySitMob(level, pos, state, living);
+        }
+    }
+
+    public void trySitMob(Level level, BlockPos pos, BlockState state, LivingEntity mob) {
+        if (mob.isPassenger() || mob.isVehicle() || !mob.isAlive()) {
+            return;
+        }
+        if (ConfigHelpers.isMobChairBlacklisted(mob.getType())) {
+            return;
+        }
+        for (PlacementRange range : getPlacementRanges(state)) {
+            if (range.chair()) {
+                AABB worldRangeBox = getWorldRangeBox(state, pos, range).inflate(0.05, 0.1, 0.05);
+                if (mob.getBoundingBox().intersects(worldRangeBox)) {
+                    InteractionResult result = PlaceMatInteractions.sitEntity(level, pos, state, range, mob);
+                    if (result.consumesAction()) {
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    public static AABB getWorldRangeBox(BlockState state, BlockPos pos, PlacementRange range) {
+        AABB localBox = range.box();
+        if (state.hasProperty(PlaceMatCardinalBlock.FACING)) {
+            if (!(state.getBlock() instanceof IPlacementRangeProvider provider) || provider.isRotateZones()) {
+                localBox = PlaceMatShapeHelper.rotateAABB(state.getValue(PlaceMatCardinalBlock.FACING), localBox);
+            }
+        }
+        return localBox.move(pos);
     }
 
     @Nullable

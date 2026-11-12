@@ -15,9 +15,9 @@ import org.apache.commons.lang3.tuple.Pair;
  * Copied from TFG-Core, additional credit to Zippity.
  */
 public class PlaceMatConfig {
-    //public static final ClientConfig CLIENT = register(ModConfig.Type.CLIENT, ClientConfig::new);
-    //public static final ClientConfig COMMON = register(ModConfig.Type.COMMON, CommonConfig::new);
-    //public static final ServerConfig SERVER = register(ModConfig.Type.SERVER, ServerConfig::new);
+    public static final ClientConfig CLIENT = register(ModConfig.Type.CLIENT, ClientConfig::new);
+    public static final CommonConfig COMMON = register(ModConfig.Type.COMMON, CommonConfig::new);
+    public static final ServerConfig SERVER = register(ModConfig.Type.SERVER, ServerConfig::new);
 
     public static void init() {
     }

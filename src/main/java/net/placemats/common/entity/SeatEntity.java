@@ -12,6 +12,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.data.PlaceMatEntities;
+import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.NotNull;
 
 @SuppressWarnings("unused")
@@ -53,6 +54,11 @@ public class SeatEntity extends Entity {
     }
 
     @Override
+    protected boolean canAddPassenger(@NotNull Entity passenger) {
+        return this.getPassengers().isEmpty() && !ConfigHelpers.isMobChairBlacklisted(passenger.getType());
+    }
+
+    @Override
     public boolean canCollideWith(@NotNull Entity entity) {
         return false;
     }
@@ -65,6 +71,11 @@ public class SeatEntity extends Entity {
     @Override
     public boolean isInvisible() {
         return true;
+    }
+
+    @Override
+    public boolean isAlive() {
+        return false;
     }
 
     @Override
