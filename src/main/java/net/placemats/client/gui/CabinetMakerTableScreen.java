@@ -196,9 +196,24 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     }
 
     public static int getRainbowColor() {
-        float hue = (float) ((Util.getMillis() % 4000L) / 4000.0);
+        float hue = (float) ((Util.getMillis() % 8000L) / 8000.0);
         int rgb = Mth.hsvToRgb(hue, 1.0f, 1.0f);
         return 0xFF000000 | (rgb & 0xFFFFFF);
+    }
+
+    public static int getMultiColorAnimation(int[] colors, long speed) {
+        float progress = (Util.getMillis() % speed) / (float) speed;
+        float scaled = progress * colors.length;
+        int index = (int) scaled;
+        float delta = scaled - index;
+        int c1 = colors[index % colors.length];
+        int c2 = colors[(index + 1) % colors.length];
+
+        int r = (int) Mth.lerp(delta, (c1 >> 16) & 0xFF, (c2 >> 16) & 0xFF);
+        int g = (int) Mth.lerp(delta, (c1 >> 8) & 0xFF, (c2 >> 8) & 0xFF);
+        int b = (int) Mth.lerp(delta, c1 & 0xFF, c2 & 0xFF);
+
+        return 0xFF000000 | (r << 16) | (g << 8) | b;
     }
 
     public static List<BlockState> getCycleableBlockStates(Block block) {

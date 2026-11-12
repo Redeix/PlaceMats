@@ -39,7 +39,10 @@ public final class DynamicTextureRenderer {
             int packedOverlay,
             ItemRenderer itemRenderer) {
 
-        if (be instanceof IDynamicTexturedBlockEntity dtbe && dtbe.hasRainbowColor()) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe && (
+            dtbe.hasRainbowColor()
+                || dtbe.hasMultiColor()
+        )) {
             BlockState state = be.getBlockState();
             BakedModel blockModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
             if (blockModel instanceof DynamicTexturedBakedModel dtbm) {

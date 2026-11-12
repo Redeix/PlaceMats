@@ -65,9 +65,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
-        if (customColors != null && customColors.values().stream().anyMatch(IDynamicTexturedBlock::isRainbowColor)) {
+        if (customColors != null && customColors.values().stream()
+            .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c))) {
             return Collections.emptyList();
         }
+
         if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty())) {
             return quads;
         }
@@ -124,6 +126,14 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             int tint = tintColor != null ? tintColor : -1;
             if (IDynamicTexturedBlock.isRainbowColor(tint)) {
                 tint = CabinetMakerTableScreen.getRainbowColor();
+            }
+            IDynamicTexturedBlock.KeywordColor keywordColor = IDynamicTexturedBlock.KeywordColor.fromColor(tint);
+            long speed = 0;
+            if (keywordColor != null && keywordColor.getSpeed() != null) {
+                speed = keywordColor.getSpeed();
+            }
+            if (keywordColor != null && keywordColor.getMultiColors() != null && speed > 0) {
+                tint = CabinetMakerTableScreen.getMultiColorAnimation(keywordColor.getMultiColors(), speed);
             }
 
             if (targetTex != null) {

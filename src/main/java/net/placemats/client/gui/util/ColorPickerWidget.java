@@ -126,17 +126,6 @@ public class ColorPickerWidget extends AbstractWidget {
     public void setColor(int argb, boolean updateEditBox) {
         this.currentColor = argb;
 
-        IDynamicTexturedBlock.KeywordColor matchedColor = IDynamicTexturedBlock.KeywordColor.fromColor(argb);
-
-        if (matchedColor != null) {
-            if (updateEditBox && !this.updatingFromEditBox) {
-                this.updatingFromEditBox = true;
-                this.hexEditBox.setValue(matchedColor.getKeywords().get(0));
-                this.updatingFromEditBox = false;
-            }
-            return;
-        }
-
         float a = ((argb >> 24) & 0xFF) / 255.0f;
         float r = ((argb >> 16) & 0xFF) / 255.0f;
         float g = ((argb >> 8) & 0xFF) / 255.0f;
@@ -169,7 +158,12 @@ public class ColorPickerWidget extends AbstractWidget {
 
         if (updateEditBox && !this.updatingFromEditBox) {
             this.updatingFromEditBox = true;
-            this.hexEditBox.setValue(String.format("%08X", argb));
+            IDynamicTexturedBlock.KeywordColor matchedColor = IDynamicTexturedBlock.KeywordColor.fromColor(argb);
+            if (matchedColor != null) {
+                this.hexEditBox.setValue(matchedColor.getKeywords().get(0));
+            } else {
+                this.hexEditBox.setValue(String.format("%08X", argb));
+            }
             this.updatingFromEditBox = false;
         }
     }
@@ -411,6 +405,14 @@ public class ColorPickerWidget extends AbstractWidget {
         int previewColor = this.currentColor;
         if (IDynamicTexturedBlock.isRainbowColor(previewColor)) {
             previewColor = CabinetMakerTableScreen.getRainbowColor();
+        }
+        IDynamicTexturedBlock.KeywordColor keywordColor = IDynamicTexturedBlock.KeywordColor.fromColor(previewColor);
+        long speed = 0;
+        if (keywordColor != null && keywordColor.getSpeed() != null) {
+            speed = keywordColor.getSpeed();
+        }
+        if (keywordColor != null && keywordColor.getMultiColors() != null && speed > 0) {
+            previewColor = CabinetMakerTableScreen.getMultiColorAnimation(keywordColor.getMultiColors(), speed);
         }
         graphics.fill(previewX, previewY, previewX + COLOR_PREVIEW_SIZE, previewY + COLOR_PREVIEW_SIZE, previewColor);
         RenderSystem.disableBlend();

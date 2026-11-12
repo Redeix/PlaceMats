@@ -37,11 +37,32 @@ public interface IDynamicTexturedBlock {
     @Getter
     enum KeywordColor {
         // Easter Eggs
-        RAINBOW(0x00726564, List.of(
-            "rainbow", "redeix", "pyritie", "tomtom", "gustavo",
-            "ashlen", "xikaro", "zippity", "yan", "airrice",
-            "dmitry", "gamestar", "nebby", "sakura", "tfg"
-        )),
+        RAINBOW(0x00726564, List.of("rainbow", "pride")),
+        TRANS(0x0030ddff, List.of("trans"), new int[] {
+            0x5BCEFA, // Blue
+            0xF5A9B8, // Pink
+            0xFFFFFF, // White
+            0xF5A9B8  // Pink
+        }, 8000L),
+        ICE_CREAM(0x00fff2cf, List.of("icecream", "polly"), new int[] {
+            0xfff2cf, // vanilla
+            0x2b1b14, // chocolate
+            0xf25a97 // strawberry
+        }, 8000L),
+        TFG(0x00d12ea6, List.of(
+            "redeix", "pyritie", "tomtom", "gustavo", "ashlen",
+            "xikaro", "zippity", "yan", "airrice", "dmitry",
+            "gamestar", "nebby", "sakura", "tfg"), new int[] {
+            0x360431,
+            0x86036D,
+            0xCD0479,
+            0xFD6C7F,
+            0xCD0479,
+            0x86036D
+        }, 8000L),
+        // Misc
+        CHORUS(0xFF956595, List.of("chorus", "shulk")),
+        BRICK(0xFF995542, List.of("brick")),
         // Base Colors
         WHITE(0xFFF9FFFE, List.of("white")),
         ORANGE(0xFFF9801D, List.of("orange")),
@@ -67,24 +88,64 @@ public interface IDynamicTexturedBlock {
         ACACIA(0xFFAB5C31, List.of("acacia")),
         DARK_OAK(0xFF5C3828, List.of("darkoak", "dark oak", "dark_oak", "doak")),
         BAMBOO(0xFFB4A948, List.of("bamboo")),
-        MANGROVE(0xFF6D292D, List.of("mangrove")),
+        MANGROVE(0xFF753833, List.of("mangrove")),
         CHERRY(0xFFDA9B95, List.of("cherry")),
         CRIMSON(0xFF7E3752, List.of("crimson")),
-        WARPED(0xFF308B8A, List.of("warped"));
+        WARPED(0xFF308B8A, List.of("warped")),
+        ASH(0xFFa35949, List.of("ash")),
+        ASPEN(0xFF464631, List.of("aspen")),
+        CHESTNUT(0xFF6c3c2b, List.of("chestnut")),
+        FIR(0xFFd4ae83, List.of("fir", "dfir")),
+        HICKORY(0xFF4e3118, List.of("hickory")),
+        KAPOK(0xFFa47c96, List.of("kapok")),
+        MAPLE(0xFF9b6b38, List.of("maple")),
+        PALM(0xFFac6932, List.of("palm")),
+        PINE(0xFFc6b393, List.of("pine")),
+        ROSEWOOD(0xFF8d2227, List.of("rosewood", "rose")),
+        SEQUOIA(0xFF7e4937, List.of("sequoia")),
+        SYCAMORE(0xFFbc8839, List.of("sycamore")),
+        CEDAR(0xFFb6aba4, List.of("cedar", "wcedar")),
+        WILLOW(0xFF343e09, List.of("willow")),
+        // Metals
+        COPPER(0xFFbf6a4b, List.of("copper")),
+        EXPOSED_COPPER(0xFFa67561, List.of("ecopper")),
+        WEATHERED_COPPER(0xFF65a775, List.of("wcopper")),
+        OXIDIZED_COPPER(0xFF4ea98e, List.of("ocopper")),
+        IRON(0xFFdddddd, List.of("iron")),
+        GOLD(0xFFfbe94e, List.of("gold")),
+        // Gems
+        EMERALD(0xFF17da61, List.of("emerald")),
+        DIAMOND(0xFF64f2e0, List.of("diamond")),
+        AMETHYST(0xFFa476ee, List.of("amethyst"));
 
+        @Getter
         private final int colorCode;
+        @Getter
         private final List<String> keywords;
+        @Getter
+        private final int @Nullable [] multiColors;
+        @Getter
+        private final @Nullable Long speed;
 
         KeywordColor(int colorCode, List<String> keywords) {
+            this(colorCode, keywords, null, null);
+        }
+
+        KeywordColor(int colorCode, List<String> keywords, int @Nullable [] multiColors, @Nullable Long speed) {
             this.colorCode = colorCode;
             this.keywords = keywords;
+            this.multiColors = multiColors;
+            this.speed = speed;
         }
 
-        public boolean matches(Integer color) {
-            return color == this.colorCode;
+        public boolean matches(@Nullable Integer color) {
+            return color != null && color == this.colorCode;
         }
 
-        public static @Nullable KeywordColor fromColor(Integer color) {
+        public static @Nullable KeywordColor fromColor(@Nullable Integer color) {
+            if (color == null) {
+                return null;
+            }
             return Arrays.stream(values())
                 .filter(c -> c.colorCode == color)
                 .findFirst()
@@ -97,6 +158,14 @@ public interface IDynamicTexturedBlock {
      */
     static boolean isRainbowColor(Integer color) {
         return KeywordColor.RAINBOW.matches(color);
+    }
+
+    /**
+     * Checks if the color is for any multicolor-cycling Easter egg.
+     */
+    static boolean isMultiColor(@Nullable Integer color) {
+        KeywordColor keywordColor = KeywordColor.fromColor(color);
+        return keywordColor != null && keywordColor.multiColors != null;
     }
 
     /**

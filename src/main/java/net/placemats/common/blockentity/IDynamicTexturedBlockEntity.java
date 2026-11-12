@@ -67,6 +67,18 @@ public interface IDynamicTexturedBlockEntity {
     }
 
     /**
+     * @return True if any active color key has multi-color animations.
+     */
+    default boolean hasMultiColor() {
+        for (Integer color : getDynamicColors().values()) {
+            if (IDynamicTexturedBlock.isMultiColor(color)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Builds ModelData containing dynamic textures and colors properties.
      */
     default ModelData getDynamicModelData(ModelData baseData) {
