@@ -154,8 +154,7 @@ tasks.withType(Jar).configureEach {
             "Specification-Version"   : "1",
             "Implementation-Title"    : "${mod_name}",
             "Implementation-Version"  : "${mod_version}",
-            "Implementation-Vendor"   : "${mod_authors}",
-            "MixinConfigs"            : "${mod_id}.mixins.json"
+            "Implementation-Vendor"   : "${mod_authors}"
     ])
 }
 
