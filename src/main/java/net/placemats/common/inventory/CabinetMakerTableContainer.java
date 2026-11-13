@@ -179,6 +179,13 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         IDynamicTexturedBlock.setDynamicTextures(outputTemplate, chosenTextures);
         IDynamicTexturedBlock.setDynamicColors(outputTemplate, chosenColors);
 
+        ItemStack mat0 = this.container.getItem(MATERIAL_SLOT_START);
+        if (!mat0.isEmpty() && mat0.getItem() instanceof BlockItem biMat) {
+            IDynamicTexturedBlock.setDynamicMaterial(outputTemplate, biMat.getBlock().defaultBlockState());
+        } else if (mat0.isEmpty() && chosenTextures.isEmpty()) {
+            IDynamicTexturedBlock.setDynamicMaterial(outputTemplate, null);
+        }
+
         ItemStack currentOutput = this.container.getItem(OUTPUT_SLOT);
         if (currentOutput.isEmpty()) {
             int craftedAmount = Math.min(toCraft, outputTemplate.getMaxStackSize());

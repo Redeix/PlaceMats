@@ -3,12 +3,16 @@ package net.placemats.common.blockentity;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.ModelData;
 import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.common.block.IDynamicTexturedBlock;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for block entities that store and provide dynamic texture and color overrides.
@@ -39,6 +43,28 @@ public interface IDynamicTexturedBlockEntity {
      * @param colors Map of texture slot keys to ARGB integer color overrides.
      */
     void setDynamicColors(Map<String, Integer> colors);
+
+    /**
+     * @return Material BlockState override.
+     */
+    @Nullable
+    default BlockState getDynamicMaterial() {
+        return null;
+    }
+
+    /**
+     * Sets material BlockState override and marks the block entity synced.
+     *
+     * @param material Material BlockState override.
+     */
+    default void setDynamicMaterial(@Nullable BlockState material) {}
+
+    /**
+     * @return True if a material BlockState override is present.
+     */
+    default boolean hasDynamicMaterial() {
+        return getDynamicMaterial() != null;
+    }
 
     /**
      * @return True if any texture slot override is present.
@@ -79,16 +105,19 @@ public interface IDynamicTexturedBlockEntity {
     }
 
     /**
-     * Builds ModelData containing dynamic textures and colors properties.
+     * Builds ModelData containing dynamic textures, colors, and material properties.
      */
     default ModelData getDynamicModelData(ModelData baseData) {
-        if (hasDynamicTextures() || hasDynamicColors()) {
+        if (hasDynamicTextures() || hasDynamicColors() || hasDynamicMaterial()) {
             ModelData.Builder builder = ModelData.builder();
             if (hasDynamicTextures()) {
                 builder.with(DynamicTexturedBakedModel.DYNAMIC_TEXTURES_PROPERTY, new HashMap<>(getDynamicTextures()));
             }
             if (hasDynamicColors()) {
                 builder.with(DynamicTexturedBakedModel.DYNAMIC_COLORS_PROPERTY, new HashMap<>(getDynamicColors()));
+            }
+            if (hasDynamicMaterial()) {
+                builder.with(DynamicTexturedBakedModel.MATERIAL_STATE_PROPERTY, getDynamicMaterial());
             }
             return builder.build();
         }
@@ -106,11 +135,11 @@ public interface IDynamicTexturedBlockEntity {
      * Serializes dynamic textures and colors to NBT.
      */
     default void saveDynamicData(CompoundTag tag) {
-        saveDynamicData(tag, getDynamicTextures(), getDynamicColors());
+        saveDynamicData(tag, getDynamicTextures(), getDynamicColors(), getDynamicMaterial());
     }
 
     /**
-     * Deserializes dynamic textures and colors from NBT.
+     * Deserializes dynamic textures, colors, and material from NBT.
      */
     default void loadDynamicData(CompoundTag tag) {
         Map<String, ResourceLocation> textures = new HashMap<>();
@@ -118,12 +147,20 @@ public interface IDynamicTexturedBlockEntity {
         loadDynamicData(tag, textures, colors);
         setDynamicTextures(textures);
         setDynamicColors(colors);
+        setDynamicMaterial(loadDynamicMaterial(tag));
     }
 
     /**
      * Serializes texture and color maps into the compound tag.
      */
     static void saveDynamicData(CompoundTag tag, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+        saveDynamicData(tag, textures, colors, null);
+    }
+
+    /**
+     * Serializes texture, color maps, and material into the compound tag.
+     */
+    static void saveDynamicData(CompoundTag tag, Map<String, ResourceLocation> textures, Map<String, Integer> colors, @Nullable BlockState material) {
         if (textures != null && !textures.isEmpty()) {
             CompoundTag dtTag = new CompoundTag();
             textures.forEach((k, v) -> {
@@ -141,6 +178,9 @@ public interface IDynamicTexturedBlockEntity {
                 }
             });
             tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, dcTag);
+        }
+        if (material != null) {
+            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(material));
         }
     }
 
@@ -172,6 +212,17 @@ public interface IDynamicTexturedBlockEntity {
     }
 
     /**
+     * Deserializes material BlockState from the compound tag.
+     */
+    @Nullable
+    static BlockState loadDynamicMaterial(CompoundTag tag) {
+        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND)) {
+            return NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL));
+        }
+        return null;
+    }
+
+    /**
      * Deserializes texture and color maps using consumer setters.
      */
     static void loadDynamicData(CompoundTag tag, Consumer<Map<String, ResourceLocation>> texturesSetter, Consumer<Map<String, Integer>> colorsSetter) {
@@ -190,15 +241,26 @@ public interface IDynamicTexturedBlockEntity {
      * Creates a ModelData instance from dynamic textures and colors maps.
      */
     static ModelData createDynamicModelData(Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+        return createDynamicModelData(textures, colors, null);
+    }
+
+    /**
+     * Creates a ModelData instance from dynamic textures, colors maps, and material BlockState.
+     */
+    static ModelData createDynamicModelData(Map<String, ResourceLocation> textures, Map<String, Integer> colors, @Nullable BlockState material) {
         boolean hasTex = textures != null && !textures.isEmpty();
         boolean hasCol = colors != null && !colors.isEmpty();
-        if (hasTex || hasCol) {
+        boolean hasMat = material != null;
+        if (hasTex || hasCol || hasMat) {
             ModelData.Builder builder = ModelData.builder();
             if (hasTex) {
                 builder.with(DynamicTexturedBakedModel.DYNAMIC_TEXTURES_PROPERTY, new HashMap<>(textures));
             }
             if (hasCol) {
                 builder.with(DynamicTexturedBakedModel.DYNAMIC_COLORS_PROPERTY, new HashMap<>(colors));
+            }
+            if (hasMat) {
+                builder.with(DynamicTexturedBakedModel.MATERIAL_STATE_PROPERTY, material);
             }
             return builder.build();
         }

@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.client.model.data.ModelData;
+import net.placemats.common.block.IDynamicTexturedBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,9 +26,29 @@ public abstract class DynamicTexturedBlockEntity extends BlockEntity implements 
 
     protected final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     protected final Map<String, Integer> dynamicColors = new HashMap<>();
+    @Nullable
+    protected BlockState dynamicMaterial;
 
     public DynamicTexturedBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
+    }
+
+    @Override
+    @Nullable
+    public BlockState getDynamicMaterial() {
+        if (this.dynamicMaterial != null) {
+            return this.dynamicMaterial;
+        }
+        return IDynamicTexturedBlock.resolveBlockStateFromTextures(this.dynamicTextures);
+    }
+
+    @Override
+    public void setDynamicMaterial(@Nullable BlockState material) {
+        this.dynamicMaterial = material;
+        setChanged();
+        if (this.level != null && this.level.isClientSide) {
+            requestModelDataUpdate();
+        }
     }
 
     @Override

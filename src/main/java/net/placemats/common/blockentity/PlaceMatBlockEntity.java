@@ -46,6 +46,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import lombok.Setter;
 
+import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.block.LockType;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -69,6 +70,8 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     private final List<PlacedItem> placedItems = new ArrayList<>();
     private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     private final Map<String, Integer> dynamicColors = new HashMap<>();
+    @Nullable
+    private BlockState dynamicMaterial;
     @Setter
     private float currentRotation = 0;
     @Setter
@@ -129,6 +132,24 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         if (colors != null) {
             this.dynamicColors.putAll(colors);
         }
+        setChanged();
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
+    @Override
+    @Nullable
+    public BlockState getDynamicMaterial() {
+        if (this.dynamicMaterial != null) {
+            return this.dynamicMaterial;
+        }
+        return IDynamicTexturedBlock.resolveBlockStateFromTextures(this.dynamicTextures);
+    }
+
+    @Override
+    public void setDynamicMaterial(@Nullable BlockState material) {
+        this.dynamicMaterial = material;
         setChanged();
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();

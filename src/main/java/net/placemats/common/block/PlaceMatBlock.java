@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -29,6 +30,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -111,6 +113,28 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public float getPreviewYOffset() {
         return this.previewYOffset;
+    }
+
+    @Override
+    public BlockState getAppearance(BlockState state, BlockAndTintGetter level, BlockPos pos, Direction side, @Nullable BlockState queryState, @Nullable BlockPos queryPos) {
+        if (level.getBlockEntity(pos) instanceof IDynamicTexturedBlockEntity dtbe) {
+            BlockState mat = dtbe.getDynamicMaterial();
+            if (mat != null) {
+                return mat;
+            }
+            if (queryState != null && dtbe.hasDynamicTextures()) {
+                ResourceLocation queryBlockId = BuiltInRegistries.BLOCK.getKey(queryState.getBlock());
+                for (ResourceLocation tex : dtbe.getDynamicTextures().values()) {
+                    if (tex != null && tex.getNamespace().equals(queryBlockId.getNamespace())) {
+                        String path = tex.getPath();
+                        if (path.endsWith(queryBlockId.getPath()) || queryBlockId.getPath().endsWith(path.substring(path.lastIndexOf('/') + 1))) {
+                            return queryState;
+                        }
+                    }
+                }
+            }
+        }
+        return super.getAppearance(state, level, pos, side, queryState, queryPos);
     }
 
     @Override

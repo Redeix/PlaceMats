@@ -1,13 +1,12 @@
 package net.placemats.common.block;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import lombok.Getter;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -16,8 +15,10 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.blockentity.IDynamicTexturedBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +30,7 @@ public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
     String NBT_DYNAMIC_COLORS = "DynamicColors";
+    String NBT_DYNAMIC_MATERIAL = "DynamicMaterial";
 
     /**
      * Enum for colors by keywords for Easter eggs and faster coloring.
@@ -287,6 +289,66 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
+     * Gets a BlockState from dynamic textures by matching texture path names against registered blocks.
+     */
+    @Nullable
+    static BlockState resolveBlockStateFromTextures(@Nullable Map<String, ResourceLocation> textures) {
+        if (textures == null || textures.isEmpty()) {
+            return null;
+        }
+        ResourceLocation tex0 = textures.get("0");
+        if (tex0 == null) {
+            tex0 = textures.values().iterator().next();
+        }
+        String namespace = tex0.getNamespace();
+        String blockName = tex0.getPath();
+        int lastSlash = blockName.lastIndexOf('/');
+        if (lastSlash != -1) {
+            blockName = blockName.substring(lastSlash + 1);
+        }
+        ResourceLocation blockId = ResourceLocation.fromNamespaceAndPath(namespace, blockName);
+        if (ForgeRegistries.BLOCKS.containsKey(blockId)) {
+            return Objects.requireNonNull(ForgeRegistries.BLOCKS.getValue(blockId)).defaultBlockState();
+        }
+        return null;
+    }
+
+    /**
+     * Extracts dynamic material override from an ItemStack's NBT.
+     */
+    @Nullable
+    static BlockState getDynamicMaterial(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return null;
+        }
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND)) {
+            return NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(NBT_DYNAMIC_MATERIAL));
+        }
+        return resolveBlockStateFromTextures(getDynamicTextures(stack));
+    }
+
+    /**
+     * Saves dynamic material override to an ItemStack's NBT.
+     */
+    static void setDynamicMaterial(ItemStack stack, @Nullable BlockState material) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        if (material == null) {
+            if (stack.hasTag()) {
+                assert stack.getTag() != null;
+                stack.getTag().remove(NBT_DYNAMIC_MATERIAL);
+                if (stack.getTag().isEmpty()) {
+                    stack.setTag(null);
+                }
+            }
+            return;
+        }
+        stack.addTagElement(NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(material));
+    }
+
+    /**
      * Checks if an ItemStack has dynamic texture overrides.
      */
     static boolean hasDynamicTextures(ItemStack stack) {
@@ -309,7 +371,18 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
-     * Applies dynamic textures and colors from an ItemStack to a target BlockEntity.
+     * Checks if an ItemStack has dynamic material override.
+     */
+    static boolean hasDynamicMaterial(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND);
+    }
+
+    /**
+     * Applies dynamic textures, colors, and material from an ItemStack to a target BlockEntity.
      */
     static void applyDynamicDataToBlockEntity(@Nullable BlockEntity be, ItemStack stack) {
         if (be instanceof IDynamicTexturedBlockEntity dtbe) {
@@ -319,11 +392,14 @@ public interface IDynamicTexturedBlock {
             if (hasDynamicColors(stack)) {
                 dtbe.setDynamicColors(getDynamicColors(stack));
             }
+            if (hasDynamicMaterial(stack)) {
+                dtbe.setDynamicMaterial(getDynamicMaterial(stack));
+            }
         }
     }
 
     /**
-     * Copies dynamic textures and colors from a BlockEntity into an ItemStack.
+     * Copies dynamic textures, colors, and material from a BlockEntity into an ItemStack.
      */
     static ItemStack applyDynamicDataToItemStack(ItemStack stack, @Nullable BlockEntity be) {
         if (be instanceof IDynamicTexturedBlockEntity dtbe) {
@@ -333,15 +409,18 @@ public interface IDynamicTexturedBlock {
             if (dtbe.hasDynamicColors()) {
                 setDynamicColors(stack, dtbe.getDynamicColors());
             }
+            if (dtbe.hasDynamicMaterial()) {
+                setDynamicMaterial(stack, dtbe.getDynamicMaterial());
+            }
         }
         return stack;
     }
 
     /**
-     * Applies dynamic textures and colors from a BlockEntity to the dropped item.
+     * Applies dynamic textures, colors, and material from a BlockEntity to the dropped item.
      */
     static void applyDynamicDataToDrops(List<ItemStack> drops, @Nullable BlockEntity be, Block block) {
-        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors())) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors() || dtbe.hasDynamicMaterial())) {
             for (ItemStack drop : drops) {
                 if (drop.getItem() == block.asItem()) {
                     applyDynamicDataToItemStack(drop, be);

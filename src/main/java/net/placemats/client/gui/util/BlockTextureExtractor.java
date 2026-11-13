@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -18,6 +19,7 @@ import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.client.model.data.ModelData;
 import net.placemats.client.renderer.CyclicLayerBakedModel;
 import net.placemats.common.data.PlaceMatTags;
 
@@ -75,15 +77,63 @@ public class BlockTextureExtractor {
         // Directional quads.
         for (Direction side : Direction.values()) {
             try {
-                allQuads.addAll(model.getQuads(state, side, RANDOM));
+                allQuads.addAll(model.getQuads(state, side, RANDOM, ModelData.EMPTY, null));
             } catch (Exception ignored) {
+                try {
+                    allQuads.addAll(model.getQuads(state, side, RANDOM));
+                } catch (Exception ignored2) {
+                }
             }
         }
 
         // Unculled quads.
         try {
-            allQuads.addAll(model.getQuads(state, null, RANDOM));
+            allQuads.addAll(model.getQuads(state, null, RANDOM, ModelData.EMPTY, null));
         } catch (Exception ignored) {
+            try {
+                allQuads.addAll(model.getQuads(state, null, RANDOM));
+            } catch (Exception ignored2) {
+            }
+        }
+
+        // Render type-specific quads (Create casings, multi-layer blocks).
+        if (state != null) {
+            try {
+                for (net.minecraft.client.renderer.RenderType rt : model.getRenderTypes(state, RANDOM, ModelData.EMPTY)) {
+                    for (Direction side : Direction.values()) {
+                        try {
+                            allQuads.addAll(model.getQuads(state, side, RANDOM, ModelData.EMPTY, rt));
+                        } catch (Exception ignored) {
+                        }
+                    }
+                    try {
+                        allQuads.addAll(model.getQuads(state, null, RANDOM, ModelData.EMPTY, rt));
+                    } catch (Exception ignored) {
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+
+        if (allQuads.isEmpty()) {
+            RenderType[] commonTypes = new RenderType[] {
+                RenderType.solid(),
+                RenderType.cutout(),
+                RenderType.cutoutMipped(),
+                RenderType.translucent()
+            };
+            for (RenderType rt : commonTypes) {
+                for (Direction side : Direction.values()) {
+                    try {
+                        allQuads.addAll(model.getQuads(state, side, RANDOM, ModelData.EMPTY, rt));
+                    } catch (Exception ignored) {
+                    }
+                }
+                try {
+                    allQuads.addAll(model.getQuads(state, null, RANDOM, ModelData.EMPTY, rt));
+                } catch (Exception ignored) {
+                }
+            }
         }
 
         Map<Integer, ResourceLocation> layeredTextures = new TreeMap<>();
@@ -91,7 +141,7 @@ public class BlockTextureExtractor {
 
         for (BakedQuad quad : allQuads) {
             TextureAtlasSprite sprite = quad.getSprite();
-            if (!isValid16x16Sprite(sprite)) {
+            if (!isValidSprite(sprite)) {
                 continue;
             }
 
@@ -106,7 +156,11 @@ public class BlockTextureExtractor {
         }
 
         if (!layeredTextures.isEmpty()) {
-            out.addAll(layeredTextures.values());
+            for (ResourceLocation tex : layeredTextures.values()) {
+                if (!out.contains(tex)) {
+                    out.add(tex);
+                }
+            }
             return;
         }
 
@@ -118,18 +172,28 @@ public class BlockTextureExtractor {
 
         // Particles.
         try {
-            TextureAtlasSprite particle = model.getParticleIcon();
-            if (isValid16x16Sprite(particle)) {
+            TextureAtlasSprite particle = model.getParticleIcon(ModelData.EMPTY);
+            if (isValidSprite(particle)) {
                 ResourceLocation particleName = particle.contents().name();
                 if (!out.contains(particleName)) {
                     out.add(particleName);
                 }
             }
         } catch (Exception ignored) {
+            try {
+                TextureAtlasSprite particle = model.getParticleIcon();
+                if (isValidSprite(particle)) {
+                    ResourceLocation particleName = particle.contents().name();
+                    if (!out.contains(particleName)) {
+                        out.add(particleName);
+                    }
+                }
+            } catch (Exception ignored2) {
+            }
         }
     }
 
-    private static boolean isValid16x16Sprite(TextureAtlasSprite sprite) {
+    private static boolean isValidSprite(TextureAtlasSprite sprite) {
         if (sprite == null) {
             return false;
         }
@@ -142,7 +206,6 @@ public class BlockTextureExtractor {
         int width = sprite.contents().width();
         int height = sprite.contents().height();
 
-        // Standard 16x16 textures.
-        return width == 16 && height == 16;
+        return width > 0 && height > 0;
     }
 }
