@@ -23,7 +23,7 @@ public class PlaceMatAttachedStairsBlock extends PlaceMatStairsBlock {
                 .setValue(FACING, Direction.NORTH)
                 .setValue(SHAPE, StairsShape.STRAIGHT)
                 .setValue(ATTACHED, false)
-                .setValue(LOCKED, false));
+                .setValue(LOCKED, LockType.NONE));
     }
 
     @Override

@@ -44,6 +44,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
+import net.placemats.common.block.LockType;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -54,8 +55,7 @@ import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.PlaceMatPacket;
 
-import static net.placemats.common.block.PlaceMatBlock.*;
-
+@SuppressWarnings("DuplicateExpressions")
 public class ClientHandler {
     private static boolean wasLookingAtPlacemat = false;
 
@@ -95,11 +95,11 @@ public class ClientHandler {
             List<BlockPos> targetBlocks = getBlocksInRadius(mc.level, playerPos, radius);
             List<BlockPos> lockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
                 BlockState state = mc.level.getBlockState(pos);
-                return state.hasProperty(LOCKED) && state.getValue(LOCKED);
+                return state.hasProperty(PlaceMatBlock.LOCKED) && state.getValue(PlaceMatBlock.LOCKED) == LockType.STRICT;
             }).toList());
             List<BlockPos> unlockedBlocks = new ArrayList<>(targetBlocks.stream().filter(pos -> {
                 BlockState state = mc.level.getBlockState(pos);
-                return !state.hasProperty(LOCKED) || !state.getValue(LOCKED);
+                return !state.hasProperty(PlaceMatBlock.LOCKED) || state.getValue(PlaceMatBlock.LOCKED) != LockType.STRICT;
             }).toList());
 
             // Render overlays on each block.
@@ -114,7 +114,7 @@ public class ClientHandler {
         if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
             BlockPos pos = blockHit.getBlockPos();
             BlockEntity be = mc.level.getBlockEntity(pos);
-            if (be instanceof PlaceMatBlockEntity pmbe && !pmbe.getBlockState().getValue(LOCKED).equals(true)) {
+            if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsOutlines(pmbe.getBlockState())) {
                 poseStack.pushPose();
                 poseStack.translate(pos.getX() - mc.gameRenderer.getMainCamera().getPosition().x,
                         pos.getY() - mc.gameRenderer.getMainCamera().getPosition().y,
@@ -316,7 +316,7 @@ public class ClientHandler {
         ItemStack held = event.getItemStack();
 
         BlockEntity be = event.getLevel().getBlockEntity(event.getPos());
-        if (be instanceof PlaceMatBlockEntity pmbe) {
+        if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
             Vec3 location = event.getHitVec().getLocation().subtract(event.getPos().getX(), event.getPos().getY(), event.getPos().getZ());
@@ -430,7 +430,7 @@ public class ClientHandler {
         BlockState state = blockEntity.getBlockState();
         ItemStack held = player.getMainHandItem();
 
-        boolean isLocked = state.hasProperty(PlaceMatBlock.LOCKED) && state.getValue(PlaceMatBlock.LOCKED);
+        boolean isLocked = PlaceMatBlock.preventsInteraction(state);
         boolean holdingKey = held.is(PlaceMatTags.Items.KEY);
 
         if (isLocked && !holdingKey) return;
@@ -506,7 +506,7 @@ public class ClientHandler {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                     assert mc.level != null;
-                    if (mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity) {
+                    if (mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
                         mc.options.keyJump.setDown(false);
                     }
                 }
@@ -531,7 +531,7 @@ public class ClientHandler {
                 if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                     assert mc.level != null;
                     BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
-                    if (be instanceof PlaceMatBlockEntity pmbe) {
+                    if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
                         if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                             Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
                             PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
@@ -562,7 +562,7 @@ public class ClientHandler {
         if (player != null && Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
             HitResult hit = mc.hitResult;
             if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
-                if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity) {
+                if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                         Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
                         PlacementRange targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
@@ -584,7 +584,7 @@ public class ClientHandler {
             if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                 assert mc.level != null;
                 BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
-                if (be instanceof PlaceMatBlockEntity foodPlacer) {
+                if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
                     PlaceMatBlock pmb;
                     PlacementRange targetedRange = null;
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock block) {
@@ -595,27 +595,27 @@ public class ClientHandler {
                     if (Screen.hasAltDown() && Screen.hasShiftDown()) {
                         if (targetedRange != null && targetedRange.rollDisabled())
                             return;
-                        float roll = foodPlacer.getCurrentRoll();
+                        float roll = pmbe.getCurrentRoll();
                         roll = (roll + (float) event.getScrollDelta() * 15f) % 360f;
                         if (roll < 0)
                             roll += 360f;
-                        foodPlacer.setCurrentRoll(roll);
+                        pmbe.setCurrentRoll(roll);
                     } else if (Screen.hasControlDown()) {
                         if (targetedRange != null && targetedRange.pitchDisabled())
                             return;
-                        float pitch = foodPlacer.getCurrentPitch();
+                        float pitch = pmbe.getCurrentPitch();
                         pitch = (pitch + (float) event.getScrollDelta() * 15f) % 360f;
                         if (pitch < 0)
                             pitch += 360f;
-                        foodPlacer.setCurrentPitch(pitch);
+                        pmbe.setCurrentPitch(pitch);
                     } else {
                         if (targetedRange != null && targetedRange.yawDisabled())
                             return;
-                        float rotation = foodPlacer.getCurrentRotation();
+                        float rotation = pmbe.getCurrentRotation();
                         rotation = (rotation + (float) event.getScrollDelta() * 15f) % 360f;
                         if (rotation < 0)
                             rotation += 360f;
-                        foodPlacer.setCurrentRotation(rotation);
+                        pmbe.setCurrentRotation(rotation);
                     }
                     event.setCanceled(true);
                 }

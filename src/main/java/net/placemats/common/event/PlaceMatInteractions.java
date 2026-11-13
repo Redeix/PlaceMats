@@ -45,8 +45,6 @@ import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.recipe.PlaceMatRecipe;
 import net.placemats.compat.kjs.KJSCompat;
 
-import static net.placemats.common.block.PlaceMatBlock.*;
-
 /**
  * Handles placemat interactions for recipes and events.
  * TODO: Rewrite this class. A lot of it is redundant.
@@ -59,7 +57,7 @@ public class PlaceMatInteractions {
 
     public static InteractionResult handleInteraction(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, BlockHitResult hit) {
         Level level = placeMat.getLevel();
-        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
+        if (PlaceMatBlock.preventsInteraction(placeMat.getBlockState()))
             return InteractionResult.PASS;
         if (level == null)
             return InteractionResult.PASS;
@@ -151,7 +149,7 @@ public class PlaceMatInteractions {
             || (!(entity instanceof Player) && entity.isPassenger())
             || entity.isVehicle()
             || !entity.isAlive()
-            || state.getValue(LOCKED)
+            || PlaceMatBlock.preventsInteraction(state)
             || ConfigHelpers.isMobChairBlacklisted(entity.getType())
         ) {
             return InteractionResult.PASS;
@@ -387,7 +385,7 @@ public class PlaceMatInteractions {
 
     public static boolean handleLeftClick(PlaceMatBlockEntity placeMat, Player player, @Nullable BlockHitResult hit) {
         Level level = placeMat.getLevel();
-        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
+        if (PlaceMatBlock.preventsInteraction(placeMat.getBlockState()))
             return false;
         if (level == null)
             return false;
@@ -455,7 +453,7 @@ public class PlaceMatInteractions {
         Level level = placeMat.getLevel();
         if (level == null)
             return false;
-        if (placeMat.getBlockState().getValue(LOCKED).equals(true))
+        if (PlaceMatBlock.preventsInteraction(placeMat.getBlockState()))
             return false;
 
         ItemStack inputStack = player.getItemInHand(hand);
@@ -621,7 +619,7 @@ public class PlaceMatInteractions {
         return InteractionResult.sidedSuccess(be.getLevel().isClientSide);
     }
 
-    public static InteractionResult handleEatDrink(PlaceMatBlockEntity foodPlacer, Player player, PlacedItem targeted, Level level) {
+    public static InteractionResult handleEatDrink(PlaceMatBlockEntity pmbe, Player player, PlacedItem targeted, Level level) {
         ItemStack stack = targeted.stack;
         int countBefore = stack.getCount();
 
@@ -629,7 +627,7 @@ public class PlaceMatInteractions {
         boolean isEdible = stack.getItem().isEdible() || TFCCompat.INSTANCE.hasFoodCapability(stack);
         boolean isDrinkable = anim == UseAnim.DRINK;
 
-        if (isEdible || isDrinkable && !foodPlacer.getBlockState().getValue(LOCKED).equals(true)) {
+        if ((isEdible || isDrinkable) && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
             FoodProperties foodProperties = stack.getFoodProperties(player);
             boolean canAlwaysEat = foodProperties != null && foodProperties.canAlwaysEat();
             if (isDrinkable || player.canEat(canAlwaysEat)) {
@@ -658,11 +656,11 @@ public class PlaceMatInteractions {
                     if (!result.isEmpty()) {
                         if (result != stack) {
                             // Replaced item.
-                            foodPlacer.removeTraitsFromStack(result, targeted);
+                            pmbe.removeTraitsFromStack(result, targeted);
                             if (stack.isEmpty()) {
                                 // Put it back on the mat.
-                                PlacementRange range = foodPlacer.getRangeForItem(targeted);
-                                if (range != null && foodPlacer.isInsertable(range, result)) {
+                                PlacementRange range = pmbe.getRangeForItem(targeted);
+                                if (range != null && pmbe.isInsertable(range, result)) {
                                     targeted.stack = result;
                                 } else {
                                     ItemHandlerHelper.giveItemToPlayer(player, result);
@@ -673,7 +671,7 @@ public class PlaceMatInteractions {
                             }
                         } else {
                             // Same item, already on mat.
-                            foodPlacer.removeTraitsFromStack(result, targeted);
+                            pmbe.removeTraitsFromStack(result, targeted);
                         }
                     }
 
@@ -682,11 +680,11 @@ public class PlaceMatInteractions {
                     }
 
                     if (targeted.stack.isEmpty()) {
-                        foodPlacer.removeItem(targeted);
+                        pmbe.removeItem(targeted);
                     } else {
-                        foodPlacer.updateTargetHeights();
-                        foodPlacer.setChanged();
-                        level.sendBlockUpdated(foodPlacer.getBlockPos(), foodPlacer.getBlockState(), foodPlacer.getBlockState(), 3);
+                        pmbe.updateTargetHeights();
+                        pmbe.setChanged();
+                        level.sendBlockUpdated(pmbe.getBlockPos(), pmbe.getBlockState(), pmbe.getBlockState(), 3);
                     }
                 }
                 return InteractionResult.sidedSuccess(level.isClientSide);

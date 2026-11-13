@@ -18,7 +18,7 @@ public class PlaceMatCardinalBlock extends PlaceMatBlock {
 
     public PlaceMatCardinalBlock(Properties properties) {
         super(properties);
-        registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.NORTH).setValue(LOCKED, false));
+        registerDefaultState(getStateDefinition().any().setValue(FACING, Direction.NORTH).setValue(LOCKED, LockType.NONE));
     }
 
     @Override

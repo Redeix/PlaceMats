@@ -55,7 +55,7 @@ public enum PlaceMatJadeProvider implements IBlockComponentProvider {
             }
             boolean containsItems = !pm.getPlacedItems().isEmpty();
 
-            if (pm.getBlockState().getValue(PlaceMatBlock.LOCKED).equals(true)) {
+            if (PlaceMatBlock.isLocked(pm.getBlockState())) {
 
                 tooltip.add(Component.translatable("place_mats.tooltip.placemat.locked"));
 

@@ -26,7 +26,7 @@ public class PlaceMatStairsBlock extends PlaceMatCardinalBlock {
         registerDefaultState(getStateDefinition().any()
                 .setValue(FACING, Direction.NORTH)
                 .setValue(SHAPE, StairsShape.STRAIGHT)
-                .setValue(LOCKED, false));
+                .setValue(LOCKED, LockType.NONE));
     }
 
     @Override

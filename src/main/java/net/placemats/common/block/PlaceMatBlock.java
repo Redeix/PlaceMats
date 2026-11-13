@@ -11,6 +11,8 @@ import java.util.function.Consumer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,8 +38,6 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
-import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -61,7 +61,7 @@ import net.placemats.common.event.PlaceMatInteractions;
 @SuppressWarnings({"deprecation", "UnusedReturnValue", "unused"})
 public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRangeProvider, IPlaceMatShapeProvider, IDynamicTexturedBlock {
 
-    public static final BooleanProperty LOCKED = BlockStateProperties.LOCKED;
+    public static final EnumProperty<LockType> LOCKED = EnumProperty.create("locked", LockType.class);
 
     @Getter
     private final PlaceMatPlacementDefinition placementDefinition = new PlaceMatPlacementDefinition();
@@ -78,7 +78,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
-        registerDefaultState(getStateDefinition().any().setValue(LOCKED, false));
+        registerDefaultState(getStateDefinition().any().setValue(LOCKED, LockType.NONE));
     }
 
     public PlaceMatBlock dynamicBlock(int keyCount, Map<String, ResourceLocation> defaults, Map<Integer, Component> labels) {
@@ -150,9 +150,8 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
         BlockEntity be = level.getBlockEntity(pos);
-        boolean currentState = state.getValue(LOCKED);
 
-        if (be instanceof PlaceMatBlockEntity pmbe && !pmbe.getBlockState().getValue(LOCKED).equals(true)) {
+        if (be instanceof PlaceMatBlockEntity pmbe && !preventsInteraction(pmbe.getBlockState())) {
             InteractionResult result = PlaceMatInteractions.handleInteraction(pmbe, player, hand, hit);
             if (result != InteractionResult.PASS) {
                 return result;
@@ -165,7 +164,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
 
         ItemStack held = player.getItemInHand(hand);
 
-        if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) && !state.getValue(LOCKED).equals(true)) {
+        if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) && !preventsInteraction(state)) {
             Vec3 location = hit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
             PlacementRange targetedRange = getTargetedPlacementRange(state, location);
             if (targetedRange != null) {
@@ -177,24 +176,8 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
             }
         }
 
-        if (held.is(PlaceMatTags.Items.KEY) && level instanceof ServerLevel serverLevel) {
-            boolean newState = !currentState;
-            state = state.setValue(LOCKED, newState);
-
-            if (be instanceof PlaceMatBlockEntity pmbe) {
-                if (newState) {
-                    pmbe.setLockedBy(player.getUUID());
-                } else if (player.getUUID() == pmbe.getLockedBy()) {
-                    pmbe.setLockedBy(null);
-                }
-                pmbe.setChanged();
-            }
-
-            level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.WOODEN_DOOR_OPEN, SoundSource.AMBIENT, 2f, 0.5f);
-            serverLevel.sendParticles(ParticleTypes.FIREWORK, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6, 0.2, 0.2, 0.2, 0.1);
-            level.setBlockAndUpdate(pos, state);
-
-            return InteractionResult.SUCCESS;
+        if (held.is(PlaceMatTags.Items.KEY)) {
+            return handleKeyInteraction(level, pos, state, player, be);
         }
 
         return InteractionResult.PASS;
@@ -244,7 +227,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
             super.onRemove(state, level, pos, newState, isMoving);
         } else if (!state.equals(newState)) {
             boolean onlyLockChanged = state.hasProperty(LOCKED) && newState.hasProperty(LOCKED)
-                    && state.setValue(LOCKED, false).equals(newState.setValue(LOCKED, false));
+                    && state.setValue(LOCKED, LockType.NONE).equals(newState.setValue(LOCKED, LockType.NONE));
             if (!onlyLockChanged) {
                 BlockEntity be = level.getBlockEntity(pos);
                 if (be instanceof PlaceMatBlockEntity pmbe) {
@@ -260,11 +243,117 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity pmbe) {
             Vec3 eyePos = player.getEyePosition(1.0f);
             Vec3 lookVec = player.getViewVector(1.0f);
-            if (pmbe.getTargetedItem(eyePos, lookVec, pos) != null || pmbe.getBlockState().getValue(LOCKED).equals(true)) {
+            if (pmbe.getTargetedItem(eyePos, lookVec, pos) != null || preventsDestruction(pmbe.getBlockState())) {
                 return 0.0f;
             }
+        } else if (preventsDestruction(state)) {
+            return 0.0f;
         }
         return super.getDestroyProgress(state, player, level, pos);
+    }
+
+    @Override
+    public float getExplosionResistance(BlockState state, BlockGetter level, BlockPos pos, Explosion explosion) {
+        if (preventsExplosion(state)) {
+            return 3600000.0F;
+        }
+        return super.getExplosionResistance(state, level, pos, explosion);
+    }
+
+    @Override
+    public boolean isFlammable(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        if (preventsBurning(state)) {
+            return false;
+        }
+        return super.isFlammable(state, level, pos, direction);
+    }
+
+    @Override
+    public int getFlammability(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        if (preventsBurning(state)) {
+            return 0;
+        }
+        return super.getFlammability(state, level, pos, direction);
+    }
+
+    @Override
+    public int getFireSpreadSpeed(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        if (preventsBurning(state)) {
+            return 0;
+        }
+        return super.getFireSpreadSpeed(state, level, pos, direction);
+    }
+
+    /* ======================== Locking API ========================== */
+
+    public static LockType getLockType(@Nullable BlockState state) {
+        if (state != null && state.hasProperty(LOCKED)) {
+            return state.getValue(LOCKED);
+        }
+        return LockType.NONE;
+    }
+
+    public static boolean isLocked(@Nullable BlockState state) {
+        return getLockType(state).isLocked();
+    }
+
+    public static boolean preventsInteraction(@Nullable BlockState state) {
+        return getLockType(state).preventsInteraction;
+    }
+
+    public static boolean preventsDestruction(@Nullable BlockState state) {
+        return getLockType(state).preventsDestruction;
+    }
+
+    public static boolean preventsExplosion(@Nullable BlockState state) {
+        return getLockType(state).preventsExplosion;
+    }
+
+    public static boolean preventsBurning(@Nullable BlockState state) {
+        return getLockType(state).preventsBurning;
+    }
+
+    public static boolean preventsOutlines(@Nullable BlockState state) {
+        return getLockType(state).preventsOutlines;
+    }
+
+    public static boolean setLockType(Level level, BlockPos pos, BlockState state, LockType lockType, @Nullable UUID owner) {
+        if (!state.hasProperty(LOCKED)) {
+            return false;
+        }
+        BlockEntity be = level.getBlockEntity(pos);
+        if (be instanceof PlaceMatBlockEntity pmbe) {
+            pmbe.setLockedBy(owner);
+            pmbe.setChanged();
+        }
+        return level.setBlockAndUpdate(pos, state.setValue(LOCKED, lockType));
+    }
+
+    public static InteractionResult handleKeyInteraction(Level level, BlockPos pos, BlockState state, Player player, @Nullable BlockEntity be) {
+        if (!state.hasProperty(LOCKED)) {
+            return InteractionResult.PASS;
+        }
+
+        LockType currentLock = state.getValue(LOCKED);
+        boolean isStrict = currentLock == LockType.STRICT;
+        LockType newLock = isStrict ? LockType.NONE : LockType.STRICT;
+
+        if (be instanceof PlaceMatBlockEntity pmbe) {
+            if (!isStrict) {
+                pmbe.setLockedBy(player.getUUID());
+            } else if (player.getUUID().equals(pmbe.getLockedBy()) || pmbe.getLockedBy() == null) {
+                pmbe.setLockedBy(null);
+            }
+            pmbe.setChanged();
+        }
+
+        if (level instanceof ServerLevel serverLevel) {
+            level.playSound(null, pos.getX(), pos.getY(), pos.getZ(), SoundEvents.WOODEN_DOOR_OPEN, SoundSource.AMBIENT, 2f, 0.5f);
+            serverLevel.sendParticles(ParticleTypes.FIREWORK, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, 6, 0.2, 0.2, 0.2, 0.1);
+            level.setBlockAndUpdate(pos, state.setValue(LOCKED, newLock));
+        }
+
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override

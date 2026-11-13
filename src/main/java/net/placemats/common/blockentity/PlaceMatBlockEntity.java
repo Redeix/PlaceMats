@@ -46,6 +46,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import lombok.Getter;
 import lombok.Setter;
 
+import net.placemats.common.block.LockType;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -53,8 +54,6 @@ import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
 import net.placemats.compat.firmalife.FirmaLifeCompat;
 import net.placemats.compat.tfc.TFCCompat;
-
-import static net.placemats.common.block.PlaceMatBlock.*;
 
 /**
  * Place mat base block entity class.
@@ -85,6 +84,26 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     @Getter
     @Nullable
     private UUID lockedBy = null;
+
+    public LockType getLockType() {
+        return PlaceMatBlock.getLockType(getBlockState());
+    }
+
+    public boolean isLocked() {
+        return PlaceMatBlock.isLocked(getBlockState());
+    }
+
+    public boolean preventsInteraction() {
+        return PlaceMatBlock.preventsInteraction(getBlockState());
+    }
+
+    public boolean preventsDestruction() {
+        return PlaceMatBlock.preventsDestruction(getBlockState());
+    }
+
+    public boolean preventsOutlines() {
+        return PlaceMatBlock.preventsOutlines(getBlockState());
+    }
 
     public Map<String, ResourceLocation> getDynamicTextures() {
         return Collections.unmodifiableMap(dynamicTextures);
@@ -153,7 +172,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             if (level == null || stack.isEmpty())
                 return stack;
-            if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
+            if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || PlaceMatBlock.preventsInteraction(getBlockState()))
                 return stack;
 
             if (slot >= 0 && slot < placedItems.size()) {
@@ -246,7 +265,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
             if (level == null || amount <= 0)
                 return ItemStack.EMPTY;
 
-            if (getBlockState().getValue(LOCKED).equals(true))
+            if (PlaceMatBlock.preventsInteraction(getBlockState()))
                 return ItemStack.EMPTY;
 
             if (slot >= 0 && slot < placedItems.size()) {
@@ -451,7 +470,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
      * Determines whether an item can be placed at a specific position and height on the PlaceMatBlock.
      */
     public boolean canPlace(ItemStack stack, Vec2 pos, float height, @Nullable PlacementRange targetRange) {
-        if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) || getBlockState().getValue(LOCKED).equals(true)) {
+        if (stack.isEmpty() || stack.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) || PlaceMatBlock.preventsInteraction(getBlockState())) {
             return false;
         }
 
@@ -674,7 +693,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     public boolean isExtractable(PlacedItem item) {
         if (level == null)
             return false;
-        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
+        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || PlaceMatBlock.preventsInteraction(getBlockState()))
             return false;
         if (pmb.isExtractionDisabled())
             return false;
@@ -696,7 +715,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     public boolean isInsertable(PlacementRange range, ItemStack stack) {
         if (level == null)
             return false;
-        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || getBlockState().getValue(LOCKED).equals(true))
+        if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || PlaceMatBlock.preventsInteraction(getBlockState()))
             return false;
         if (pmb.isInsertionDisabled())
             return false;
@@ -983,7 +1002,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         super.setBlockState(newState);
         if (!oldState.isAir() && level != null && !level.isClientSide && !placedItems.isEmpty()) {
             boolean onlyLockChanged = oldState.hasProperty(PlaceMatBlock.LOCKED) && newState.hasProperty(PlaceMatBlock.LOCKED)
-                    && oldState.setValue(PlaceMatBlock.LOCKED, false).equals(newState.setValue(PlaceMatBlock.LOCKED, false));
+                    && oldState.setValue(PlaceMatBlock.LOCKED, LockType.NONE).equals(newState.setValue(PlaceMatBlock.LOCKED, LockType.NONE));
             if (!onlyLockChanged && !oldState.equals(newState)) {
                 dropItems();
             }
