@@ -1,5 +1,13 @@
 package net.placemats.common.block;
 
+import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
+import net.placemats.common.event.PlaceMatInteractions;
 import org.jetbrains.annotations.Nullable;
 
 import net.minecraft.resources.ResourceLocation;
@@ -262,5 +270,37 @@ public record PlacementRange(
 
     public PlacementRange withBoxAndHeight(VoxelShape newShape, float newMaxHeight) {
         return withBoxAndHeight(newShape.bounds(), newMaxHeight);
+    }
+
+    public @Nullable Entity getEntity(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getEntityInRange(level, pos, state, this);
+    }
+
+    public @Nullable UUID getEntityUUID(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getEntityUUIDInRange(level, pos, state, this);
+    }
+
+    public @Nullable EntityType<?> getEntityType(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getEntityTypeInRange(level, pos, state, this);
+    }
+
+    public boolean hasEntity(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.hasEntityInRange(level, pos, state, this);
+    }
+
+    public @Nullable Mob getMob(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getMobInRange(level, pos, state, this);
+    }
+
+    public @Nullable UUID getMobUUID(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getMobUUIDInRange(level, pos, state, this);
+    }
+
+    public @Nullable EntityType<?> getMobType(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.getMobTypeInRange(level, pos, state, this);
+    }
+
+    public boolean hasMob(Level level, BlockPos pos, BlockState state) {
+        return PlaceMatInteractions.hasMobInRange(level, pos, state, this);
     }
 }

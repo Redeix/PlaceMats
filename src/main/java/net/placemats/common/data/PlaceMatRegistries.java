@@ -62,6 +62,7 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.press_for_info", "§6Press [%s§6]§r for more information.");
             prov.add("place_mats.tooltip.texture_bundles", "This item is intended as a source of textures for the §oCabinetmaker's Table§r. Simply §6drag and drop§r it into a material slot and tint away!");
             prov.add("place_mats.tooltip.placemat.sit", "§3LMB§r to sit.");
+            prov.add("place_mats.tooltip.placemat.kick", "§3SHIFT+LMB§r to kick-out.");
         });
     }
 }

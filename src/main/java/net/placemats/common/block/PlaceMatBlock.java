@@ -5,9 +5,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.Nullable;
 
@@ -297,6 +300,14 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         if (ConfigHelpers.isMobChairBlacklisted(mob.getType())) {
             return;
         }
+        if (mob.getPersistentData().contains(PlaceMatInteractions.CHAIR_COOLDOWN_TAG)) {
+            long cooldownUntil = mob.getPersistentData().getLong(PlaceMatInteractions.CHAIR_COOLDOWN_TAG);
+            if (level.getGameTime() < cooldownUntil) {
+                return;
+            } else {
+                mob.getPersistentData().remove(PlaceMatInteractions.CHAIR_COOLDOWN_TAG);
+            }
+        }
         for (PlacementRange range : getPlacementRanges(state)) {
             if (range.chair()) {
                 AABB worldRangeBox = getWorldRangeBox(state, pos, range).inflate(0.05, 0.1, 0.05);
@@ -308,6 +319,38 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
                 }
             }
         }
+    }
+
+    public static @Nullable Entity getEntityInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getEntityInRange(level, pos, state, range);
+    }
+
+    public static @Nullable UUID getEntityUUIDInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getEntityUUIDInRange(level, pos, state, range);
+    }
+
+    public static @Nullable EntityType<?> getEntityTypeInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getEntityTypeInRange(level, pos, state, range);
+    }
+
+    public static boolean hasEntityInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.hasEntityInRange(level, pos, state, range);
+    }
+
+    public static @Nullable Mob getMobInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getMobInRange(level, pos, state, range);
+    }
+
+    public static @Nullable java.util.UUID getMobUUIDInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getMobUUIDInRange(level, pos, state, range);
+    }
+
+    public static @Nullable EntityType<?> getMobTypeInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.getMobTypeInRange(level, pos, state, range);
+    }
+
+    public static boolean hasMobInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return PlaceMatInteractions.hasMobInRange(level, pos, state, range);
     }
 
     public static AABB getWorldRangeBox(BlockState state, BlockPos pos, PlacementRange range) {

@@ -3,8 +3,11 @@ package net.placemats.common.event;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
+import net.minecraft.core.Direction;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.common.block.PlaceMatBlock;
@@ -48,7 +51,11 @@ import static net.placemats.common.block.PlaceMatBlock.*;
  * Handles placemat interactions for recipes and events.
  * TODO: Rewrite this class. A lot of it is redundant.
  */
+@SuppressWarnings("unused")
 public class PlaceMatInteractions {
+
+    public static final String CHAIR_COOLDOWN_TAG = "PlaceMatChairCooldown";
+    public static final int KICK_COOLDOWN_TICKS = 60;
 
     public static InteractionResult handleInteraction(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, BlockHitResult hit) {
         Level level = placeMat.getLevel();
@@ -106,19 +113,23 @@ public class PlaceMatInteractions {
                         );
                         if (!leashedMobs.isEmpty()) {
                             Mob leashedMob = leashedMobs.get(0);
+                            leashedMob.getPersistentData().remove(CHAIR_COOLDOWN_TAG);
                             InteractionResult sitResult = sitEntity(level, pos, placeMat.getBlockState(), targetedRange, leashedMob);
                             if (sitResult.consumesAction()) {
-                                leashedMob.dropLeash(true, !player.getAbilities().instabuild);
+                                //leashedMob.dropLeash(true, !player.getAbilities().instabuild);
                                 return sitResult;
                             }
                         }
                     }
                     // Sit Player
                     return sitPlayer(level, pos, placeMat.getBlockState(), targetedRange, player);
+                } else {
+                    if (!level.isClientSide) {
+                        return kickEntity(level, pos, targetedRange);
+                    }
                 }
             }
         }
-
         return InteractionResult.PASS;
     }
 
@@ -136,12 +147,20 @@ public class PlaceMatInteractions {
      * Attempts to sit an entity in the targeted placement range.
      */
     public static InteractionResult sitEntity(Level level, BlockPos pos, BlockState state, PlacementRange range, Entity entity) {
-        if (!range.chair() || (!(entity instanceof Player) && entity.isPassenger()) || entity.isVehicle() || !entity.isAlive()) {
+        if (!range.chair()
+            || (!(entity instanceof Player) && entity.isPassenger())
+            || entity.isVehicle()
+            || !entity.isAlive()
+            || state.getValue(LOCKED)
+            || ConfigHelpers.isMobChairBlacklisted(entity.getType())
+        ) {
             return InteractionResult.PASS;
         }
 
-        if (ConfigHelpers.isMobChairBlacklisted(entity.getType())) {
-            return InteractionResult.PASS;
+        if (entity.getPersistentData().contains(CHAIR_COOLDOWN_TAG)) {
+            if (level.getGameTime() < entity.getPersistentData().getLong(CHAIR_COOLDOWN_TAG)) {
+                return InteractionResult.PASS;
+            }
         }
 
         double localCenterX = (range.box().minX + range.box().maxX) / 2.0;
@@ -181,6 +200,190 @@ public class PlaceMatInteractions {
 
         return InteractionResult.PASS;
     }
+
+
+    /**
+     * Attempts to kick an entity from a seat anywhere on the block.
+     */
+    public static InteractionResult kickEntity(Level level, BlockPos pos) {
+        return kickEntity(level, pos, null);
+    }
+
+    /**
+     * Attempts to kick an entity from a seat in the specified placement range.
+     */
+    public static InteractionResult kickEntity(Level level, BlockPos pos, @Nullable PlacementRange range) {
+        BlockState state = level.getBlockState(pos);
+        List<SeatEntity> seats;
+
+        if (range != null) {
+            double localCenterX = (range.box().minX + range.box().maxX) / 2.0;
+            double localCenterY = range.box().minY;
+            double localCenterZ = (range.box().minZ + range.box().maxZ) / 2.0;
+
+            Vec3 worldHit = PlaceMatBlock.getWorldHitVec(state, new Vec3(localCenterX, localCenterY, localCenterZ));
+            double x = pos.getX() + worldHit.x;
+            double y = pos.getY() + worldHit.y;
+            double z = pos.getZ() + worldHit.z;
+
+            seats = level.getEntitiesOfClass(SeatEntity.class, new AABB(x - 0.2, y - 0.2, z - 0.2, x + 0.2, y + 0.2, z + 0.2), seat -> !seat.getPassengers().isEmpty());
+        } else {
+            AABB seatArea = new AABB(pos).inflate(0, 1, 0);
+            seats = level.getEntitiesOfClass(SeatEntity.class, seatArea, seat -> !seat.getPassengers().isEmpty());
+        }
+
+        for (SeatEntity seat : seats) {
+            Entity passenger = seat.getFirstPassenger();
+            if (passenger != null && !(passenger instanceof Player)) {
+                passenger.stopRiding();
+                seat.discard();
+
+                // Prevent immediate re-entry with cooldown.
+                passenger.getPersistentData().putLong(CHAIR_COOLDOWN_TAG, level.getGameTime() + KICK_COOLDOWN_TICKS);
+
+                // Displace entity away from the block.
+                Direction facing = state.hasProperty(PlaceMatCardinalBlock.FACING) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.SOUTH;
+                Vec3 seatPos = seat.position();
+                Vec3 dismountPos = null;
+
+                Direction[] tryDirs = new Direction[]{
+                        facing,
+                        facing.getClockWise(),
+                        facing.getCounterClockWise(),
+                        facing.getOpposite()
+                };
+
+                for (Direction dir : tryDirs) {
+                    BlockPos checkPos = pos.relative(dir);
+                    if (level.getBlockState(checkPos).getCollisionShape(level, checkPos).isEmpty() &&
+                            !level.getBlockState(checkPos.below()).getCollisionShape(level, checkPos.below()).isEmpty()) {
+                        dismountPos = new Vec3(checkPos.getX() + 0.5, checkPos.getY(), checkPos.getZ() + 0.5);
+                        facing = dir;
+                        break;
+                    }
+                }
+
+                if (dismountPos == null) {
+                    for (Direction dir : tryDirs) {
+                        BlockPos checkPos = pos.relative(dir);
+                        if (level.getBlockState(checkPos).getCollisionShape(level, checkPos).isEmpty()) {
+                            dismountPos = new Vec3(checkPos.getX() + 0.5, checkPos.getY(), checkPos.getZ() + 0.5);
+                            facing = dir;
+                            break;
+                        }
+                    }
+                }
+
+                if (dismountPos != null) {
+                    passenger.teleportTo(dismountPos.x, dismountPos.y, dismountPos.z);
+                } else {
+                    passenger.setPos(seatPos.x + facing.getStepX() * 0.8, seatPos.y, seatPos.z + facing.getStepZ() * 0.8);
+                }
+
+                passenger.setDeltaMovement(facing.getStepX() * 0.25, 0.15, facing.getStepZ() * 0.25);
+                passenger.hurtMarked = true;
+
+                return InteractionResult.SUCCESS;
+            }
+        }
+        return InteractionResult.PASS;
+    }
+
+    /**
+     * Gets the entity currently in the placement range.
+     */
+    public static @Nullable Entity getEntityInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        if (level == null || range == null) {
+            return null;
+        }
+
+        if (range.chair()) {
+            double localCenterX = (range.box().minX + range.box().maxX) / 2.0;
+            double localCenterY = range.box().minY;
+            double localCenterZ = (range.box().minZ + range.box().maxZ) / 2.0;
+
+            Vec3 worldHit = PlaceMatBlock.getWorldHitVec(state, new Vec3(localCenterX, localCenterY, localCenterZ));
+            double x = pos.getX() + worldHit.x;
+            double y = pos.getY() + worldHit.y;
+            double z = pos.getZ() + worldHit.z;
+
+            List<SeatEntity> seats = level.getEntitiesOfClass(
+                SeatEntity.class,
+                new AABB(x - 0.2, y - 0.2, z - 0.2, x + 0.2, y + 0.2, z + 0.2)
+            );
+            for (SeatEntity seat : seats) {
+                Entity passenger = seat.getFirstPassenger();
+                if (passenger != null && passenger.isAlive()) {
+                    return passenger;
+                }
+            }
+
+            return null;
+        }
+
+        AABB worldRangeBox = PlaceMatBlock.getWorldRangeBox(state, pos, range);
+        List<Entity> entities = level.getEntitiesOfClass(
+            Entity.class,
+            worldRangeBox,
+            e -> e.isAlive() && !(e instanceof SeatEntity)
+        );
+        return entities.isEmpty() ? null : entities.get(0);
+    }
+
+    /**
+     * Gets the UUID of the entity in the placement range, if any.
+     */
+    public static @Nullable UUID getEntityUUIDInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        Entity entity = getEntityInRange(level, pos, state, range);
+        return entity != null ? entity.getUUID() : null;
+    }
+
+    /**
+     * Gets the EntityType of the entity in the placement range, if any.
+     */
+    public static @Nullable EntityType<?> getEntityTypeInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        Entity entity = getEntityInRange(level, pos, state, range);
+        return entity != null ? entity.getType() : null;
+    }
+
+    /**
+     * Returns whether there is an entity currently in the placement range.
+     */
+    public static boolean hasEntityInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return getEntityInRange(level, pos, state, range) != null;
+    }
+
+    /**
+     * Gets the Mob currently in the specified placement range, if any.
+     */
+    public static @Nullable Mob getMobInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        Entity entity = getEntityInRange(level, pos, state, range);
+        return entity instanceof Mob mob ? mob : null;
+    }
+
+    /**
+     * Gets the UUID of the Mob in the placement range, if any.
+     */
+    public static @Nullable UUID getMobUUIDInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        Mob mob = getMobInRange(level, pos, state, range);
+        return mob != null ? mob.getUUID() : null;
+    }
+
+    /**
+     * Gets the EntityType of the Mob in the placement range, if any.
+     */
+    public static @Nullable EntityType<?> getMobTypeInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        Mob mob = getMobInRange(level, pos, state, range);
+        return mob != null ? mob.getType() : null;
+    }
+
+    /**
+     * Returns whether there is a Mob currently in the placement range.
+     */
+    public static boolean hasMobInRange(Level level, BlockPos pos, BlockState state, @Nullable PlacementRange range) {
+        return getMobInRange(level, pos, state, range) != null;
+    }
+
 
     public static boolean handleLeftClick(PlaceMatBlockEntity placeMat, Player player, @Nullable BlockHitResult hit) {
         Level level = placeMat.getLevel();

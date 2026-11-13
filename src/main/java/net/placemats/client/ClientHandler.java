@@ -3,8 +3,10 @@ package net.placemats.client;
 import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import com.mojang.math.Axis;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
@@ -58,10 +60,10 @@ public class ClientHandler {
     private static boolean wasLookingAtPlacemat = false;
 
     public static final TextureAtlasSprite LOCKED_OVERLAY = PlaceMatRenderer.getBlockAtlasSprite(
-        ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_locked")
+            ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_locked")
     );
     public static final TextureAtlasSprite UNLOCKED_OVERLAY = PlaceMatRenderer.getBlockAtlasSprite(
-        ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_unlocked")
+            ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_unlocked")
     );
 
     @SubscribeEvent
@@ -119,98 +121,104 @@ public class ClientHandler {
                         pos.getZ() - mc.gameRenderer.getMainCamera().getPosition().z);
 
                 BlockState state = pmbe.getBlockState();
-                Direction facing = (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones()) ? Direction.NORTH : (state.hasProperty(PlaceMatCardinalBlock.FACING) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH);
+                Direction facing = (state.getBlock() instanceof PlaceMatBlock pmb && !pmb.isRotateZones())
+                        ? Direction.NORTH
+                        : (state.hasProperty(PlaceMatCardinalBlock.FACING) ? state.getValue(PlaceMatCardinalBlock.FACING) : Direction.NORTH);
+
                 poseStack.pushPose();
                 poseStack.translate(0.5, 0, 0.5);
                 if (facing != Direction.NORTH) {
-                    poseStack.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180 - facing.toYRot()));
+                    poseStack.mulPose(Axis.YP.rotationDegrees(180 - facing.toYRot()));
                 }
                 poseStack.translate(-0.5, 0, -0.5);
 
                 if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
                     Vec3 location = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
 
-                    final PlacementRange[] targetedRange = { null };
                     if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                        PlacementRange targetedRange = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
+
+                        // Render unhovered non-chair placement ranges.
                         pmb.addPlacementRanges(pmbe.getBlockState(), range -> {
-                            if (range.chair()) {
-                                // Chair Range
-                                PlaceMatRenderer.renderBounds(poseStack, buffer, range, 1.0f, 1.0f, 0.0f);
-                            } else {
-                                PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
+                            if (range.chair() || range.equals(targetedRange)) {
+                                return;
                             }
+                            PlaceMatRenderer.renderBounds(poseStack, buffer, range, 0.5f, 0.5f, 0.5f);
                         });
-                        targetedRange[0] = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
-                        if (targetedRange[0] != null) {
-                            if (targetedRange[0].chair()) {
-                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 1.0f, 1.0f, 0.0f);
-                            } else if (targetedRange[0].restricted()) {
-                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 1, 0, 1);
+
+                        // Render the hovered range highlight.
+                        if (targetedRange != null) {
+                            if (targetedRange.chair()) {
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange, 1.0f, 1.0f, 0.0f);
+                            } else if (targetedRange.restricted()) {
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange, 1.0f, 0.0f, 1.0f);
                             } else {
-                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange[0], 0, 0, 1);
+                                PlaceMatRenderer.renderBounds(poseStack, buffer, targetedRange, 0.0f, 0.0f, 1.0f);
+                            }
+
+                            // Render item placement preview on non-chair ranges.
+                            if (!targetedRange.chair()) {
+                                DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRange);
+                                if (pmb.isDisableCustomModels() || targetedRange.disableCustomModels()) {
+                                    def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
+                                }
+                                float multiplier = pmb.getScaleMultiplier() * targetedRange.scaleMultiplier();
+
+                                // Project ray onto the box's bottom plane.
+                                double planeY = pos.getY() + targetedRange.box().minY;
+
+                                Vec3 intersection = null;
+                                if (Math.abs(lookVec.y) > 1e-6) {
+                                    double t = (planeY - eyePos.y) / lookVec.y;
+                                    if (t > 0) {
+                                        intersection = eyePos.add(lookVec.scale(t));
+                                    }
+                                }
+
+                                float placementX, placementZ;
+                                if (intersection != null) {
+                                    Vec3 relativeIntersection = intersection.subtract(pos.getX(), pos.getY(), pos.getZ());
+                                    Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), relativeIntersection);
+                                    placementX = (float) localIntersection.x - (def.size().x * multiplier) / 2f;
+                                    placementZ = (float) localIntersection.z - (def.size().y * multiplier) / 2f;
+                                } else {
+                                    // Fallback to hit location if ray is parallel to plane.
+                                    Vec3 localLocation = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), location);
+                                    placementX = (float) localLocation.x - (def.size().x * multiplier) / 2f;
+                                    placementZ = (float) localLocation.z - (def.size().y * multiplier) / 2f;
+                                }
+
+                                Vec2 placementPos;
+                                float effectiveHeight;
+                                if (targetedRange.restricted()) {
+                                    float centerX = (float) (targetedRange.box().minX + targetedRange.box().maxX) / 2f;
+                                    float centerZ = (float) (targetedRange.box().minZ + targetedRange.box().maxZ) / 2f;
+                                    placementPos = new Vec2(centerX - (def.size().x * multiplier) / 2f, centerZ - (def.size().y * multiplier) / 2f);
+                                    if (targetedRange.snapToCenter()) {
+                                        float centerY = (float) (targetedRange.box().minY + targetedRange.box().maxY) / 2f;
+                                        float itemHalfHeight = (def.getItemHeight() * multiplier) / 2f;
+                                        effectiveHeight = centerY - (float) targetedRange.box().minY - itemHalfHeight;
+                                    } else {
+                                        effectiveHeight = 0;
+                                    }
+                                } else {
+                                    float minX = (float) targetedRange.box().minX;
+                                    float maxX = (float) targetedRange.box().maxX - def.size().x * multiplier;
+                                    float minZ = (float) targetedRange.box().minZ;
+                                    float maxZ = (float) targetedRange.box().maxZ - def.size().y * multiplier;
+
+                                    float clampedX = Math.max(minX, Math.min(maxX, placementX));
+                                    float clampedZ = Math.max(minZ, Math.min(maxZ, placementZ));
+                                    placementPos = new Vec2(clampedX, clampedZ);
+                                    effectiveHeight = pmbe.calculateEffectiveHeight(held, placementPos, pmbe.getCurrentHeight(), targetedRange);
+                                }
+                                boolean valid = pmbe.canPlace(held, placementPos, pmbe.getCurrentHeight(), targetedRange);
+
+                                PlaceMatRenderer.renderPreview(poseStack, buffer, placementPos, def.size(), def.scale(),
+                                        pmbe.getCurrentRotation(), pmbe.getCurrentPitch(), pmbe.getCurrentRoll(),
+                                        effectiveHeight, valid, held, mc.getItemRenderer(), targetedRange, pmb);
                             }
                         }
-                    }
-
-                    if (targetedRange[0] != null && !targetedRange[0].chair() && pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                        DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRange[0]);
-                        if (pmb.isDisableCustomModels() || targetedRange[0].disableCustomModels()) {
-                            def = DefinitionManager.PlaceMatDefinition.DEFAULT(held.getItem());
-                        }
-                        float multiplier = pmb.getScaleMultiplier() * targetedRange[0].scaleMultiplier();
-
-                        // Project ray onto the box's bottom plane.
-                        double planeY = pos.getY() + targetedRange[0].box().minY;
-
-                        Vec3 intersection = null;
-                        if (Math.abs(lookVec.y) > 1e-6) {
-                            double t = (planeY - eyePos.y) / lookVec.y;
-                            if (t > 0) {
-                                intersection = eyePos.add(lookVec.scale(t));
-                            }
-                        }
-
-                        float placementX, placementZ;
-                        if (intersection != null) {
-                            Vec3 relativeIntersection = intersection.subtract(pos.getX(), pos.getY(), pos.getZ());
-                            Vec3 localIntersection = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), relativeIntersection);
-                            placementX = (float) localIntersection.x - (def.size().x * multiplier) / 2f;
-                            placementZ = (float) localIntersection.z - (def.size().y * multiplier) / 2f;
-                        } else {
-                            // Fallback to hit location if ray is parallel to plane.
-                            Vec3 localLocation = PlaceMatBlock.getLocalHitVec(pmbe.getBlockState(), location);
-                            placementX = (float) localLocation.x - (def.size().x * multiplier) / 2f;
-                            placementZ = (float) localLocation.z - (def.size().y * multiplier) / 2f;
-                        }
-
-                        Vec2 placementPos;
-                        float effectiveHeight;
-                        if (targetedRange[0].restricted()) {
-                            float centerX = (float) (targetedRange[0].box().minX + targetedRange[0].box().maxX) / 2f;
-                            float centerZ = (float) (targetedRange[0].box().minZ + targetedRange[0].box().maxZ) / 2f;
-                            placementPos = new Vec2(centerX - (def.size().x * multiplier) / 2f, centerZ - (def.size().y * multiplier) / 2f);
-                            if (targetedRange[0].snapToCenter()) {
-                                float centerY = (float) (targetedRange[0].box().minY + targetedRange[0].box().maxY) / 2f;
-                                float itemHalfHeight = (def.getItemHeight() * multiplier) / 2f;
-                                effectiveHeight = centerY - (float) targetedRange[0].box().minY - itemHalfHeight;
-                            } else {
-                                effectiveHeight = 0;
-                            }
-                        } else {
-                            float minX = (float) targetedRange[0].box().minX;
-                            float maxX = (float) targetedRange[0].box().maxX - def.size().x * multiplier;
-                            float minZ = (float) targetedRange[0].box().minZ;
-                            float maxZ = (float) targetedRange[0].box().maxZ - def.size().y * multiplier;
-
-                            float clampedX = Math.max(minX, Math.min(maxX, placementX));
-                            float clampedZ = Math.max(minZ, Math.min(maxZ, placementZ));
-                            placementPos = new Vec2(clampedX, clampedZ);
-                            effectiveHeight = pmbe.calculateEffectiveHeight(held, placementPos, pmbe.getCurrentHeight(), targetedRange[0]);
-                        }
-                        boolean valid = pmbe.canPlace(held, placementPos, pmbe.getCurrentHeight(), targetedRange[0]);
-
-                        PlaceMatRenderer.renderPreview(poseStack, buffer, placementPos, def.size(), def.scale(), pmbe.getCurrentRotation(), pmbe.getCurrentPitch(),
-                                pmbe.getCurrentRoll(), effectiveHeight, valid, held, mc.getItemRenderer(), targetedRange[0], (PlaceMatBlock) pmbe.getBlockState().getBlock());
                     }
                 } else {
                     PlaceMatBlockEntity.PlacedItem targeted = pmbe.getTargetedItem(eyePos, lookVec, pos);
@@ -225,23 +233,16 @@ public class ClientHandler {
                         }
                     }
                 }
-
-                poseStack.popPose();
-
-                buffer.endBatch(RenderType.lines());
-                buffer.endBatch(RenderType.cutout());
-                buffer.endBatch();
-
-                poseStack.popPose();
             }
         }
     }
 
     /**
      * Finds all place mat block positions within a spherical radius.
-     * @param level The level to scan for matching blocks.
+     *
+     * @param level     The level to scan for matching blocks.
      * @param centerPos The center position of the scan.
-     * @param radius The radius of the spherical scan.
+     * @param radius    The radius of the spherical scan.
      * @return A list of matching block positions.
      */
     public static List<BlockPos> getBlocksInRadius(Level level, BlockPos centerPos, int radius) {
@@ -249,8 +250,8 @@ public class ClientHandler {
         int maxDistSqr = radius * radius;
 
         for (BlockPos pos : BlockPos.betweenClosed(
-            centerPos.offset(-radius, -radius, -radius),
-            centerPos.offset(radius, radius, radius)
+                centerPos.offset(-radius, -radius, -radius),
+                centerPos.offset(radius, radius, radius)
         )) {
             if (pos.distSqr(centerPos) <= maxDistSqr) {
                 if (level.getBlockEntity(pos) instanceof PlaceMatBlockEntity || level.getBlockState(pos).getBlock() instanceof PlaceMatBlock) {
@@ -266,12 +267,12 @@ public class ClientHandler {
      * Runs through a list of block positions and renders a textured overlay on each block with a given color.
      */
     public static void renderBlockOverlays(
-        PoseStack poseStack,
-        MultiBufferSource.BufferSource buffer,
-        Vec3 camPos,
-        List<BlockPos> positions,
-        TextureAtlasSprite sprite,
-        Color color
+            PoseStack poseStack,
+            MultiBufferSource.BufferSource buffer,
+            Vec3 camPos,
+            List<BlockPos> positions,
+            TextureAtlasSprite sprite,
+            Color color
     ) {
         AABB unitBox = new AABB(-0.001, -0.001, -0.001, 1.001, 1.001, 1.001);
 
@@ -348,7 +349,7 @@ public class ClientHandler {
                 }
 
                 if (event.getLevel().isClientSide) {
-                    final PlacementRange[] targetedRangeArr = { targetedRange };
+                    final PlacementRange[] targetedRangeArr = {targetedRange};
                     if (targetedRangeArr[0] != null) {
                         DefinitionManager.PlaceMatDefinition def = DefinitionManager.getEffectiveDefinition(held, pmbe.getBlockState(), targetedRangeArr[0]);
                         if (pmb != null && (pmb.isDisableCustomModels() || targetedRangeArr[0].disableCustomModels())) {
@@ -441,15 +442,20 @@ public class ClientHandler {
 
         PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
         PlacementRange targetedRange = (targetedItem != null)
-            ? foodPlacer.getRangeForItem(targetedItem)
-            : pmb.getTargetedPlacementRange(state, localHit);
+                ? foodPlacer.getRangeForItem(targetedItem)
+                : pmb.getTargetedPlacementRange(state, localHit);
 
         if (holdingKey) {
             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
         } else if (targetedItem != null) {
             player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
         } else if (targetedRange != null && targetedRange.chair()) {
-            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.sit").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+            // Chair
+            if (!targetedRange.hasEntity(mc.level, pos, state)) {
+                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.sit").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+            } else if (targetedRange.hasEntity(mc.level, pos, state) && !(targetedRange.getEntity(mc.level, pos, state) instanceof Player)) {
+                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.kick").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
+            }
         } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
 
             int maxCapacity = pmb.getContainerSize();
@@ -462,10 +468,14 @@ public class ClientHandler {
                     player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.placing").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                 } else {
                     MutableComponent instructions = Component.empty();
-                    if (targetedRange == null || !targetedRange.yawDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
-                    if (targetedRange == null || !targetedRange.pitchDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
-                    if (targetedRange == null || !targetedRange.rollDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.roll"));
-                    if (targetedRange == null || !targetedRange.elevationDisabled()) instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
+                    if (targetedRange == null || !targetedRange.yawDisabled())
+                        instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
+                    if (targetedRange == null || !targetedRange.pitchDisabled())
+                        instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
+                    if (targetedRange == null || !targetedRange.rollDisabled())
+                        instructions.append(Component.translatable("place_mats.tooltip.placemat.roll"));
+                    if (targetedRange == null || !targetedRange.elevationDisabled())
+                        instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
 
                     player.displayClientMessage(instructions.withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
                 }

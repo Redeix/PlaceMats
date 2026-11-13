@@ -1,5 +1,6 @@
 package net.placemats.common.entity;
 
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.Packet;
@@ -12,8 +13,10 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.data.PlaceMatEntities;
+import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.config.ConfigHelpers;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @SuppressWarnings("unused")
 public class SeatEntity extends Entity {
@@ -55,7 +58,29 @@ public class SeatEntity extends Entity {
 
     @Override
     protected boolean canAddPassenger(@NotNull Entity passenger) {
-        return this.getPassengers().isEmpty() && !ConfigHelpers.isMobChairBlacklisted(passenger.getType());
+        if (!this.getPassengers().isEmpty()) {
+            return false;
+        }
+        if (passenger.getPersistentData().contains(PlaceMatInteractions.CHAIR_COOLDOWN_TAG)) {
+            if (this.level().getGameTime() < passenger.getPersistentData().getLong(PlaceMatInteractions.CHAIR_COOLDOWN_TAG)) {
+                return false;
+            }
+        }
+        return !ConfigHelpers.isMobChairBlacklisted(passenger.getType());
+    }
+
+    public @Nullable Entity getPassenger() {
+        return this.getFirstPassenger();
+    }
+
+    public @Nullable UUID getPassengerUUID() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger != null ? passenger.getUUID() : null;
+    }
+
+    public @Nullable EntityType<?> getPassengerType() {
+        Entity passenger = this.getFirstPassenger();
+        return passenger != null ? passenger.getType() : null;
     }
 
     @Override

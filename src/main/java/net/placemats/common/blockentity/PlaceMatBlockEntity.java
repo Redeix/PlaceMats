@@ -9,6 +9,9 @@ import java.util.UUID;
 
 import net.minecraft.core.Direction;
 import net.minecraft.network.Connection;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1116,6 +1119,105 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         if (level != null) {
             this.lastInteractionTick = level.getGameTime();
         }
+    }
+
+    public @Nullable PlacementRange getRangeByIndex(int zoneIndex) {
+        if (zoneIndex < 0 || !(getBlockState().getBlock() instanceof PlaceMatBlock pmb)) {
+            return null;
+        }
+        List<PlacementRange> ranges = pmb.getPlacementRanges(getBlockState());
+        if (zoneIndex < ranges.size()) {
+            return ranges.get(zoneIndex);
+        }
+        return null;
+    }
+
+    public @Nullable Entity getEntityInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getEntityInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public @Nullable UUID getEntityUUIDInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getEntityUUIDInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public @Nullable EntityType<?> getEntityTypeInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getEntityTypeInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public boolean hasEntityInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.hasEntityInRange(level, worldPosition, getBlockState(), range);
+        }
+        return false;
+    }
+
+    public @Nullable Mob getMobInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getMobInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public @Nullable UUID getMobUUIDInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getMobUUIDInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public @Nullable EntityType<?> getMobTypeInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.getMobTypeInRange(level, worldPosition, getBlockState(), range);
+        }
+        return null;
+    }
+
+    public boolean hasMobInRange(@Nullable PlacementRange range) {
+        if (level != null) {
+            return PlaceMatBlock.hasMobInRange(level, worldPosition, getBlockState(), range);
+        }
+        return false;
+    }
+
+    public @Nullable Entity getEntityInZone(int zoneIndex) {
+        return getEntityInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public @Nullable UUID getEntityUUIDInZone(int zoneIndex) {
+        return getEntityUUIDInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public @Nullable EntityType<?> getEntityTypeInZone(int zoneIndex) {
+        return getEntityTypeInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public boolean hasEntityInZone(int zoneIndex) {
+        return hasEntityInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public @Nullable Mob getMobInZone(int zoneIndex) {
+        return getMobInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public @Nullable UUID getMobUUIDInZone(int zoneIndex) {
+        return getMobUUIDInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public @Nullable EntityType<?> getMobTypeInZone(int zoneIndex) {
+        return getMobTypeInRange(getRangeByIndex(zoneIndex));
+    }
+
+    public boolean hasMobInZone(int zoneIndex) {
+        return hasMobInRange(getRangeByIndex(zoneIndex));
     }
 
     public static class PlacedItem {
