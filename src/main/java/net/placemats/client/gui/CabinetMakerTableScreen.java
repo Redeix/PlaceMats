@@ -22,6 +22,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -890,7 +891,12 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             modelToRender
         );
 
+        bufferSource.endBatch(Sheets.translucentItemSheet());
+        bufferSource.endBatch(Sheets.translucentCullBlockSheet());
+        bufferSource.endBatch(Sheets.cutoutBlockSheet());
         bufferSource.endBatch(RenderType.translucent());
+        bufferSource.endBatch(RenderType.cutout());
+        bufferSource.endBatch(RenderType.cutoutMipped());
         bufferSource.endBatch();
 
         Lighting.setupFor3DItems();

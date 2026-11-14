@@ -9,6 +9,7 @@ import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.ItemOverrides;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -85,7 +86,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
-        return super.getRenderTypes(state, rand, data);
+        return ChunkRenderTypeSet.of(RenderType.translucent());
     }
 
     @Override
@@ -105,19 +106,24 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
+        if (renderType != null && renderType != RenderType.translucent()) {
+            return Collections.emptyList();
+        }
+
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
         if (customColors != null && customColors.values().stream()
             .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c))) {
             return Collections.emptyList();
         }
 
-        List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
         BlockState materialState = extraData.get(MATERIAL_STATE_PROPERTY);
 
         if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()) && materialState == null) {
-            return quads;
+            return super.getQuads(state, side, rand, extraData, renderType);
         }
+
+        List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
         return remapQuads(quads, materialState, customTextures, customColors, extraData, rand, renderType);
     }
 
@@ -222,7 +228,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                     if (!matQuads.isEmpty()) break;
                 }
             }
-            if (!matQuads.isEmpty()) {
+            if (!matQuads.isEmpty() && isFullFaceCoverage(matQuads, quadDir)) {
                 if (targetTex == null) {
                     useMaterialModel = true;
                 } else {
@@ -292,7 +298,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                 } catch (Exception ignored2) {
                 }
             }
-            if (matParticle != null) {
+            if (isValidSprite(matParticle)) {
                 out.add(remapSprite(quad, matParticle, tint));
             } else if (tint != -1) {
                 out.add(remapSprite(quad, quad.getSprite(), tint));
@@ -596,6 +602,55 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         return null;
     }
 
+    private static boolean isFullFaceCoverage(List<BakedQuad> quads, @Nullable Direction dir) {
+        if (quads == null || quads.isEmpty()) {
+            return false;
+        }
+
+        int stride = IQuadTransformer.STRIDE;
+        float totalMinU = Float.MAX_VALUE, totalMaxU = -Float.MAX_VALUE;
+        float totalMinV = Float.MAX_VALUE, totalMaxV = -Float.MAX_VALUE;
+
+        for (BakedQuad q : quads) {
+            int[] v = q.getVertices();
+            if (v.length < stride * 4) {
+                return false;
+            }
+            Direction effectiveDir = dir != null ? dir : q.getDirection();
+            float qMinU = Float.MAX_VALUE, qMaxU = -Float.MAX_VALUE;
+            float qMinV = Float.MAX_VALUE, qMaxV = -Float.MAX_VALUE;
+
+            for (int i = 0; i < 4; i++) {
+                int posOffset = i * stride + IQuadTransformer.POSITION;
+                float x = Float.intBitsToFloat(v[posOffset]);
+                float y = Float.intBitsToFloat(v[posOffset + 1]);
+                float z = Float.intBitsToFloat(v[posOffset + 2]);
+
+                float[] faceUV = getFaceUV(x, y, z, effectiveDir);
+                qMinU = Math.min(qMinU, faceUV[0]);
+                qMaxU = Math.max(qMaxU, faceUV[0]);
+                qMinV = Math.min(qMinV, faceUV[1]);
+                qMaxV = Math.max(qMaxV, faceUV[1]);
+            }
+
+            float qWidth = qMaxU - qMinU;
+            float qHeight = qMaxV - qMinV;
+            if (qWidth < 0.20f || qHeight < 0.20f) {
+                return false;
+            }
+
+            totalMinU = Math.min(totalMinU, qMinU);
+            totalMaxU = Math.max(totalMaxU, qMaxU);
+            totalMinV = Math.min(totalMinV, qMinV);
+            totalMaxV = Math.max(totalMaxV, qMaxV);
+        }
+
+        float totalWidth = totalMaxU - totalMinU;
+        float totalHeight = totalMaxV - totalMinV;
+
+        return totalWidth >= 0.75f && totalHeight >= 0.75f && totalMinU <= 0.20f && totalMinV <= 0.20f && totalMaxU >= 0.80f && totalMaxV >= 0.80f;
+    }
+
     private static boolean isMatchingMaterialSprite(ResourceLocation spriteName, ResourceLocation targetTex) {
         if (spriteName.equals(targetTex) || spriteName.getPath().equals(targetTex.getPath())) {
             return true;
@@ -605,6 +660,22 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             String tPath = targetTex.getPath();
             if (sPath.startsWith(tPath)) {
                 String remainder = sPath.substring(tPath.length());
+                if (remainder.isEmpty()
+                    || remainder.startsWith("_ctm")
+                    || remainder.startsWith("-ctm")
+                    || remainder.startsWith("_connected")
+                    || remainder.startsWith("/ctm")
+                    || remainder.startsWith("/")) {
+                    return true;
+                }
+            }
+            String sFile = sPath.substring(sPath.lastIndexOf('/') + 1);
+            String tFile = tPath.substring(tPath.lastIndexOf('/') + 1);
+            if (sFile.equals(tFile)) {
+                return true;
+            }
+            if (sFile.startsWith(tFile)) {
+                String remainder = sFile.substring(tFile.length());
                 return remainder.startsWith("_ctm")
                     || remainder.startsWith("-ctm")
                     || remainder.startsWith("_connected")
@@ -693,6 +764,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         }
 
         @Override
+        public @NotNull List<RenderType> getRenderTypes(@NotNull ItemStack itemStack, boolean fabulous) {
+            return Collections.singletonList(Sheets.translucentItemSheet());
+        }
+
+        @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
             BlockState targetState = state != null ? state : this.blockState;
             List<BakedQuad> quads = super.getQuads(targetState, side, rand);
@@ -701,9 +777,12 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
+            if (renderType != null && renderType != Sheets.translucentItemSheet() && renderType != RenderType.translucent()) {
+                return Collections.emptyList();
+            }
             BlockState targetState = state != null ? state : this.blockState;
             BlockState mat = this.materialState != null ? this.materialState : extraData.get(MATERIAL_STATE_PROPERTY);
-            List<BakedQuad> quads = super.getQuads(targetState, side, rand, extraData, renderType);
+            List<BakedQuad> quads = super.getQuads(targetState, side, rand, extraData, null);
             return parent.remapQuads(quads, mat, customTextures, customColors, extraData, rand, renderType);
         }
 
