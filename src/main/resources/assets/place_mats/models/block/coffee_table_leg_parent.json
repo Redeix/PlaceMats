@@ -1,0 +1,274 @@
+{
+    "parent": "minecraft:block/block",
+    "textures": {
+        "1": "place_mats:block/storage_rack_bar",
+        "particle": "#1"
+    },
+    "elements": [
+        {
+            "rotation": {
+                "origin": [
+                    0.08,
+                    0,
+                    -0.01
+                ],
+                "angle": 0,
+                "axis": "y"
+            },
+            "from": [
+                -0.01,
+                0,
+                -0.01
+            ],
+            "to": [
+                -0.01,
+                8,
+                1.99
+            ],
+            "faces": {
+                "east": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "south": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "north": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "west": {
+                    "uv": [
+                        10,
+                        8,
+                        8,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "up": {
+                    "uv": [
+                        16,
+                        16,
+                        16,
+                        16
+                    ],
+                    "texture": "#1",
+                    "rotation": 90
+                },
+                "down": {
+                    "uv": [
+                        16,
+                        16,
+                        16,
+                        16
+                    ],
+                    "texture": "#1",
+                    "rotation": 270
+                }
+            }
+        },
+        {
+            "rotation": {
+                "origin": [
+                    -0.1,
+                    0,
+                    -0.1
+                ],
+                "angle": 0,
+                "axis": "y"
+            },
+            "from": [
+                -0.01,
+                0,
+                -0.01
+            ],
+            "to": [
+                1.99,
+                8,
+                -0.01
+            ],
+            "faces": {
+                "east": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "south": {
+                    "uv": [
+                        10,
+                        8,
+                        8,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "north": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "west": {
+                    "uv": [
+                        8,
+                        8,
+                        10,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "up": {
+                    "uv": [
+                        16,
+                        16,
+                        16,
+                        16
+                    ],
+                    "texture": "#1"
+                },
+                "down": {
+                    "uv": [
+                        16,
+                        16,
+                        16,
+                        16
+                    ],
+                    "texture": "#1"
+                }
+            }
+        }
+    ],
+    "display": {
+        "head": {"translation": [
+            0,
+            8,
+            0
+        ]},
+        "firstperson_righthand": {
+            "rotation": [
+                0,
+                45,
+                0
+            ],
+            "scale": [
+                0.4,
+                0.4,
+                0.4
+            ]
+        },
+        "thirdperson_lefthand": {
+            "rotation": [
+                75,
+                45,
+                0
+            ],
+            "translation": [
+                0,
+                2.5,
+                0
+            ],
+            "scale": [
+                0.375,
+                0.375,
+                0.375
+            ]
+        },
+        "firstperson_lefthand": {
+            "rotation": [
+                0,
+                -135,
+                0
+            ],
+            "scale": [
+                0.4,
+                0.4,
+                0.4
+            ]
+        },
+        "thirdperson_righthand": {
+            "rotation": [
+                75,
+                45,
+                0
+            ],
+            "translation": [
+                0,
+                2.5,
+                0
+            ],
+            "scale": [
+                0.375,
+                0.375,
+                0.375
+            ]
+        },
+        "ground": {
+            "translation": [
+                0,
+                3,
+                0
+            ],
+            "scale": [
+                0.25,
+                0.25,
+                0.25
+            ]
+        },
+        "gui": {
+            "rotation": [
+                30,
+                -135,
+                0
+            ],
+            "scale": [
+                0.625,
+                0.625,
+                0.625
+            ]
+        },
+        "fixed": {"scale": [
+            0.5,
+            0.5,
+            0.5
+        ]}
+    },
+    "groups": [{
+        "color": 0,
+        "children": [
+            0,
+            1
+        ],
+        "origin": [
+            0.08,
+            0,
+            -0.01
+        ],
+        "scope": 0,
+        "name": "leg"
+    }],
+    "render_type": "minecraft:translucent"
+}

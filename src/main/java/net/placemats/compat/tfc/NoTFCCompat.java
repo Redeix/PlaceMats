@@ -15,6 +15,7 @@ import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
+import net.placemats.common.block.PlaceMatTableBlock;
 
 public class NoTFCCompat implements TFCCompat {
     @Override public void applyTrait(ItemStack stack, ResourceLocation traitId) {}
@@ -41,6 +42,9 @@ public class NoTFCCompat implements TFCCompat {
     }
     @Override public Block createPlaceMatAttachedStairsBlock(Block.Properties properties) {
         return new PlaceMatAttachedStairsBlock(properties);
+    }
+    @Override public Block createPlaceMatTableBlock(Block.Properties properties) {
+        return new PlaceMatTableBlock(properties);
     }
     @Override public FluidStack getContainedFluid(ItemStack stack) {
         return FluidStack.EMPTY;

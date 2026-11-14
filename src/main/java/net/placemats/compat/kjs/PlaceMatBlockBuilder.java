@@ -35,6 +35,7 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     private boolean disableInsertion = false;
     private int maxStackSize = 64;
     private boolean cardinal = false;
+    private boolean isTable = false;
     private boolean disableLayFlat = false;
     private boolean disableCustomModels = false;
     private boolean rotateZones = true;
@@ -81,6 +82,18 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
     @Info("Sets if the block can rotate in the cardinal directions. (boolean)")
     public PlaceMatBlockBuilder isCardinal(boolean cardinal) {
         this.cardinal = cardinal;
+        return this;
+    }
+
+    @Info("Sets if the block behaves as an adaptive table block. (boolean)")
+    public PlaceMatBlockBuilder isTable(boolean table) {
+        this.isTable = table;
+        return this;
+    }
+
+    @Info("Marks this block as an adaptive table block.")
+    public PlaceMatBlockBuilder table() {
+        this.isTable = true;
         return this;
     }
 
@@ -404,7 +417,9 @@ public class PlaceMatBlockBuilder extends PlaceMatBlockBuilders {
 
     @Override
     public PlaceMatBlock createObject() {
-        PlaceMatBlock block = (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(createProperties(), cardinal);
+        PlaceMatBlock block = isTable
+                ? (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatTableBlock(createProperties())
+                : (PlaceMatBlock) TFCCompat.INSTANCE.createPlaceMatBlock(createProperties(), cardinal);
         block.containerSize(containerSize);
         block.maxStackSize(maxStackSize);
         if (disableExtraction) {

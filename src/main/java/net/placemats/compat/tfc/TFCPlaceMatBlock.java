@@ -6,6 +6,7 @@ import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
+import net.placemats.common.block.PlaceMatTableBlock;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,6 +71,24 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         }
 
         public AttachedStairs(ExtendedProperties properties) {
+            super(properties.properties());
+            this.extendedProperties = properties;
+        }
+
+        @Override
+        public @NotNull ExtendedProperties getExtendedProperties() {
+            return extendedProperties;
+        }
+    }
+
+    public static class Table extends PlaceMatTableBlock implements IForgeBlockExtension {
+        private final ExtendedProperties extendedProperties;
+
+        public Table(Block.Properties properties) {
+            this(ExtendedProperties.of(properties));
+        }
+
+        public Table(ExtendedProperties properties) {
             super(properties.properties());
             this.extendedProperties = properties;
         }

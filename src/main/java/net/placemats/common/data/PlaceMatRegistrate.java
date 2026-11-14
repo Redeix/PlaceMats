@@ -17,6 +17,7 @@ import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
+import net.placemats.common.block.PlaceMatTableBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
@@ -71,5 +72,17 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
 
     public BlockBuilder<PlaceMatAttachedStairsBlock, PlaceMatRegistrate> floatingShelf(String name) {
         return placeMatBlock(name, p -> (PlaceMatAttachedStairsBlock) TFCCompat.INSTANCE.createPlaceMatAttachedStairsBlock(p));
+    }
+
+    public <T extends PlaceMatTableBlock> BlockBuilder<T, PlaceMatRegistrate> table(String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
+        return block(name, factory);
+    }
+
+    public BlockBuilder<PlaceMatTableBlock, PlaceMatRegistrate> table(String name) {
+        return placeMatBlock(name, p -> (PlaceMatTableBlock) TFCCompat.INSTANCE.createPlaceMatTableBlock(p));
+    }
+
+    public BlockBuilder<PlaceMatTableBlock, PlaceMatRegistrate> coffeeTable(String name) {
+        return table(name);
     }
 }

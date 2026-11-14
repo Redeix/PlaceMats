@@ -26,6 +26,8 @@ public final class PlaceMatTags {
         public static final TagKey<Item> ORNATE_SHELVES = createItemTag("place_mats/single_shelves/ornate");
         public static final TagKey<Item> ORNATE_DOUBLE_SHELVES = createItemTag("place_mats/double_shelves/ornate");
         public static final TagKey<Item> FLOATING_SHELVES = createItemTag("place_mats/single_shelves/floating");
+        public static final TagKey<Item> TABLES = createItemTag("place_mats/tables");
+        public static final TagKey<Item> COFFEE_TABLES = createItemTag("place_mats/tables/coffee_tables");
         public static final TagKey<Item> DYNAMIC_MATERIALS = createItemTag("dynamic_materials");
         public static final TagKey<Item> TEXTURE_PROVIDERS = createItemTag("texture_providers");
         public static final TagKey<Item> TEXTURE_BUNDLES = createItemTag("texture_bundles");
@@ -50,6 +52,8 @@ public final class PlaceMatTags {
         public static final TagKey<Block> ORNATE_SHELVES = createBlockTag("place_mats/single_shelves/ornate");
         public static final TagKey<Block> ORNATE_DOUBLE_SHELVES = createBlockTag("place_mats/double_shelves/ornate");
         public static final TagKey<Block> FLOATING_SHELVES = createBlockTag("place_mats/single_shelves/floating");
+        public static final TagKey<Block> TABLES = createBlockTag("place_mats/tables");
+        public static final TagKey<Block> COFFEE_TABLES = createBlockTag("place_mats/tables/coffee_tables");
         public static final TagKey<Block> DYNAMIC_MATERIALS = createBlockTag("dynamic_materials");
 
         private static TagKey<Block> createBlockTag(String path) {

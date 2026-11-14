@@ -18,6 +18,7 @@ import net.placemats.PlaceMatMain;
 import net.placemats.common.block.CabinetMakerTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlaceMatTableBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 import static net.minecraft.world.level.block.Block.box;
@@ -153,6 +154,42 @@ public final class PlaceMatBlocks {
         .item()
         .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.ORNATE_DOUBLE_SHELVES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DOUBLE_SHELVES, PlaceMatTags.Items.DYNAMIC_MATERIALS)
         .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
+        .build()
+        .register();
+
+    // Dynamic Materials Coffee Table
+    public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table")
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .lang("Coffee Table")
+        .blockstate(tableBlockState(
+            List.of(
+                new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar"))),
+            "coffee_table"
+        ))
+        .onRegister(block -> {
+            block.containerSize(12);
+            block.disableZoneRotation();
+            block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
+            block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+            block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
+            block.dynamicBlock(2,
+                Map.of(
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_bar")
+                ),
+                Map.of(
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.legs")
+                )
+            );
+            block.previewYOffset(-14.0f);
+        })
+        .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.COFFEE_TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.COFFEE_TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
         .build()
         .register();
 

@@ -1,5 +1,6 @@
 {
   "block.place_mats.cabinetmaker_table": "Cabinetmaker's Table",
+  "block.place_mats.coffee_table": "Coffee Table",
   "block.place_mats.floating_shelf": "Floating Shelf",
   "block.place_mats.ornate_double_shelf": "Ornate Double Shelf",
   "block.place_mats.ornate_shelf": "Ornate Shelf",
@@ -25,6 +26,7 @@
   "gui.place_mats.cabinet_maker.key.base": "Base Surface",
   "gui.place_mats.cabinet_maker.key.brackets": "Brackets",
   "gui.place_mats.cabinet_maker.key.generic": "Key %s",
+  "gui.place_mats.cabinet_maker.key.legs": "Legs",
   "gui.place_mats.cabinet_maker.key_slot_title": "Key Slot %s: %s",
   "gui.place_mats.cabinet_maker.material_tooltip": "Place an item to extract 16x16 textures!",
   "gui.place_mats.cabinet_maker.preview": "3D Preview",

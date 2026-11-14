@@ -15,13 +15,13 @@ import net.minecraft.world.level.block.state.properties.StairsShape;
 import net.minecraft.world.level.block.state.properties.WoodType;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
+import net.placemats.common.block.PlaceMatTableBlock;
 import net.placemats.common.block.PlacementRange;
 
 /**
@@ -185,6 +185,56 @@ public class RegistryHelpers {
                     .uvLock(true)
                     .build();
             }, PlaceMatBlock.LOCKED);
+        };
+    }
+
+    /**
+     * Helper method for creating multipart table blockstates with an unconditional base tabletop
+     * and conditional corner legs based on horizontal neighbor connections.
+     * @param textures TextureConfig list.
+     * @param blockName Name of the table type.
+     * @return Blockstate provider.
+     */
+    public static <T extends PlaceMatTableBlock> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> tableBlockState(
+        List<TextureConfig> textures,
+        String blockName) {
+
+        return (ctx, prov) -> {
+            var baseModel = prov.models().withExistingParent(ctx.getName() + "_base", prov.modLoc("block/" + blockName + "_base_parent"));
+            var legModel = prov.models().withExistingParent(ctx.getName() + "_leg", prov.modLoc("block/" + blockName + "_leg_parent"));
+            var itemModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/" + blockName + "_parent"));
+
+            var allModels = new BlockModelBuilder[]{ baseModel, legModel, itemModel };
+            for (var model : allModels) {
+                for (TextureConfig texture : textures) {
+                    model.texture(texture.index(), texture.resource());
+                }
+            }
+
+            var builder = prov.getMultipartBuilder(ctx.getEntry());
+
+            // Base Tabletop Model
+            builder.part().modelFile(baseModel).addModel();
+
+            // NW Leg (rot 0)
+            builder.part().modelFile(legModel).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.WEST, false);
+
+            // NE Leg (rot 90)
+            builder.part().modelFile(legModel).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.EAST, false);
+
+            // SE Leg (rot 180)
+            builder.part().modelFile(legModel).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.EAST, false);
+
+            // SW Leg (rot 270)
+            builder.part().modelFile(legModel).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.WEST, false);
         };
     }
 

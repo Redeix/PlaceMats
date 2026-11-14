@@ -227,6 +227,11 @@ public class TFCCompatImpl implements TFCCompat {
     }
 
     @Override
+    public Block createPlaceMatTableBlock(Block.Properties properties) {
+        return new TFCPlaceMatBlock.Table(properties);
+    }
+
+    @Override
     public FluidStack getContainedFluid(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return FluidStack.EMPTY;
         if (stack.hasTag() && stack.getTag() != null) {

@@ -20,6 +20,7 @@ public class PlaceMatBlockEntities {
         .validBlock(PlaceMatBlocks.ORNATE_SHELF)
         .validBlock(PlaceMatBlocks.FLOATING_SHELF)
         .validBlock(PlaceMatBlocks.ORNATE_DOUBLE_SHELF)
+        .validBlock(PlaceMatBlocks.COFFEE_TABLE)
         /*
         TODO: I'll have to figure out what I want to do with wood variants later.
         .validBlocks(PlaceMatBlocks.WOOD_STORAGE_RACKS.toArray(BlockEntry[]::new))
