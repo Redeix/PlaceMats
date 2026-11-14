@@ -112,7 +112,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
         if (customColors != null && customColors.values().stream()
-            .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c))) {
+            .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c) || isTranslucentColor(c))) {
             return Collections.emptyList();
         }
 
@@ -683,6 +683,14 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             }
         }
         return false;
+    }
+
+    public static boolean isTranslucentColor(int color) {
+        if (IDynamicTexturedBlock.isRainbowColor(color) || IDynamicTexturedBlock.isMultiColor(color)) {
+            return false;
+        }
+        int alpha = (color >>> 24) & 0xFF;
+        return alpha > 0 && alpha < 255;
     }
 
     public static boolean isValidSprite(@Nullable TextureAtlasSprite sprite) {

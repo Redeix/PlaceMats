@@ -105,6 +105,21 @@ public interface IDynamicTexturedBlockEntity {
     }
 
     /**
+     * @return True if any active color has translucency.
+     */
+    default boolean hasTranslucentColor() {
+        for (Integer color : getDynamicColors().values()) {
+            if (color != null && !IDynamicTexturedBlock.isRainbowColor(color) && !IDynamicTexturedBlock.isMultiColor(color)) {
+                int alpha = (color >>> 24) & 0xFF;
+                if (alpha > 0 && alpha < 255) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Builds ModelData containing dynamic textures, colors, and material properties.
      */
     default ModelData getDynamicModelData(ModelData baseData) {

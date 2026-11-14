@@ -42,12 +42,20 @@ public final class DynamicTextureRenderer {
         if (be instanceof IDynamicTexturedBlockEntity dtbe && (
             dtbe.hasRainbowColor()
                 || dtbe.hasMultiColor()
+                || dtbe.hasTranslucentColor()
         )) {
             BlockState state = be.getBlockState();
             BakedModel blockModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(state);
             if (blockModel instanceof DynamicTexturedBakedModel dtbm) {
                 BlockState materialState = dtbe.getDynamicMaterial();
                 BakedModel baseModel = dtbm.getOriginalModel();
+                ModelData modelData = be.getModelData();
+                if (materialState != null && (!modelData.has(DynamicTexturedBakedModel.MATERIAL_STATE_PROPERTY) || modelData.get(DynamicTexturedBakedModel.MATERIAL_STATE_PROPERTY) == null)) {
+                    modelData = modelData.derive().with(DynamicTexturedBakedModel.MATERIAL_STATE_PROPERTY, materialState).build();
+                }
+                if (be.getLevel() != null) {
+                    modelData = dtbm.getModelData(be.getLevel(), be.getBlockPos(), state, modelData);
+                }
                 renderDynamicQuads(
                         baseModel,
                         dtbm,
@@ -55,7 +63,7 @@ public final class DynamicTextureRenderer {
                         materialState,
                         dtbe.getDynamicTextures(),
                         dtbe.getDynamicColors(),
-                        be.getModelData(),
+                        modelData,
                         poseStack,
                         buffer,
                         packedLight,
