@@ -118,6 +118,10 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     @Override
     public BlockState getAppearance(BlockState state, BlockAndTintGetter level, BlockPos pos, Direction side, @Nullable BlockState queryState, @Nullable BlockPos queryPos) {
         if (level.getBlockEntity(pos) instanceof IDynamicTexturedBlockEntity dtbe) {
+            Map<String, BlockState> mats = dtbe.getDynamicMaterials();
+            if (queryState != null && mats.containsValue(queryState)) {
+                return queryState;
+            }
             BlockState mat = dtbe.getDynamicMaterial();
             if (mat != null) {
                 return mat;

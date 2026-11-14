@@ -47,6 +47,8 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
     public static final ModelProperty<Map<String, Integer>> DYNAMIC_COLORS_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<BlockState> MATERIAL_STATE_PROPERTY = new ModelProperty<>();
 
+    private static final ThreadLocal<Boolean> THREAD_GUARD = ThreadLocal.withInitial(() -> Boolean.FALSE);
+
     @Getter private final IDynamicTexturedBlock dynamicBlock;
     private final ItemOverrides itemOverrides;
 
@@ -62,26 +64,37 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull ModelData getModelData(@NotNull BlockAndTintGetter level, @NotNull BlockPos pos, @NotNull BlockState state, @NotNull ModelData modelData) {
-        BlockState material = modelData.get(MATERIAL_STATE_PROPERTY);
-        ModelData resolvedData = modelData;
-        if (material != null) {
-            BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(material);
-            ModelData matData = materialModel.getModelData(level, pos, material, modelData);
-            if (matData != ModelData.EMPTY) {
-                ModelData.Builder builder = matData.derive();
-                if (modelData.has(DYNAMIC_TEXTURES_PROPERTY) && !matData.has(DYNAMIC_TEXTURES_PROPERTY)) {
-                    builder.with(DYNAMIC_TEXTURES_PROPERTY, modelData.get(DYNAMIC_TEXTURES_PROPERTY));
-                }
-                if (modelData.has(DYNAMIC_COLORS_PROPERTY) && !matData.has(DYNAMIC_COLORS_PROPERTY)) {
-                    builder.with(DYNAMIC_COLORS_PROPERTY, modelData.get(DYNAMIC_COLORS_PROPERTY));
-                }
-                if (modelData.has(MATERIAL_STATE_PROPERTY) && !matData.has(MATERIAL_STATE_PROPERTY)) {
-                    builder.with(MATERIAL_STATE_PROPERTY, modelData.get(MATERIAL_STATE_PROPERTY));
-                }
-                resolvedData = builder.build();
-            }
+        if (THREAD_GUARD.get()) {
+            return super.getModelData(level, pos, state, modelData);
         }
-        return super.getModelData(level, pos, state, resolvedData);
+        THREAD_GUARD.set(true);
+        try {
+            BlockState materialState = modelData.get(MATERIAL_STATE_PROPERTY);
+            if (materialState != null && !(materialState.getBlock() instanceof IDynamicTexturedBlock)) {
+                try {
+                    BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
+                    if (!(materialModel instanceof DynamicTexturedBakedModel)) {
+                        ModelData matData = materialModel.getModelData(level, pos, materialState, ModelData.EMPTY);
+                        if (matData != ModelData.EMPTY) {
+                            ModelData.Builder builder = matData.derive();
+                            if (modelData.has(DYNAMIC_TEXTURES_PROPERTY) && !matData.has(DYNAMIC_TEXTURES_PROPERTY)) {
+                                builder.with(DYNAMIC_TEXTURES_PROPERTY, modelData.get(DYNAMIC_TEXTURES_PROPERTY));
+                            }
+                            if (modelData.has(DYNAMIC_COLORS_PROPERTY) && !matData.has(DYNAMIC_COLORS_PROPERTY)) {
+                                builder.with(DYNAMIC_COLORS_PROPERTY, modelData.get(DYNAMIC_COLORS_PROPERTY));
+                            }
+                            if (modelData.has(MATERIAL_STATE_PROPERTY) && !matData.has(MATERIAL_STATE_PROPERTY)) {
+                                builder.with(MATERIAL_STATE_PROPERTY, modelData.get(MATERIAL_STATE_PROPERTY));
+                            }
+                            return super.getModelData(level, pos, state, builder.build());
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+            return super.getModelData(level, pos, state, modelData);
+        } finally {
+            THREAD_GUARD.set(false);
+        }
     }
 
     @Override
@@ -91,12 +104,27 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull TextureAtlasSprite getParticleIcon(@NotNull ModelData data) {
-        BlockState materialState = data.get(MATERIAL_STATE_PROPERTY);
-        if (materialState != null) {
-            BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
-            return materialModel.getParticleIcon(data);
+        if (THREAD_GUARD.get()) {
+            return super.getParticleIcon(data);
         }
-        return super.getParticleIcon(data);
+        THREAD_GUARD.set(true);
+        try {
+            BlockState materialState = data.get(MATERIAL_STATE_PROPERTY);
+            if (materialState != null && !(materialState.getBlock() instanceof IDynamicTexturedBlock)) {
+                try {
+                    BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
+                    if (!(materialModel instanceof DynamicTexturedBakedModel)) {
+                        TextureAtlasSprite particle = materialModel.getParticleIcon(ModelData.EMPTY);
+                        if (isValidSprite(particle)) {
+                            return particle;
+                        }
+                    }
+                } catch (Throwable ignored) {}
+            }
+            return super.getParticleIcon(data);
+        } finally {
+            THREAD_GUARD.set(false);
+        }
     }
 
     @Override
@@ -108,6 +136,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
         if (renderType != null && renderType != RenderType.translucent()) {
             return Collections.emptyList();
+        }
+
+        if (THREAD_GUARD.get()) {
+            return super.getQuads(state, side, rand, extraData, renderType);
         }
 
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
@@ -123,8 +155,13 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             return super.getQuads(state, side, rand, extraData, renderType);
         }
 
-        List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
-        return remapQuads(quads, materialState, customTextures, customColors, extraData, rand, renderType);
+        THREAD_GUARD.set(true);
+        try {
+            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
+            return remapQuads(quads, materialState, customTextures, customColors, extraData, rand, renderType);
+        } finally {
+            THREAD_GUARD.set(false);
+        }
     }
 
     @Override
@@ -143,7 +180,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         public BakedModel resolve(@NotNull BakedModel model, @NotNull ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
             Map<String, ResourceLocation> customTextures = IDynamicTexturedBlock.getDynamicTextures(stack);
             Map<String, Integer> customColors = IDynamicTexturedBlock.getDynamicColors(stack);
-            BlockState materialState = IDynamicTexturedBlock.getDynamicMaterial(stack);
+            BlockState materialState = IDynamicTexturedBlock.getMaterialBlockState(stack);
             if (customTextures.isEmpty() && customColors.isEmpty() && materialState == null) {
                 return DynamicTexturedBakedModel.this;
             }
@@ -152,11 +189,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures) {
-        return remapQuads(quads, null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null);
+        return remapQuads(quads, (BlockState) null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null);
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-        return remapQuads(quads, null, customTextures, customColors, ModelData.EMPTY, null, null);
+        return remapQuads(quads, (BlockState) null, customTextures, customColors, ModelData.EMPTY, null, null);
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
@@ -170,15 +207,20 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         return remapped;
     }
 
+    public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
+        BlockState matState = materials != null ? materials.get("0") : null;
+        return remapQuads(quads, matState, customTextures, customColors, extraData, rand, renderType);
+    }
+
     public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures) {
         List<BakedQuad> out = new ArrayList<>(1);
-        remapQuad(quad, null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null, out);
+        remapQuad(quad, (BlockState) null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null, out);
         return out.isEmpty() ? quad : out.get(0);
     }
 
     public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
         List<BakedQuad> out = new ArrayList<>(1);
-        remapQuad(quad, null, customTextures, customColors, ModelData.EMPTY, null, null, out);
+        remapQuad(quad, (BlockState) null, customTextures, customColors, ModelData.EMPTY, null, null, out);
         return out.isEmpty() ? quad : out.get(0);
     }
 
@@ -186,6 +228,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         List<BakedQuad> out = new ArrayList<>(1);
         remapQuad(quad, materialState, customTextures, customColors, extraData, rand, renderType, out);
         return out.isEmpty() ? quad : out.get(0);
+    }
+
+    public void remapQuad(BakedQuad quad, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
+        BlockState matState = materials != null ? materials.get("0") : null;
+        remapQuad(quad, matState, customTextures, customColors, extraData, rand, renderType, out);
     }
 
     public void remapQuad(BakedQuad quad, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
@@ -210,36 +257,49 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             tint = CabinetMakerTableScreen.getMultiColorAnimation(keywordColor.getMultiColors(), speed);
         }
 
+        BlockState materialForLayer = null;
+        if ("0".equals(matchedKey)) {
+            materialForLayer = materialState != null ? materialState : extraData.get(MATERIAL_STATE_PROPERTY);
+        }
+
+        Direction effectiveDir = getEffectiveDirection(quad);
         boolean useMaterialModel = false;
         List<BakedQuad> matQuads = null;
-        if (materialState != null && "0".equals(matchedKey)) {
-            BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
-            Direction quadDir = quad.getDirection();
-            RandomSource random = rand != null ? rand : RandomSource.create();
-            matQuads = materialModel.getQuads(materialState, quadDir, random, extraData, null);
-            if (matQuads.isEmpty()) {
-                matQuads = materialModel.getQuads(materialState, null, random, extraData, null);
-            }
-            if (matQuads.isEmpty()) {
-                for (RenderType rt : materialModel.getRenderTypes(materialState, random, extraData)) {
-                    matQuads = materialModel.getQuads(materialState, quadDir, random, extraData, rt);
-                    if (!matQuads.isEmpty()) break;
-                    matQuads = materialModel.getQuads(materialState, null, random, extraData, rt);
-                    if (!matQuads.isEmpty()) break;
-                }
-            }
-            if (!matQuads.isEmpty() && isFullFaceCoverage(matQuads, quadDir)) {
-                if (targetTex == null) {
-                    useMaterialModel = true;
-                } else {
-                    for (BakedQuad mq : matQuads) {
-                        ResourceLocation mqSpriteName = mq.getSprite().contents().name();
-                        if (isMatchingMaterialSprite(mqSpriteName, targetTex)) {
+        if (materialForLayer != null && !(materialForLayer.getBlock() instanceof IDynamicTexturedBlock)) {
+            try {
+                BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialForLayer);
+                if (!(materialModel instanceof DynamicTexturedBakedModel)) {
+                    RandomSource random = rand != null ? rand : RandomSource.create();
+                    matQuads = materialModel.getQuads(materialForLayer, effectiveDir, random, extraData, null);
+                    if (matQuads.isEmpty() && quad.getDirection() != effectiveDir) {
+                        matQuads = materialModel.getQuads(materialForLayer, quad.getDirection(), random, extraData, null);
+                    }
+                    if (matQuads.isEmpty()) {
+                        matQuads = materialModel.getQuads(materialForLayer, null, random, extraData, null);
+                    }
+                    if (matQuads.isEmpty()) {
+                        for (RenderType rt : materialModel.getRenderTypes(materialForLayer, random, extraData)) {
+                            matQuads = materialModel.getQuads(materialForLayer, effectiveDir, random, extraData, rt);
+                            if (!matQuads.isEmpty()) break;
+                            matQuads = materialModel.getQuads(materialForLayer, null, random, extraData, rt);
+                            if (!matQuads.isEmpty()) break;
+                        }
+                    }
+                    if (!matQuads.isEmpty() && isFullFaceCoverage(matQuads, effectiveDir)) {
+                        if (targetTex == null) {
                             useMaterialModel = true;
-                            break;
+                        } else {
+                            for (BakedQuad mq : matQuads) {
+                                ResourceLocation mqSpriteName = mq.getSprite().contents().name();
+                                if (isMatchingMaterialSprite(mqSpriteName, targetTex)) {
+                                    useMaterialModel = true;
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
+            } catch (Throwable ignored) {
             }
         }
 
@@ -251,15 +311,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                 out.add(remapSprite(quad, newSprite, tint));
             } else {
                 TextureAtlasSprite fallbackSprite = null;
-                if (materialState != null) {
+                if (materialForLayer != null && !(materialForLayer.getBlock() instanceof IDynamicTexturedBlock)) {
                     try {
-                        BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
-                        try {
-                            TextureAtlasSprite particle = materialModel.getParticleIcon(extraData);
-                            if (isValidSprite(particle)) {
-                                fallbackSprite = particle;
-                            }
-                        } catch (Exception ignored) {
+                        BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialForLayer);
+                        if (!(materialModel instanceof DynamicTexturedBakedModel)) {
                             try {
                                 TextureAtlasSprite particle = materialModel.getParticleIcon(ModelData.EMPTY);
                                 if (isValidSprite(particle)) {
@@ -267,11 +322,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                                 }
                             } catch (Exception ignored2) {
                             }
-                        }
-                        if (fallbackSprite == null && matQuads != null && !matQuads.isEmpty()) {
-                            TextureAtlasSprite mqSprite = matQuads.get(0).getSprite();
-                            if (isValidSprite(mqSprite)) {
-                                fallbackSprite = mqSprite;
+                            if (fallbackSprite == null && matQuads != null && !matQuads.isEmpty()) {
+                                TextureAtlasSprite mqSprite = matQuads.get(0).getSprite();
+                                if (isValidSprite(mqSprite)) {
+                                    fallbackSprite = mqSprite;
+                                }
                             }
                         }
                     } catch (Exception ignored) {
@@ -287,12 +342,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                     out.add(quad);
                 }
             }
-        } else if (materialState != null && "0".equals(matchedKey)) {
-            BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialState);
+        } else if (materialForLayer != null && !(materialForLayer.getBlock() instanceof IDynamicTexturedBlock)) {
+            BakedModel materialModel = Minecraft.getInstance().getBlockRenderer().getBlockModel(materialForLayer);
             TextureAtlasSprite matParticle = null;
-            try {
-                matParticle = materialModel.getParticleIcon(extraData);
-            } catch (Exception ignored) {
+            if (!(materialModel instanceof DynamicTexturedBakedModel)) {
                 try {
                     matParticle = materialModel.getParticleIcon(ModelData.EMPTY);
                 } catch (Exception ignored2) {
@@ -312,15 +365,19 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         }
     }
 
+    public static Direction getEffectiveDirection(BakedQuad quad) {
+        return quad.getDirection();
+    }
+
     private void remapQuadWithMaterialQuads(BakedQuad quad, List<BakedQuad> matQuads, int tint, List<BakedQuad> out) {
-        Direction dir = quad.getDirection();
+        Direction dir = getEffectiveDirection(quad);
         List<MatQuadBounds> boundsList = new ArrayList<>(matQuads.size());
         for (BakedQuad mq : matQuads) {
             boundsList.add(new MatQuadBounds(mq, dir));
         }
 
         if (matQuads.size() == 1) {
-            out.add(remapSingleQuadFromBounds(quad, boundsList.get(0), tint));
+            out.add(remapSingleQuadFromBounds(quad, boundsList.get(0), tint, dir));
             return;
         }
 
@@ -379,12 +436,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                     break;
                 }
             }
-            out.add(remapSingleQuadFromBounds(piece, best, tint));
+            out.add(remapSingleQuadFromBounds(piece, best, tint, dir));
         }
     }
 
-    private static BakedQuad remapSingleQuadFromBounds(BakedQuad quad, MatQuadBounds bounds, int tint) {
-        Direction dir = quad.getDirection();
+    private static BakedQuad remapSingleQuadFromBounds(BakedQuad quad, MatQuadBounds bounds, int tint, @NotNull Direction dir) {
         int[] v = Arrays.copyOf(quad.getVertices(), quad.getVertices().length);
         int stride = IQuadTransformer.STRIDE;
 
@@ -661,11 +717,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             if (sPath.startsWith(tPath)) {
                 String remainder = sPath.substring(tPath.length());
                 if (remainder.isEmpty()
-                    || remainder.startsWith("_ctm")
-                    || remainder.startsWith("-ctm")
-                    || remainder.startsWith("_connected")
-                    || remainder.startsWith("/ctm")
-                    || remainder.startsWith("/")) {
+                    || remainder.startsWith("_")
+                    || remainder.startsWith("-")
+                    || remainder.startsWith("/")
+                    || remainder.startsWith(".")) {
                     return true;
                 }
             }
@@ -676,10 +731,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             }
             if (sFile.startsWith(tFile)) {
                 String remainder = sFile.substring(tFile.length());
-                return remainder.startsWith("_ctm")
-                    || remainder.startsWith("-ctm")
-                    || remainder.startsWith("_connected")
-                    || remainder.startsWith("/ctm");
+                return remainder.isEmpty()
+                    || remainder.startsWith("_")
+                    || remainder.startsWith("-")
+                    || remainder.startsWith("/")
+                    || remainder.startsWith(".");
             }
         }
         return false;
@@ -751,15 +807,15 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         @Getter private final Map<String, Integer> customColors;
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures) {
-            this(parent, null, null, customTextures, Collections.emptyMap());
+            this(parent, null, (BlockState) null, customTextures, Collections.emptyMap());
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-            this(parent, null, null, customTextures, customColors);
+            this(parent, null, (BlockState) null, customTextures, customColors);
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-            this(parent, blockState, null, customTextures, customColors);
+            this(parent, blockState, (BlockState) null, customTextures, customColors);
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
@@ -771,9 +827,23 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             this.customColors = customColors != null ? customColors : Collections.emptyMap();
         }
 
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable Map<String, BlockState> dynamicMaterials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
+            this(parent, blockState, dynamicMaterials != null ? dynamicMaterials.get("0") : null, customTextures, customColors);
+        }
+
+        @Override
+        public @NotNull ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
+            return ChunkRenderTypeSet.of(RenderType.translucent());
+        }
+
         @Override
         public @NotNull List<RenderType> getRenderTypes(@NotNull ItemStack itemStack, boolean fabulous) {
             return Collections.singletonList(Sheets.translucentItemSheet());
+        }
+
+        @Override
+        public @NotNull TextureAtlasSprite getParticleIcon(@NotNull ModelData data) {
+            return this.parent.getParticleIcon(data);
         }
 
         @Override

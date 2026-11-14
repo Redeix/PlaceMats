@@ -1,5 +1,6 @@
 package net.placemats.common.blockentity;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -17,7 +18,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Interface for block entities that store and provide dynamic texture and color overrides.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation"})
 public interface IDynamicTexturedBlockEntity {
 
     /**
@@ -45,15 +46,45 @@ public interface IDynamicTexturedBlockEntity {
     void setDynamicColors(Map<String, Integer> colors);
 
     /**
-     * @return Material BlockState override.
+     * @return Material BlockState overrides for each layer.
+     *
+     * Currently, not really working besides the first layer.
      */
-    @Nullable
-    default BlockState getDynamicMaterial() {
-        return null;
+    default Map<String, BlockState> getDynamicMaterials() {
+        BlockState single = getDynamicMaterial();
+        return single != null ? Collections.singletonMap("0", single) : Collections.emptyMap();
     }
 
     /**
-     * Sets material BlockState override and marks the block entity synced.
+     * Sets material BlockState overrides and marks the block entity synced.
+     *
+     * @param materials Map of texture slot keys to material BlockState overrides.
+     */
+    default void setDynamicMaterials(Map<String, BlockState> materials) {
+        if (materials != null && materials.containsKey("0")) {
+            setDynamicMaterial(materials.get("0"));
+        } else {
+            setDynamicMaterial(null);
+        }
+    }
+
+    /**
+     * @return True if any material BlockState override is present.
+     */
+    default boolean hasDynamicMaterials() {
+        return !getDynamicMaterials().isEmpty() || hasDynamicMaterial();
+    }
+
+    /**
+     * @return Material BlockState override for the primary slot.
+     */
+    @Nullable
+    default BlockState getDynamicMaterial() {
+        return getDynamicMaterials().get("0");
+    }
+
+    /**
+     * Sets material BlockState override for the primary slot and marks the block entity synced.
      *
      * @param material Material BlockState override.
      */
@@ -150,7 +181,7 @@ public interface IDynamicTexturedBlockEntity {
      * Serializes dynamic textures and colors to NBT.
      */
     default void saveDynamicData(CompoundTag tag) {
-        saveDynamicData(tag, getDynamicTextures(), getDynamicColors(), getDynamicMaterial());
+        saveDynamicData(tag, getDynamicTextures(), getDynamicColors(), getDynamicMaterials());
     }
 
     /**
@@ -162,20 +193,33 @@ public interface IDynamicTexturedBlockEntity {
         loadDynamicData(tag, textures, colors);
         setDynamicTextures(textures);
         setDynamicColors(colors);
-        setDynamicMaterial(loadDynamicMaterial(tag));
+        Map<String, BlockState> materials = loadDynamicMaterials(tag);
+        if (!materials.isEmpty()) {
+            setDynamicMaterials(materials);
+        } else {
+            setDynamicMaterial(loadDynamicMaterial(tag));
+        }
     }
 
     /**
      * Serializes texture and color maps into the compound tag.
      */
     static void saveDynamicData(CompoundTag tag, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        saveDynamicData(tag, textures, colors, null);
+        saveDynamicData(tag, textures, colors, (BlockState) null);
     }
 
     /**
      * Serializes texture, color maps, and material into the compound tag.
      */
     static void saveDynamicData(CompoundTag tag, Map<String, ResourceLocation> textures, Map<String, Integer> colors, @Nullable BlockState material) {
+        Map<String, BlockState> materials = material != null ? Collections.singletonMap("0", material) : null;
+        saveDynamicData(tag, textures, colors, materials);
+    }
+
+    /**
+     * Serializes texture, color maps, and materials mapping into the compound tag.
+     */
+    static void saveDynamicData(CompoundTag tag, Map<String, ResourceLocation> textures, Map<String, Integer> colors, @Nullable Map<String, BlockState> materials) {
         if (textures != null && !textures.isEmpty()) {
             CompoundTag dtTag = new CompoundTag();
             textures.forEach((k, v) -> {
@@ -194,8 +238,17 @@ public interface IDynamicTexturedBlockEntity {
             });
             tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_COLORS, dcTag);
         }
-        if (material != null) {
-            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(material));
+        if (materials != null && !materials.isEmpty()) {
+            CompoundTag dmTag = new CompoundTag();
+            materials.forEach((k, v) -> {
+                if (v != null) {
+                    dmTag.put(k, NbtUtils.writeBlockState(v));
+                }
+            });
+            tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIALS, dmTag);
+            if (materials.containsKey("0") && materials.get("0") != null) {
+                tag.put(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(materials.get("0")));
+            }
         }
     }
 
@@ -238,6 +291,31 @@ public interface IDynamicTexturedBlockEntity {
     }
 
     /**
+     * Deserializes dynamic materials mapping from the compound tag.
+     */
+    static Map<String, BlockState> loadDynamicMaterials(CompoundTag tag) {
+        Map<String, BlockState> materials = new HashMap<>();
+        if (tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIALS, Tag.TAG_COMPOUND)) {
+            CompoundTag dmTag = tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIALS);
+            for (String key : dmTag.getAllKeys()) {
+                if (dmTag.contains(key, Tag.TAG_COMPOUND)) {
+                    BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), dmTag.getCompound(key));
+                    if (!state.isAir()) {
+                        materials.put(key, state);
+                    }
+                }
+            }
+        }
+        if (!materials.containsKey("0") && tag.contains(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND)) {
+            BlockState single = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(IDynamicTexturedBlock.NBT_DYNAMIC_MATERIAL));
+            if (!single.isAir()) {
+                materials.put("0", single);
+            }
+        }
+        return materials;
+    }
+
+    /**
      * Deserializes texture and color maps using consumer setters.
      */
     static void loadDynamicData(CompoundTag tag, Consumer<Map<String, ResourceLocation>> texturesSetter, Consumer<Map<String, Integer>> colorsSetter) {
@@ -256,7 +334,7 @@ public interface IDynamicTexturedBlockEntity {
      * Creates a ModelData instance from dynamic textures and colors maps.
      */
     static ModelData createDynamicModelData(Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        return createDynamicModelData(textures, colors, null);
+        return createDynamicModelData(textures, colors, (BlockState) null);
     }
 
     /**
@@ -280,5 +358,13 @@ public interface IDynamicTexturedBlockEntity {
             return builder.build();
         }
         return ModelData.EMPTY;
+    }
+
+    /**
+     * Creates a ModelData instance from dynamic textures, colors maps, and materials mapping.
+     */
+    static ModelData createDynamicModelData(Map<String, ResourceLocation> textures, Map<String, Integer> colors, @Nullable Map<String, BlockState> materials) {
+        BlockState material = materials != null ? materials.get("0") : null;
+        return createDynamicModelData(textures, colors, material);
     }
 }

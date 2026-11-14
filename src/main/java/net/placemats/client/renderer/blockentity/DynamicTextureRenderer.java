@@ -1,6 +1,8 @@
 package net.placemats.client.renderer.blockentity;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -88,7 +90,7 @@ public final class DynamicTextureRenderer {
             int packedLight,
             int packedOverlay,
             ItemRenderer itemRenderer) {
-        renderDynamicQuads(originalModel, dynamicModel, state, null, textures, colors, ModelData.EMPTY, poseStack, buffer, packedLight, packedOverlay, itemRenderer);
+        renderDynamicQuads(originalModel, dynamicModel, state, (Map<String, BlockState>) null, textures, colors, ModelData.EMPTY, poseStack, buffer, packedLight, packedOverlay, itemRenderer);
     }
 
     /**
@@ -107,6 +109,26 @@ public final class DynamicTextureRenderer {
             int packedLight,
             int packedOverlay,
             ItemRenderer itemRenderer) {
+        Map<String, BlockState> materials = materialState != null ? Collections.singletonMap("0", materialState) : null;
+        renderDynamicQuads(originalModel, dynamicModel, state, materials, textures, colors, modelData, poseStack, buffer, packedLight, packedOverlay, itemRenderer);
+    }
+
+    /**
+     * Renders dynamic remapped quads for a block model, materials mapping, and texture/color configuration.
+     */
+    public static void renderDynamicQuads(
+            BakedModel originalModel,
+            DynamicTexturedBakedModel dynamicModel,
+            BlockState state,
+            Map<String, BlockState> materials,
+            Map<String, ResourceLocation> textures,
+            Map<String, Integer> colors,
+            ModelData modelData,
+            PoseStack poseStack,
+            MultiBufferSource buffer,
+            int packedLight,
+            int packedOverlay,
+            ItemRenderer itemRenderer) {
 
         RandomSource rand = RandomSource.create(42L);
         List<BakedQuad> quads = new ArrayList<>();
@@ -115,7 +137,7 @@ public final class DynamicTextureRenderer {
         }
         quads.addAll(originalModel.getQuads(state, null, rand, modelData, null));
 
-        List<BakedQuad> remapped = dynamicModel.remapQuads(quads, materialState, textures, colors, modelData, rand, null);
+        List<BakedQuad> remapped = dynamicModel.remapQuads(quads, materials, textures, colors, modelData, rand, null);
         VertexConsumer consumer = buffer.getBuffer(Sheets.translucentCullBlockSheet());
         itemRenderer.renderQuadList(poseStack, consumer, remapped, ItemStack.EMPTY, packedLight, packedOverlay);
     }

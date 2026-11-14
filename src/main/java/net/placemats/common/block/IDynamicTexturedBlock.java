@@ -19,18 +19,20 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.placemats.PlaceMatMain;
 import net.placemats.common.blockentity.IDynamicTexturedBlockEntity;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for blocks that support custom dynamic textures.
  */
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "deprecation"})
 public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
     String NBT_DYNAMIC_COLORS = "DynamicColors";
     String NBT_DYNAMIC_MATERIAL = "DynamicMaterial";
+    String NBT_DYNAMIC_MATERIALS = "DynamicMaterials";
 
     /**
      * Enum for colors by keywords for Easter eggs and faster coloring.
@@ -300,17 +302,90 @@ public interface IDynamicTexturedBlock {
         if (tex0 == null) {
             tex0 = textures.values().iterator().next();
         }
-        String namespace = tex0.getNamespace();
-        String blockName = tex0.getPath();
+        return resolveBlockStateFromTexture(tex0);
+    }
+
+    /**
+     * Resolves all possible BlockStates from dynamic textures by matching texture path names against registered blocks.
+     */
+    static Map<String, BlockState> resolveBlockStatesFromTextures(@Nullable Map<String, ResourceLocation> textures) {
+        if (textures == null || textures.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Map<String, BlockState> result = new HashMap<>();
+        for (Map.Entry<String, ResourceLocation> entry : textures.entrySet()) {
+            BlockState state = resolveBlockStateFromTexture(entry.getValue());
+            if (state != null && !state.isAir()) {
+                result.put(entry.getKey(), state);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Resolves a BlockState from a single texture by matching texture path names against registered blocks.
+     */
+    @Nullable
+    static BlockState resolveBlockStateFromTexture(@Nullable ResourceLocation texture) {
+        if (texture == null) {
+            return null;
+        }
+        String namespace = texture.getNamespace();
+        if (namespace.equals(PlaceMatMain.MOD_ID)) {
+            return null;
+        }
+        String blockName = texture.getPath();
         int lastSlash = blockName.lastIndexOf('/');
         if (lastSlash != -1) {
             blockName = blockName.substring(lastSlash + 1);
         }
         ResourceLocation blockId = ResourceLocation.fromNamespaceAndPath(namespace, blockName);
         if (ForgeRegistries.BLOCKS.containsKey(blockId)) {
-            return Objects.requireNonNull(ForgeRegistries.BLOCKS.getValue(blockId)).defaultBlockState();
+            var block = ForgeRegistries.BLOCKS.getValue(blockId);
+            if (block == null || block instanceof IDynamicTexturedBlock) {
+                return null;
+            }
+            return block.defaultBlockState();
         }
         return null;
+    }
+
+    /**
+     * Resolves material BlockStates for all texture slots from an ItemStack's NBT.
+     */
+    static Map<String, BlockState> getDynamicMaterials(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        CompoundTag tag = stack.getTag();
+        Map<String, BlockState> result = new HashMap<>();
+        if (tag != null && tag.contains(NBT_DYNAMIC_MATERIALS, Tag.TAG_COMPOUND)) {
+            CompoundTag materialsTag = tag.getCompound(NBT_DYNAMIC_MATERIALS);
+            for (String key : materialsTag.getAllKeys()) {
+                if (materialsTag.contains(key, Tag.TAG_COMPOUND)) {
+                    BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), materialsTag.getCompound(key));
+                    if (!state.isAir()) {
+                        result.put(key, state);
+                    }
+                }
+            }
+        }
+        if (!result.containsKey("0") && tag != null && tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND)) {
+            BlockState state = NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(NBT_DYNAMIC_MATERIAL));
+            if (!state.isAir()) {
+                result.put("0", state);
+            }
+        }
+        Map<String, ResourceLocation> textures = getDynamicTextures(stack);
+        for (Map.Entry<String, ResourceLocation> entry : textures.entrySet()) {
+            if (!result.containsKey(entry.getKey())) {
+                BlockState resolved = resolveBlockStateFromTexture(entry.getValue());
+                if (resolved != null && !resolved.isAir()) {
+                    result.put(entry.getKey(), resolved);
+                }
+            }
+        }
+        return result;
     }
 
     /**
@@ -322,10 +397,50 @@ public interface IDynamicTexturedBlock {
             return null;
         }
         CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains(NBT_DYNAMIC_MATERIALS, Tag.TAG_COMPOUND)) {
+            CompoundTag materialsTag = tag.getCompound(NBT_DYNAMIC_MATERIALS);
+            if (materialsTag.contains("0", Tag.TAG_COMPOUND)) {
+                return NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), materialsTag.getCompound("0"));
+            }
+        }
         if (tag != null && tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND)) {
             return NbtUtils.readBlockState(BuiltInRegistries.BLOCK.asLookup(), tag.getCompound(NBT_DYNAMIC_MATERIAL));
         }
         return resolveBlockStateFromTextures(getDynamicTextures(stack));
+    }
+
+    @Nullable
+    static BlockState getMaterialBlockState(ItemStack stack) {
+        return getDynamicMaterial(stack);
+    }
+
+    /**
+     * Saves dynamic materials mapping to an ItemStack's NBT.
+     */
+    static void setDynamicMaterials(ItemStack stack, @Nullable Map<String, BlockState> materials) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        if (materials == null || materials.isEmpty()) {
+            if (stack.hasTag()) {
+                assert stack.getTag() != null;
+                stack.getTag().remove(NBT_DYNAMIC_MATERIALS);
+                stack.getTag().remove(NBT_DYNAMIC_MATERIAL);
+                if (stack.getTag().isEmpty()) {
+                    stack.setTag(null);
+                }
+            }
+            return;
+        }
+        CompoundTag materialsTag = new CompoundTag();
+        materials.forEach((k, v) -> materialsTag.put(k, NbtUtils.writeBlockState(v)));
+        stack.addTagElement(NBT_DYNAMIC_MATERIALS, materialsTag);
+        if (materials.containsKey("0") && materials.get("0") != null) {
+            stack.addTagElement(NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(materials.get("0")));
+        } else if (stack.hasTag()) {
+            assert stack.getTag() != null;
+            stack.getTag().remove(NBT_DYNAMIC_MATERIAL);
+        }
     }
 
     /**
@@ -339,6 +454,12 @@ public interface IDynamicTexturedBlock {
             if (stack.hasTag()) {
                 assert stack.getTag() != null;
                 stack.getTag().remove(NBT_DYNAMIC_MATERIAL);
+                if (stack.getTag().contains(NBT_DYNAMIC_MATERIALS, Tag.TAG_COMPOUND)) {
+                    stack.getTag().getCompound(NBT_DYNAMIC_MATERIALS).remove("0");
+                    if (stack.getTag().getCompound(NBT_DYNAMIC_MATERIALS).isEmpty()) {
+                        stack.getTag().remove(NBT_DYNAMIC_MATERIALS);
+                    }
+                }
                 if (stack.getTag().isEmpty()) {
                     stack.setTag(null);
                 }
@@ -346,6 +467,13 @@ public interface IDynamicTexturedBlock {
             return;
         }
         stack.addTagElement(NBT_DYNAMIC_MATERIAL, NbtUtils.writeBlockState(material));
+        Map<String, BlockState> current = new HashMap<>(getDynamicMaterials(stack));
+        current.put("0", material);
+        setDynamicMaterials(stack, current);
+    }
+
+    static void setMaterialBlockState(ItemStack stack, @Nullable BlockState material) {
+        setDynamicMaterial(stack, material);
     }
 
     /**
@@ -378,7 +506,17 @@ public interface IDynamicTexturedBlock {
             return false;
         }
         CompoundTag tag = stack.getTag();
-        return tag != null && tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND);
+        return tag != null && (
+            (tag.contains(NBT_DYNAMIC_MATERIALS, Tag.TAG_COMPOUND) && !tag.getCompound(NBT_DYNAMIC_MATERIALS).isEmpty())
+            || (tag.contains(NBT_DYNAMIC_MATERIAL, Tag.TAG_COMPOUND) && !tag.getCompound(NBT_DYNAMIC_MATERIAL).isEmpty())
+        );
+    }
+
+    /**
+     * Checks if an ItemStack has dynamic materials mapping.
+     */
+    static boolean hasDynamicMaterials(ItemStack stack) {
+        return hasDynamicMaterial(stack);
     }
 
     /**
@@ -392,7 +530,9 @@ public interface IDynamicTexturedBlock {
             if (hasDynamicColors(stack)) {
                 dtbe.setDynamicColors(getDynamicColors(stack));
             }
-            if (hasDynamicMaterial(stack)) {
+            if (hasDynamicMaterials(stack)) {
+                dtbe.setDynamicMaterials(getDynamicMaterials(stack));
+            } else if (hasDynamicMaterial(stack)) {
                 dtbe.setDynamicMaterial(getDynamicMaterial(stack));
             }
         }
@@ -409,7 +549,9 @@ public interface IDynamicTexturedBlock {
             if (dtbe.hasDynamicColors()) {
                 setDynamicColors(stack, dtbe.getDynamicColors());
             }
-            if (dtbe.hasDynamicMaterial()) {
+            if (dtbe.hasDynamicMaterials()) {
+                setDynamicMaterials(stack, dtbe.getDynamicMaterials());
+            } else if (dtbe.hasDynamicMaterial()) {
                 setDynamicMaterial(stack, dtbe.getDynamicMaterial());
             }
         }
@@ -420,7 +562,7 @@ public interface IDynamicTexturedBlock {
      * Applies dynamic textures, colors, and material from a BlockEntity to the dropped item.
      */
     static void applyDynamicDataToDrops(List<ItemStack> drops, @Nullable BlockEntity be, Block block) {
-        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors() || dtbe.hasDynamicMaterial())) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors() || dtbe.hasDynamicMaterial() || dtbe.hasDynamicMaterials())) {
             for (ItemStack drop : drops) {
                 if (drop.getItem() == block.asItem()) {
                     applyDynamicDataToItemStack(drop, be);

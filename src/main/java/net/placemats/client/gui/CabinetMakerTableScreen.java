@@ -2,6 +2,7 @@ package net.placemats.client.gui;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -715,9 +716,15 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             BlockState stateToRender = (!cycleableBlockStates.isEmpty() && currentBlockStateIndex < cycleableBlockStates.size())
                 ? cycleableBlockStates.get(currentBlockStateIndex)
                 : null;
-            ItemStack mat0 = this.menu.getContainer().getItem(CabinetMakerTableContainer.MATERIAL_SLOT_START);
-            BlockState matState = (mat0.getItem() instanceof BlockItem biMat) ? biMat.getBlock().defaultBlockState() : null;
-            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, stateToRender, matState, chosenTextures, chosenColors);
+            Map<String, BlockState> matStates = new HashMap<>();
+            int activeKeys = dynamicBlock != null ? dynamicBlock.getTextureKeyCount() : 1;
+            for (int i = 0; i < activeKeys; i++) {
+                ItemStack matSlotItem = this.menu.getContainer().getItem(CabinetMakerTableContainer.MATERIAL_SLOT_START + i);
+                if (matSlotItem.getItem() instanceof BlockItem biMat) {
+                    matStates.put(String.valueOf(i), biMat.getBlock().defaultBlockState());
+                }
+            }
+            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, stateToRender, matStates, chosenTextures, chosenColors);
         }
     }
 
@@ -831,10 +838,15 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
      * @param colors the color selections to apply.
      */
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, null, textures, colors);
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, (Map<String, BlockState>) null, textures, colors);
     }
 
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+        Map<String, BlockState> materials = materialState != null ? Collections.singletonMap("0", materialState) : null;
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, materials, textures, colors);
+    }
+
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
         if (inputStack.isEmpty()) {
             return;
         }
@@ -848,20 +860,23 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             baseModel = mc.getItemRenderer().getModel(inputStack, mc.level, mc.player, 0);
         }
 
-        BlockState effectiveMaterialState = materialState != null ? materialState : IDynamicTexturedBlock.getDynamicMaterial(inputStack);
+        BlockState effectiveMaterial = materials != null ? materials.get("0") : null;
+        if (effectiveMaterial == null) {
+            effectiveMaterial = IDynamicTexturedBlock.getMaterialBlockState(inputStack);
+        }
 
         BakedModel modelToRender = baseModel;
         IDynamicTexturedBlock dynamicBlock = null;
         if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
             dynamicBlock = dtbm.getDynamicBlock();
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, effectiveMaterialState, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, effectiveMaterial, textures, colors);
         } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
             dynamicBlock = dtibm.getParent().getDynamicBlock();
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, effectiveMaterialState, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, effectiveMaterial, textures, colors);
         } else if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
             dynamicBlock = dtb;
             DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dtb);
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, effectiveMaterialState, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, effectiveMaterial, textures, colors);
         } else if (blockState != null && blockState.getBlock() instanceof IDynamicTexturedBlock dtb) {
             dynamicBlock = dtb;
         }

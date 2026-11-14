@@ -1,5 +1,6 @@
 package net.placemats.common.inventory;
 
+import java.util.HashMap;
 import java.util.Map;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -15,6 +16,7 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.state.BlockState;
 import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.data.PlaceMatBlocks;
@@ -179,11 +181,11 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         IDynamicTexturedBlock.setDynamicTextures(outputTemplate, chosenTextures);
         IDynamicTexturedBlock.setDynamicColors(outputTemplate, chosenColors);
 
-        ItemStack mat0 = this.container.getItem(MATERIAL_SLOT_START);
-        if (!mat0.isEmpty() && mat0.getItem() instanceof BlockItem biMat) {
-            IDynamicTexturedBlock.setDynamicMaterial(outputTemplate, biMat.getBlock().defaultBlockState());
-        } else if (mat0.isEmpty() && chosenTextures.isEmpty()) {
-            IDynamicTexturedBlock.setDynamicMaterial(outputTemplate, null);
+        ItemStack matSlot0 = this.container.getItem(MATERIAL_SLOT_START);
+        if (!matSlot0.isEmpty() && matSlot0.getItem() instanceof BlockItem biMat) {
+            IDynamicTexturedBlock.setMaterialBlockState(outputTemplate, biMat.getBlock().defaultBlockState());
+        } else if (chosenTextures.isEmpty()) {
+            IDynamicTexturedBlock.setMaterialBlockState(outputTemplate, null);
         }
 
         ItemStack currentOutput = this.container.getItem(OUTPUT_SLOT);

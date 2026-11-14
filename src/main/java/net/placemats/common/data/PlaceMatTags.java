@@ -3,6 +3,8 @@ package net.placemats.common.data;
 import com.tterrag.registrate.AbstractRegistrate;
 import com.tterrag.registrate.providers.ProviderType;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.ItemTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -59,9 +61,16 @@ public final class PlaceMatTags {
         }
     }
 
+    public static final TagKey<Block> TACZ_INTERACT_KEY = BlockTags.create(ResourceLocation.fromNamespaceAndPath("tacz", "interact_key/whitelist"));
+
     public static void addExistingTags(AbstractRegistrate<?> registrate) {
         registrate.addDataGenerator(ProviderType.ITEM_TAGS, provider -> {
-            provider.addTag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST).add(net.minecraft.world.item.Items.DEBUG_STICK);
+            provider.addTag(Items.PLACE_MAT_BLACKLIST).add(net.minecraft.world.item.Items.DEBUG_STICK);
+            provider.addTag(Items.CABINET_MAKER_MATERIAL_BLACKLIST).addTag(Items.DYNAMIC_MATERIALS);
+        });
+
+        registrate.addDataGenerator(ProviderType.BLOCK_TAGS, provider -> {
+            provider.addTag(TACZ_INTERACT_KEY).addTag(Blocks.PLACE_MATS);
         });
     }
 }

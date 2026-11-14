@@ -70,6 +70,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     private final List<PlacedItem> placedItems = new ArrayList<>();
     private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     private final Map<String, Integer> dynamicColors = new HashMap<>();
+    private final Map<String, BlockState> dynamicMaterials = new HashMap<>();
     @Nullable
     private BlockState dynamicMaterial;
     @Setter
@@ -139,8 +140,39 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     }
 
     @Override
+    public Map<String, BlockState> getDynamicMaterials() {
+        if (!this.dynamicMaterials.isEmpty()) {
+            return Collections.unmodifiableMap(this.dynamicMaterials);
+        }
+        if (this.dynamicMaterial != null) {
+            return Collections.singletonMap("0", this.dynamicMaterial);
+        }
+        Map<String, BlockState> resolved = IDynamicTexturedBlock.resolveBlockStatesFromTextures(this.dynamicTextures);
+        if (!resolved.isEmpty()) {
+            return resolved;
+        }
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public void setDynamicMaterials(Map<String, BlockState> materials) {
+        this.dynamicMaterials.clear();
+        if (materials != null) {
+            this.dynamicMaterials.putAll(materials);
+        }
+        this.dynamicMaterial = this.dynamicMaterials.get("0");
+        setChanged();
+        if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
+    @Override
     @Nullable
     public BlockState getDynamicMaterial() {
+        if (this.dynamicMaterials.containsKey("0")) {
+            return this.dynamicMaterials.get("0");
+        }
         if (this.dynamicMaterial != null) {
             return this.dynamicMaterial;
         }
@@ -150,6 +182,11 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     @Override
     public void setDynamicMaterial(@Nullable BlockState material) {
         this.dynamicMaterial = material;
+        if (material != null) {
+            this.dynamicMaterials.put("0", material);
+        } else {
+            this.dynamicMaterials.remove("0");
+        }
         setChanged();
         if (level != null && level.isClientSide) {
             requestModelDataUpdate();
