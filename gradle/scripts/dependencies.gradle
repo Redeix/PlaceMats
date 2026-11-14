@@ -28,10 +28,17 @@ dependencies {
     modRuntimeOnly "maven.modrinth:firmalife:${firmalife_version}"
 
     // Jade
-    modImplementation "maven.modrinth:jade:11.13.2+forge"
+    modCompileOnly "maven.modrinth:jade:11.13.2+forge"
+    modRuntimeOnly "maven.modrinth:jade:11.13.2+forge"
     
     // Every Compat & Moonlight
-    modImplementation "maven.modrinth:moonlight:${moonlight_version}"
-    modImplementation "maven.modrinth:every-compat:${every_compat_version}"
+    modCompileOnly "maven.modrinth:moonlight:${moonlight_version}"
+    modCompileOnly "maven.modrinth:every-compat:${every_compat_version}"
+
+    //modRuntimeOnly "maven.modrinth:moonlight:${moonlight_version}"
+    //modRuntimeOnly "maven.modrinth:every-compat:${every_compat_version}"
+
+    // Tacz
+    //modRuntimeOnly "curse.maven:timeless-and-classics-zero-1028108:9454481"
 
 }

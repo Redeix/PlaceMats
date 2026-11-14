@@ -20,11 +20,13 @@ public class PlaceMatBlockEntities {
         .validBlock(PlaceMatBlocks.ORNATE_SHELF)
         .validBlock(PlaceMatBlocks.FLOATING_SHELF)
         .validBlock(PlaceMatBlocks.ORNATE_DOUBLE_SHELF)
+        /*
+        TODO: I'll have to figure out what I want to do with wood variants later.
         .validBlocks(PlaceMatBlocks.WOOD_STORAGE_RACKS.toArray(BlockEntry[]::new))
         .validBlocks(PlaceMatBlocks.WOOD_ORNATE_SHELVES.toArray(BlockEntry[]::new))
         .validBlocks(PlaceMatBlocks.WOOD_ORNATE_DOUBLE_SHELVES.toArray(BlockEntry[]::new))
         .validBlocks(PlaceMatBlocks.WOOD_FLOATING_SHELVES.toArray(BlockEntry[]::new))
-        .validBlock(PlaceMatBlocks.FLOATING_SEAT_TEST)
+         */
         .register();
 
     public static void init() {

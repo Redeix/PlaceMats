@@ -156,6 +156,45 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
+    // Dynamic Materials Seat
+    /*
+    Example Seat Block:
+
+    public static final BlockEntry<PlaceMatAttachedStairsBlock> FLOATING_SEAT_TEST = PlaceMatRegistries.REGISTRATE.floatingShelf("floating_seat_test")
+        .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+        .blockstate(attachedStairsBlockState(
+            List.of(
+                new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID,"block/storage_rack_base")),
+                new TextureConfig("1", ResourceLocation.fromNamespaceAndPath("minecraft","block/smooth_stone"))),
+            "floating_shelf"
+        ))
+        .onRegister(block -> {
+            block.collisionShape(Block.box(0, 0, 0, 16, 2, 16));
+            block.disableZoneRotation();
+            block.addRange(chairPlacementRange(box(0, 0, 0, 8, 4, 16)));
+            block.addRange(chairPlacementRange(box(8, 0, 0, 16, 4, 16)));
+            block.boundingBox(box(0, 0, 0, 16, 4, 16));
+            block.dynamicBlock(2,
+                Map.of(
+                    "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                    "1", ResourceLocation.fromNamespaceAndPath("minecraft","block/smooth_stone")
+                ),
+                Map.of(
+                    0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                    1, Component.translatable("gui.place_mats.cabinet_maker.key.brackets")
+                )
+            );
+            block.previewYOffset(-18.0f);
+        })
+        .tag(BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+        .loot(RegistrateBlockLootTables::dropSelf)
+        .item()
+        .tag(PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+        .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName() + "_attached")))
+        .build()
+        .register();
+    */
+
     // Cabinetmaker's Table
     public static final BlockEntry<CabinetMakerTableBlock> CABINETMAKER_TABLE = PlaceMatRegistries.REGISTRATE.block("cabinetmaker_table", CabinetMakerTableBlock::new)
         .properties(WOOD_PROPERTIES)
@@ -171,6 +210,8 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
+    /*
+    TODO: I'll have to figure out what I want to do with wood variants later.
     public static final List<BlockEntry<PlaceMatCardinalBlock>> WOOD_STORAGE_RACKS = registerWoodStorageRacks();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_ORNATE_SHELVES = registerWoodOrnateShelves();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> ORNATE_SHELVES = WOOD_ORNATE_SHELVES;
@@ -178,6 +219,7 @@ public final class PlaceMatBlocks {
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> FLOATING_SHELVES = WOOD_FLOATING_SHELVES;
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> WOOD_ORNATE_DOUBLE_SHELVES = registerWoodOrnateDoubleShelves();
     public static final List<BlockEntry<PlaceMatAttachedStairsBlock>> ORNATE_DOUBLE_SHELVES = WOOD_ORNATE_DOUBLE_SHELVES;
+    */
 
     public static void init() {
     }

@@ -100,6 +100,8 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                 .generateAdvancement()
                 .build(consumer, PlaceMatBlocks.STORAGE_RACK.getId());
 
+        /*
+        TODO: I'll have to figure out what I want to do with wood variants later.
         PlaceMatBlocks.WOOD_STORAGE_RACKS.forEach(blockReg -> {
             String woodName = blockReg.getId().getPath().replace("_storage_rack", "");
             var slab = getSlab(woodName);
@@ -214,6 +216,8 @@ public class PlaceMatRecipeProvider extends RecipeProvider {
                     .build(consumer, blockReg.getId());
             }
         });
+
+         */
 
         SpecialRecipeBuilder.special(RecipeSerializers.CLEAR_DYNAMIC_COLOR.get())
                 .save(consumer, "place_mats:clear_dynamic_color");

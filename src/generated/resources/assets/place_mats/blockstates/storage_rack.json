@@ -1,32 +1,62 @@
 {
   "variants": {
-    "facing=east,locked=false": {
+    "facing=east,locked=closed": {
       "model": "place_mats:block/storage_rack",
       "y": 90
     },
-    "facing=east,locked=true": {
+    "facing=east,locked=inspectable": {
       "model": "place_mats:block/storage_rack",
       "y": 90
     },
-    "facing=north,locked=false": {
+    "facing=east,locked=none": {
+      "model": "place_mats:block/storage_rack",
+      "y": 90
+    },
+    "facing=east,locked=strict": {
+      "model": "place_mats:block/storage_rack",
+      "y": 90
+    },
+    "facing=north,locked=closed": {
       "model": "place_mats:block/storage_rack"
     },
-    "facing=north,locked=true": {
+    "facing=north,locked=inspectable": {
       "model": "place_mats:block/storage_rack"
     },
-    "facing=south,locked=false": {
+    "facing=north,locked=none": {
+      "model": "place_mats:block/storage_rack"
+    },
+    "facing=north,locked=strict": {
+      "model": "place_mats:block/storage_rack"
+    },
+    "facing=south,locked=closed": {
       "model": "place_mats:block/storage_rack",
       "y": 180
     },
-    "facing=south,locked=true": {
+    "facing=south,locked=inspectable": {
       "model": "place_mats:block/storage_rack",
       "y": 180
     },
-    "facing=west,locked=false": {
+    "facing=south,locked=none": {
+      "model": "place_mats:block/storage_rack",
+      "y": 180
+    },
+    "facing=south,locked=strict": {
+      "model": "place_mats:block/storage_rack",
+      "y": 180
+    },
+    "facing=west,locked=closed": {
       "model": "place_mats:block/storage_rack",
       "y": 270
     },
-    "facing=west,locked=true": {
+    "facing=west,locked=inspectable": {
+      "model": "place_mats:block/storage_rack",
+      "y": 270
+    },
+    "facing=west,locked=none": {
+      "model": "place_mats:block/storage_rack",
+      "y": 270
+    },
+    "facing=west,locked=strict": {
       "model": "place_mats:block/storage_rack",
       "y": 270
     }

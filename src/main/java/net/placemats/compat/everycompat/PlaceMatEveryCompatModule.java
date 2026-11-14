@@ -16,8 +16,11 @@ import net.placemats.common.data.PlaceMatBlocks;
 
 public class PlaceMatEveryCompatModule extends SimpleModule {
 
+
     public PlaceMatEveryCompatModule(String modId) {
         super(modId, "pm");
+        /*
+        TODO: I'll have to figure out what I want to do with wood variants later.
         this.addEntry(SimpleEntrySet.builder(WoodType.class, "storage_rack",
             () -> PlaceMatBlocks.WOOD_STORAGE_RACKS.stream().filter(r -> r.getId().getPath().contains("oak")).findFirst().get().get(), () -> VanillaWoodTypes.OAK,
             w -> PlaceMatBlocks.createStorageRack(Utils.copyPropertySafe(w.planks).noOcclusion().isViewBlocking((state, level, pos) -> false))
@@ -102,5 +105,7 @@ public class PlaceMatEveryCompatModule extends SimpleModule {
             .includeModelsItem(ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "item/oak_ornate_double_shelf"))
             .defaultRecipe()
             .build());
+
+         */
     }
 }
