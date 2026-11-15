@@ -183,7 +183,8 @@ public final class PlaceMatBlocks {
                     1, Component.translatable("gui.place_mats.cabinet_maker.key.legs")
                 )
             );
-            block.previewYOffset(-14.0f);
+            block.previewYOffset(-5.0f);
+            block.previewItemModel();
         })
         .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.COFFEE_TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
         .loot(RegistrateBlockLootTables::dropSelf)

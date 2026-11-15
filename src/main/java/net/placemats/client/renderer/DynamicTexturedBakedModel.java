@@ -286,9 +286,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                         }
                     }
                     if (!matQuads.isEmpty() && isFullFaceCoverage(matQuads, effectiveDir)) {
+                        boolean isCtm = isCtmTextureOrModel(materialModel, materialForLayer, targetTex, matQuads);
                         if (targetTex == null) {
                             useMaterialModel = true;
-                        } else {
+                        } else if (isCtm) {
                             for (BakedQuad mq : matQuads) {
                                 ResourceLocation mqSpriteName = mq.getSprite().contents().name();
                                 if (isMatchingMaterialSprite(mqSpriteName, targetTex)) {
@@ -707,6 +708,33 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         return totalWidth >= 0.75f && totalHeight >= 0.75f && totalMinU <= 0.20f && totalMinV <= 0.20f && totalMaxU >= 0.80f && totalMaxV >= 0.80f;
     }
 
+    private static boolean isCtmTextureOrModel(BakedModel materialModel, BlockState materialState, ResourceLocation targetTex, List<BakedQuad> matQuads) {
+        if (targetTex != null) {
+            String path = targetTex.getPath().toLowerCase();
+            if (path.contains("ctm") || path.contains("connected") || path.contains("fusion") || path.contains("athena")) {
+                return true;
+            }
+        }
+        if (materialModel != null) {
+            String className = materialModel.getClass().getName().toLowerCase();
+            if (className.contains("ctm") || className.contains("connected") || className.contains("athena") || className.contains("fusion") || className.contains("continuity")) {
+                return true;
+            }
+        }
+        if (matQuads != null) {
+            if (matQuads.size() > 1) {
+                return true;
+            }
+            for (BakedQuad mq : matQuads) {
+                String sPath = mq.getSprite().contents().name().getPath().toLowerCase();
+                if (sPath.contains("ctm") || sPath.contains("connected") || sPath.contains("fusion") || sPath.contains("athena")) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     private static boolean isMatchingMaterialSprite(ResourceLocation spriteName, ResourceLocation targetTex) {
         if (spriteName.equals(targetTex) || spriteName.getPath().equals(targetTex.getPath())) {
             return true;
@@ -716,8 +744,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             String tPath = targetTex.getPath();
             if (sPath.startsWith(tPath)) {
                 String remainder = sPath.substring(tPath.length());
-                if (remainder.isEmpty()
-                    || remainder.startsWith("_")
+                if (remainder.isEmpty()) {
+                    return true;
+                }
+                if (remainder.startsWith("_")
                     || remainder.startsWith("-")
                     || remainder.startsWith("/")
                     || remainder.startsWith(".")) {
@@ -731,8 +761,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
             }
             if (sFile.startsWith(tFile)) {
                 String remainder = sFile.substring(tFile.length());
-                return remainder.isEmpty()
-                    || remainder.startsWith("_")
+                if (remainder.isEmpty()) {
+                    return true;
+                }
+                return remainder.startsWith("_")
                     || remainder.startsWith("-")
                     || remainder.startsWith("/")
                     || remainder.startsWith(".");

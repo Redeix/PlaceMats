@@ -223,6 +223,10 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             return List.of();
         }
 
+        if (block instanceof IDynamicTexturedBlock dtb && dtb.shouldPreviewItemModel()) {
+            return List.of();
+        }
+
         List<BlockState> possible = block.getStateDefinition().getPossibleStates();
         if (possible.size() <= 1) {
             return possible;
@@ -852,8 +856,15 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         }
 
         Minecraft mc = Minecraft.getInstance();
+        IDynamicTexturedBlock dynamicBlock = null;
+        if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
+            dynamicBlock = dtb;
+        }
+
         BakedModel baseModel = null;
-        if (blockState != null) {
+        if (dynamicBlock != null && dynamicBlock.shouldPreviewItemModel()) {
+            baseModel = mc.getItemRenderer().getModel(inputStack, mc.level, mc.player, 0);
+        } else if (blockState != null) {
             baseModel = mc.getBlockRenderer().getBlockModel(blockState);
         }
         if (baseModel == null) {
@@ -866,16 +877,14 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         }
 
         BakedModel modelToRender = baseModel;
-        IDynamicTexturedBlock dynamicBlock = null;
         if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
             dynamicBlock = dtbm.getDynamicBlock();
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, effectiveMaterial, textures, colors);
         } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
             dynamicBlock = dtibm.getParent().getDynamicBlock();
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, effectiveMaterial, textures, colors);
-        } else if (inputStack.getItem() instanceof BlockItem bi && bi.getBlock() instanceof IDynamicTexturedBlock dtb) {
-            dynamicBlock = dtb;
-            DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dtb);
+        } else if (dynamicBlock != null) {
+            DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dynamicBlock);
             modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, effectiveMaterial, textures, colors);
         } else if (blockState != null && blockState.getBlock() instanceof IDynamicTexturedBlock dtb) {
             dynamicBlock = dtb;

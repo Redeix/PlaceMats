@@ -202,6 +202,13 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
+     * @return true if the preview in the cabinetmaker's table screen should render the item model instead of the blockstate model list.
+     */
+    default boolean shouldPreviewItemModel() {
+        return false;
+    }
+
+    /**
      * Extracts dynamic texture overrides from an ItemStack's NBT.
      */
     static Map<String, ResourceLocation> getDynamicTextures(ItemStack stack) {

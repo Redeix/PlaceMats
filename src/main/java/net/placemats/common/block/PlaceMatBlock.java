@@ -77,6 +77,7 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
     private Map<String, ResourceLocation> defaultTextures = new HashMap<>();
     private Map<Integer, Component> textureKeyLabels = new HashMap<>();
     private float previewYOffset = 0.0f;
+    private boolean previewItemModel = false;
 
     public PlaceMatBlock(Properties properties) {
         super(properties);
@@ -110,9 +111,23 @@ public class PlaceMatBlock extends Block implements EntityBlock, IPlacementRange
         return this;
     }
 
+    public PlaceMatBlock previewItemModel(boolean previewItemModel) {
+        this.previewItemModel = previewItemModel;
+        return this;
+    }
+
+    public PlaceMatBlock previewItemModel() {
+        return previewItemModel(true);
+    }
+
     @Override
     public float getPreviewYOffset() {
         return this.previewYOffset;
+    }
+
+    @Override
+    public boolean shouldPreviewItemModel() {
+        return this.previewItemModel;
     }
 
     @Override
