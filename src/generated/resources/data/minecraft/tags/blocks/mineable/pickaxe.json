@@ -4,6 +4,8 @@
     "place_mats:ornate_shelf",
     "place_mats:floating_shelf",
     "place_mats:ornate_double_shelf",
-    "place_mats:coffee_table"
+    "place_mats:coffee_table",
+    "place_mats:coffee_table_fluted",
+    "place_mats:coffee_table_modern"
   ]
 }

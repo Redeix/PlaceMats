@@ -160,7 +160,6 @@ public final class PlaceMatBlocks {
     // Dynamic Materials Coffee Table
     public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table")
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
-        .lang("Coffee Table")
         .blockstate(tableBlockState(
             List.of(
                 new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
@@ -193,6 +192,83 @@ public final class PlaceMatBlocks {
         .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
         .build()
         .register();
+
+    // Dynamic Materials Fluted Coffee Table
+    public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE_FLUTED = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table_fluted")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Coffee Table [Fluted]")
+            .blockstate(tableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")),
+                            new TextureConfig("2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1"))),
+                    "coffee_table_fluted"
+            ))
+            .onRegister(block -> {
+                block.containerSize(12);
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
+                block.dynamicBlock(3,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"),
+                                "2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
+                        )
+                );
+                block.previewYOffset(-5.0f);
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.COFFEE_TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.COFFEE_TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
+
+    // Dynamic Materials Modern Coffee Table
+    public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE_MODERN = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table_modern")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Coffee Table [Modern]")
+            .blockstate(tableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"))),
+                    "coffee_table_modern"
+            ))
+            .onRegister(block -> {
+                block.containerSize(12);
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
+                block.dynamicBlock(2,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs")
+                        )
+                );
+                block.previewYOffset(-5.0f);
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.COFFEE_TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.COFFEE_TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
 
     // Dynamic Materials Seat
     /*

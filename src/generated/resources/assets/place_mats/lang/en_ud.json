@@ -1,6 +1,8 @@
 {
   "block.place_mats.cabinetmaker_table": "ǝןqɐ⟘ s,ɹǝʞɐɯʇǝuıqɐƆ",
   "block.place_mats.coffee_table": "ǝןqɐ⟘ ǝǝɟɟoƆ",
+  "block.place_mats.coffee_table_fluted": "]pǝʇnןℲ[ ǝןqɐ⟘ ǝǝɟɟoƆ",
+  "block.place_mats.coffee_table_modern": "]uɹǝpoW[ ǝןqɐ⟘ ǝǝɟɟoƆ",
   "block.place_mats.floating_shelf": "ɟןǝɥS buıʇɐoןℲ",
   "block.place_mats.ornate_double_shelf": "ɟןǝɥS ǝןqnoᗡ ǝʇɐuɹO",
   "block.place_mats.ornate_shelf": "ɟןǝɥS ǝʇɐuɹO",
@@ -26,6 +28,7 @@
   "gui.place_mats.cabinet_maker.key.base": "ǝɔɐɟɹnS ǝsɐᗺ",
   "gui.place_mats.cabinet_maker.key.brackets": "sʇǝʞɔɐɹᗺ",
   "gui.place_mats.cabinet_maker.key.generic": "%s ʎǝʞ",
+  "gui.place_mats.cabinet_maker.key.gilding": "buıpןı⅁",
   "gui.place_mats.cabinet_maker.key.legs": "sbǝꞀ",
   "gui.place_mats.cabinet_maker.key_slot_title": "%s :%s ʇoןS ʎǝʞ",
   "gui.place_mats.cabinet_maker.material_tooltip": "¡sǝɹnʇxǝʇ 9Ɩx9Ɩ ʇɔɐɹʇxǝ oʇ ɯǝʇı uɐ ǝɔɐןԀ",

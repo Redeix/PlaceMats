@@ -1,0 +1,7 @@
+{
+  "parent": "place_mats:block/coffee_table_modern_base_parent",
+  "textures": {
+    "0": "place_mats:block/storage_rack_base",
+    "1": "place_mats:block/storage_rack_fluted_leg"
+  }
+}
