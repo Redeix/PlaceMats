@@ -56,6 +56,9 @@ public class PlaceMatInteractions {
     public static final int KICK_COOLDOWN_TICKS = 60;
 
     public static InteractionResult handleInteraction(PlaceMatBlockEntity placeMat, Player player, InteractionHand hand, BlockHitResult hit) {
+        if (player.isSpectator()) {
+            return InteractionResult.FAIL;
+        }
         Level level = placeMat.getLevel();
         if (PlaceMatBlock.preventsInteraction(placeMat.getBlockState()))
             return InteractionResult.PASS;
@@ -384,6 +387,9 @@ public class PlaceMatInteractions {
 
 
     public static boolean handleLeftClick(PlaceMatBlockEntity placeMat, Player player, @Nullable BlockHitResult hit) {
+        if (player.isSpectator()) {
+            return false;
+        }
         Level level = placeMat.getLevel();
         if (PlaceMatBlock.preventsInteraction(placeMat.getBlockState()))
             return false;

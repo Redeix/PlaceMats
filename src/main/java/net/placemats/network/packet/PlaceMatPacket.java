@@ -61,10 +61,10 @@ public class PlaceMatPacket {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> {
             if (context.getSender() != null) {
-                if (context.getSender().level().getBlockEntity(message.pos) instanceof PlaceMatBlockEntity foodPlacer) {
+                if (context.getSender().level().getBlockEntity(message.pos) instanceof PlaceMatBlockEntity pmbe) {
                     final PlacementRange[] targetedRange = { null };
-                    if (foodPlacer.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
-                        targetedRange[0] = pmb.getTargetedPlacementRange(foodPlacer.getBlockState(), message.hitLocation);
+                    if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
+                        targetedRange[0] = pmb.getTargetedPlacementRange(pmbe.getBlockState(), message.hitLocation);
                     }
 
                     if (targetedRange[0] != null) {
@@ -82,8 +82,8 @@ public class PlaceMatPacket {
                         }
 
                         Vec2 serverPlacementPos = message.placementPos;
-                        var def = foodPlacer.getEffectiveDefinition(player.getMainHandItem(), targetedRange[0]);
-                        float multiplier = foodPlacer.getScaleMultiplier(targetedRange[0]);
+                        var def = pmbe.getEffectiveDefinition(player.getMainHandItem(), targetedRange[0]);
+                        float multiplier = pmbe.getScaleMultiplier(targetedRange[0]);
 
                         float minX = (float) targetedRange[0].box().minX;
                         float maxX = (float) targetedRange[0].box().maxX - def.size().x * multiplier;
@@ -94,17 +94,17 @@ public class PlaceMatPacket {
                         float clampedZ = Math.max(minZ, Math.min(maxZ, serverPlacementPos.y));
                         serverPlacementPos = new Vec2(clampedX, clampedZ);
 
-                        if (foodPlacer.canPlace(player.getMainHandItem(), serverPlacementPos, message.height, targetedRange[0])) {
+                        if (pmbe.canPlace(player.getMainHandItem(), serverPlacementPos, message.height, targetedRange[0]) && !player.isSpectator()) {
                             ItemStack held = player.getMainHandItem();
                             int toPlaceCount = Math.min(message.count, held.getCount());
-                            PlaceMatBlock pmbBlock = (PlaceMatBlock) foodPlacer.getBlockState().getBlock();
+                            PlaceMatBlock pmbBlock = (PlaceMatBlock) pmbe.getBlockState().getBlock();
                             int maxStack = Math.min(held.getMaxStackSize(), Math.min(pmbBlock.getMaxStackSize(), targetedRange[0].maxStackSize()));
                             toPlaceCount = Math.min(toPlaceCount, maxStack);
 
                             if (toPlaceCount > 0) {
                                 ItemStack toPlace = held.copy();
                                 toPlace.setCount(toPlaceCount);
-                                foodPlacer.placeItem(toPlace, serverPlacementPos, message.rotation, message.pitch, message.roll, message.height, targetedRange[0]);
+                                pmbe.placeItem(toPlace, serverPlacementPos, message.rotation, message.pitch, message.roll, message.height, targetedRange[0]);
                                 if (!player.isCreative()) {
                                     held.shrink(toPlaceCount);
                                 }
