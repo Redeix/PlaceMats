@@ -37,6 +37,9 @@ public interface TFCCompat {
     Block createPlaceMatAttachedStairsBlock(Block.Properties properties);
     Block createPlaceMatTableBlock(Block.Properties properties);
     Block createPlaceMatApronTableBlock(Block.Properties properties);
+    Block createPlaceMatTallTableBlock(Block.Properties properties);
+    Block createPlaceMatApronTallTableBlock(Block.Properties properties);
+    Block createPlaceMatTopBlock(Block.Properties properties);
     FluidStack getContainedFluid(ItemStack stack);
     boolean isFluidContainer(ItemStack stack);
 }

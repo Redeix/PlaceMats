@@ -12,11 +12,14 @@ import net.minecraft.world.level.block.Block;
 import com.google.gson.JsonElement;
 import net.minecraftforge.fluids.FluidStack;
 import net.placemats.common.block.PlaceMatApronTableBlock;
+import net.placemats.common.block.PlaceMatApronTallTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
 import net.placemats.common.block.PlaceMatTableBlock;
+import net.placemats.common.block.PlaceMatTallTableBlock;
+import net.placemats.common.block.InvisibleMatBlock;
 
 public class NoTFCCompat implements TFCCompat {
     @Override public void applyTrait(ItemStack stack, ResourceLocation traitId) {}
@@ -49,6 +52,15 @@ public class NoTFCCompat implements TFCCompat {
     }
     @Override public Block createPlaceMatApronTableBlock(Block.Properties properties) {
         return new PlaceMatApronTableBlock(properties);
+    }
+    @Override public Block createPlaceMatTallTableBlock(Block.Properties properties) {
+        return new PlaceMatTallTableBlock(properties);
+    }
+    @Override public Block createPlaceMatApronTallTableBlock(Block.Properties properties) {
+        return new PlaceMatApronTallTableBlock(properties);
+    }
+    @Override public Block createPlaceMatTopBlock(Block.Properties properties) {
+        return new InvisibleMatBlock(properties);
     }
     @Override public FluidStack getContainedFluid(ItemStack stack) {
         return FluidStack.EMPTY;

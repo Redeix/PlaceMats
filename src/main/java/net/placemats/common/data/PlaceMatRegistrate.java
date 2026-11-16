@@ -14,11 +14,14 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.placemats.common.block.PlaceMatApronTableBlock;
+import net.placemats.common.block.PlaceMatApronTallTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
 import net.placemats.common.block.PlaceMatTableBlock;
+import net.placemats.common.block.PlaceMatTallTableBlock;
+import net.placemats.common.block.InvisibleMatBlock;
 import net.placemats.compat.tfc.TFCCompat;
 
 @SuppressWarnings("unused")
@@ -93,5 +96,25 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
 
     public BlockBuilder<PlaceMatApronTableBlock, PlaceMatRegistrate> apronTable(String name) {
         return placeMatBlock(name, p -> (PlaceMatApronTableBlock) TFCCompat.INSTANCE.createPlaceMatApronTableBlock(p));
+    }
+
+    public BlockBuilder<InvisibleMatBlock, PlaceMatRegistrate> invisibleMat(String name) {
+        return placeMatBlock(name, p -> (InvisibleMatBlock) TFCCompat.INSTANCE.createPlaceMatTopBlock(p));
+    }
+
+    public <T extends PlaceMatTallTableBlock> BlockBuilder<T, PlaceMatRegistrate> tallTable(String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
+        return block(name, factory);
+    }
+
+    public BlockBuilder<PlaceMatTallTableBlock, PlaceMatRegistrate> tallTable(String name) {
+        return placeMatBlock(name, p -> (PlaceMatTallTableBlock) TFCCompat.INSTANCE.createPlaceMatTallTableBlock(p));
+    }
+
+    public <T extends PlaceMatApronTallTableBlock> BlockBuilder<T, PlaceMatRegistrate> apronTallTable(String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
+        return block(name, factory);
+    }
+
+    public BlockBuilder<PlaceMatApronTallTableBlock, PlaceMatRegistrate> apronTallTable(String name) {
+        return placeMatBlock(name, p -> (PlaceMatApronTallTableBlock) TFCCompat.INSTANCE.createPlaceMatApronTallTableBlock(p));
     }
 }

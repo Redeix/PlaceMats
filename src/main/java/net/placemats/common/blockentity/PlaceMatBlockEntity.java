@@ -50,6 +50,8 @@ import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.block.LockType;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
+import net.placemats.common.block.PlaceMatTallTableBlock;
+import net.placemats.common.block.InvisibleMatBlock;
 import net.placemats.common.block.PlacementRange;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
@@ -198,12 +200,20 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         return getDynamicModelData(super.getModelData());
     }
 
+    @Getter
     private final LazyOptional<IItemHandler> itemHandler = LazyOptional.of(() -> new IItemHandler() {
         @Override
         public int getSlots() {
             if (level == null)
                 return 0;
             BlockState state = level.getBlockState(worldPosition);
+            if (state.getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(IItemHandler::getSlots).orElse(0);
+                }
+                return 0;
+            }
             if (state.getBlock() instanceof PlaceMatBlock pmb) {
                 return pmb.getContainerSize();
             }
@@ -212,6 +222,13 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
 
         @Override
         public @NotNull ItemStack getStackInSlot(int slot) {
+            if (level != null && getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(h -> h.getStackInSlot(slot)).orElse(ItemStack.EMPTY);
+                }
+                return ItemStack.EMPTY;
+            }
             if (slot >= 0 && slot < placedItems.size()) {
                 return placedItems.get(slot).stack;
             }
@@ -230,6 +247,13 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
             if (level == null || stack.isEmpty())
                 return stack;
+            if (getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(h -> h.insertItem(slot, stack, simulate)).orElse(stack);
+                }
+                return stack;
+            }
             if (!(getBlockState().getBlock() instanceof PlaceMatBlock pmb) || PlaceMatBlock.preventsInteraction(getBlockState()))
                 return stack;
 
@@ -323,6 +347,14 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
             if (level == null || amount <= 0)
                 return ItemStack.EMPTY;
 
+            if (getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(h -> h.extractItem(slot, amount, simulate)).orElse(ItemStack.EMPTY);
+                }
+                return ItemStack.EMPTY;
+            }
+
             if (PlaceMatBlock.preventsInteraction(getBlockState()))
                 return ItemStack.EMPTY;
 
@@ -359,6 +391,13 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
 
         @Override
         public int getSlotLimit(int slot) {
+            if (level != null && getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(h -> h.getSlotLimit(slot)).orElse(0);
+                }
+                return 0;
+            }
             if (getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                 return pmb.getMaxStackSize();
             }
@@ -367,6 +406,13 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
 
         @Override
         public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+            if (level != null && getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = worldPosition.above();
+                if (level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getItemHandler().map(h -> h.isItemValid(slot, stack)).orElse(false);
+                }
+                return false;
+            }
             return true;
         }
     });
@@ -1076,6 +1122,13 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     @Override
     public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.ITEM_HANDLER) {
+            if (this.level != null && this.getBlockState().getBlock() instanceof PlaceMatTallTableBlock) {
+                BlockPos topPos = this.worldPosition.above();
+                if (this.level.getBlockEntity(topPos) instanceof PlaceMatBlockEntity topBE && this.level.getBlockState(topPos).getBlock() instanceof InvisibleMatBlock) {
+                    return topBE.getCapability(cap, side);
+                }
+                return LazyOptional.empty();
+            }
             return itemHandler.cast();
         }
         return super.getCapability(cap, side);

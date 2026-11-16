@@ -14,8 +14,11 @@ import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.WoodType;
 
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.phys.shapes.Shapes;
 import net.placemats.PlaceMatMain;
 import net.placemats.common.block.*;
+import net.placemats.common.sound.PlaceMatSoundTypes;
 import net.placemats.compat.tfc.TFCCompat;
 
 import static net.minecraft.world.level.block.Block.box;
@@ -24,7 +27,7 @@ import static net.placemats.common.data.resource.RegistryHelpers.*;
 @SuppressWarnings({ "unused" })
 public final class PlaceMatBlocks {
 
-    // Dynamic Materials Storage Rack
+    // Storage Rack
     public static final BlockEntry<PlaceMatCardinalBlock> STORAGE_RACK = PlaceMatRegistries.REGISTRATE.storageRack("storage_rack", true)
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .onRegister(block -> {
@@ -56,7 +59,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    // Dynamic Materials Ornate Shelf
+    // Ornate Shelf
     public static final BlockEntry<PlaceMatAttachedStairsBlock> ORNATE_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("ornate_shelf")
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .blockstate(attachedStairsBlockState(
@@ -89,7 +92,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    // Dynamic Materials Floating Shelf
+    // Floating Shelf
     public static final BlockEntry<PlaceMatAttachedStairsBlock> FLOATING_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("floating_shelf")
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .blockstate(attachedStairsBlockState(
@@ -123,7 +126,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    // Dynamic Materials Ornate Double Shelf
+    // Ornate Double Shelf
     public static final BlockEntry<PlaceMatAttachedStairsBlock> ORNATE_DOUBLE_SHELF = PlaceMatRegistries.REGISTRATE.floatingShelf("ornate_double_shelf")
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .blockstate(attachedStairsBlockState(
@@ -154,7 +157,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    // Dynamic Materials Coffee Table
+    // Coffee Table
     public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table")
         .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
         .blockstate(tableBlockState(
@@ -167,7 +170,7 @@ public final class PlaceMatBlocks {
             block.containerSize(12);
             block.disableZoneRotation();
             block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
-            block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+            block.collisionShape(Block.box(0, 7, 0, 16, 8, 16));
             block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
             block.dynamicBlock(2,
                 Map.of(
@@ -190,7 +193,7 @@ public final class PlaceMatBlocks {
         .build()
         .register();
 
-    // Dynamic Materials Fluted Coffee Table
+    // Fluted Coffee Table
     public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE_FLUTED = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table_fluted")
             .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
             .lang("Coffee Table [Fluted]")
@@ -205,7 +208,7 @@ public final class PlaceMatBlocks {
                 block.containerSize(12);
                 block.disableZoneRotation();
                 block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
-                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 7, 0, 16, 8, 16));
                 block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
                 block.dynamicBlock(3,
                         Map.of(
@@ -230,7 +233,7 @@ public final class PlaceMatBlocks {
             .build()
             .register();
 
-    // Dynamic Materials Modern Coffee Table
+    // Modern Coffee Table
     public static final BlockEntry<PlaceMatTableBlock> COFFEE_TABLE_MODERN = PlaceMatRegistries.REGISTRATE.coffeeTable("coffee_table_modern")
             .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
             .lang("Coffee Table [Modern]")
@@ -244,7 +247,7 @@ public final class PlaceMatBlocks {
                 block.containerSize(12);
                 block.disableZoneRotation();
                 block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
-                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 6, 0, 16, 8, 16));
                 block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
                 block.dynamicBlock(2,
                         Map.of(
@@ -267,7 +270,7 @@ public final class PlaceMatBlocks {
             .build()
             .register();
 
-    // Dynamic Materials Apron Coffee Table
+    // Apron Coffee Table
     public static final BlockEntry<PlaceMatApronTableBlock> COFFEE_TABLE_APRON = PlaceMatRegistries.REGISTRATE.apronTable("coffee_table_apron")
             .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
             .lang("Coffee Table [Apron]")
@@ -282,7 +285,7 @@ public final class PlaceMatBlocks {
                 block.containerSize(12);
                 block.disableZoneRotation();
                 block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
-                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 5, 0, 16, 8, 16));
                 block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
                 block.dynamicBlock(3,
                         Map.of(
@@ -304,6 +307,57 @@ public final class PlaceMatBlocks {
             .item()
             .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.COFFEE_TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
             .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
+
+    // Invisible Placement Range
+    public static final BlockEntry<InvisibleMatBlock> TALL_TABLE_TOP = PlaceMatRegistries.REGISTRATE.invisibleMat("tall_table_top")
+            .properties(p -> p.sound(PlaceMatSoundTypes.SILENT).pushReaction(PushReaction.BLOCK).noParticlesOnBreak().strength(Integer.MAX_VALUE, Integer.MAX_VALUE).noOcclusion().isViewBlocking((state, level, pos) -> false).noLootTable())
+            .onRegister(block -> {
+                block.containerSize(12);
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 16, 16));
+                block.collisionShape(Shapes.empty());
+                block.addRange(basicPlacementRange(Block.box(0, 0, 0, 16, 16, 16), 16 / 16F));
+            })
+            .blockstate((ctx, prov) -> prov.simpleBlock(ctx.getEntry(), prov.models().getBuilder(ctx.getName())))
+            .tag(PlaceMatTags.Blocks.PLACE_MATS)
+            .register();
+
+    // Apron Dining Table
+    public static final BlockEntry<PlaceMatApronTallTableBlock> DINING_TABLE_APRON = PlaceMatRegistries.REGISTRATE.apronTallTable("dining_table_apron")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Dining Table [Apron]")
+            .blockstate(apronTableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")),
+                            new TextureConfig("2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1"))),
+                    "dining_table_apron"
+            ))
+            .onRegister(block -> {
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 16, 16));
+                block.collisionShape(Block.box(0, 12, 0, 16, 16, 16));
+                block.dynamicBlock(3,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"),
+                                "2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
+                        )
+                );
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/dining_table_apron")))
             .build()
             .register();
 

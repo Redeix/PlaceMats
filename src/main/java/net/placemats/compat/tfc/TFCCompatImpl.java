@@ -35,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.entity.player.StackedContents;
 import net.minecraft.client.gui.screens.Screen;
+import net.placemats.common.block.InvisibleMatBlock;
 import org.jetbrains.annotations.NotNull;
 
 public class TFCCompatImpl implements TFCCompat {
@@ -234,6 +235,21 @@ public class TFCCompatImpl implements TFCCompat {
     @Override
     public Block createPlaceMatApronTableBlock(Block.Properties properties) {
         return new TFCPlaceMatBlock.ApronTable(properties);
+    }
+
+    @Override
+    public Block createPlaceMatTallTableBlock(Block.Properties properties) {
+        return new TFCPlaceMatBlock.TallTable(properties);
+    }
+
+    @Override
+    public Block createPlaceMatApronTallTableBlock(Block.Properties properties) {
+        return new TFCPlaceMatBlock.ApronTallTable(properties);
+    }
+
+    @Override
+    public Block createPlaceMatTopBlock(Block.Properties properties) {
+        return new InvisibleMatBlock(properties);
     }
 
     @Override

@@ -3,11 +3,13 @@ package net.placemats.compat.tfc;
 import net.dries007.tfc.common.blocks.ExtendedProperties;
 import net.dries007.tfc.common.blocks.IForgeBlockExtension;
 import net.placemats.common.block.PlaceMatApronTableBlock;
+import net.placemats.common.block.PlaceMatApronTallTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
 import net.placemats.common.block.PlaceMatTableBlock;
+import net.placemats.common.block.PlaceMatTallTableBlock;
 import net.minecraft.world.level.block.Block;
 import org.jetbrains.annotations.NotNull;
 
@@ -108,6 +110,42 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         }
 
         public ApronTable(ExtendedProperties properties) {
+            super(properties.properties());
+            this.extendedProperties = properties;
+        }
+
+        @Override
+        public @NotNull ExtendedProperties getExtendedProperties() {
+            return extendedProperties;
+        }
+    }
+
+    public static class TallTable extends PlaceMatTallTableBlock implements IForgeBlockExtension {
+        private final ExtendedProperties extendedProperties;
+
+        public TallTable(Block.Properties properties) {
+            this(ExtendedProperties.of(properties));
+        }
+
+        public TallTable(ExtendedProperties properties) {
+            super(properties.properties());
+            this.extendedProperties = properties;
+        }
+
+        @Override
+        public @NotNull ExtendedProperties getExtendedProperties() {
+            return extendedProperties;
+        }
+    }
+
+    public static class ApronTallTable extends PlaceMatApronTallTableBlock implements IForgeBlockExtension {
+        private final ExtendedProperties extendedProperties;
+
+        public ApronTallTable(Block.Properties properties) {
+            this(ExtendedProperties.of(properties));
+        }
+
+        public ApronTallTable(ExtendedProperties properties) {
             super(properties.properties());
             this.extendedProperties = properties;
         }

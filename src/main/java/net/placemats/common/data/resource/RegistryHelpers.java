@@ -246,7 +246,7 @@ public class RegistryHelpers {
      * @param blockName Name of the table type.
      * @return Blockstate provider.
      */
-    public static <T extends PlaceMatApronTableBlock> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> apronTableBlockState(
+    public static <T extends Block> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> apronTableBlockState(
         List<TextureConfig> textures,
         String blockName) {
 

@@ -3,7 +3,7 @@
     "textures": {
         "1": "place_mats:block/storage_rack_fluted_leg",
         "2": "place_mats:block/storage_rack_base_1",
-        "particle": "#0"
+        "particle": "#1"
     },
     "elements": [
         {
@@ -108,9 +108,9 @@
             "faces": {
                 "east": {
                     "uv": [
-                        3,
-                        0,
                         8,
+                        0,
+                        3,
                         2
                     ],
                     "texture": "#2"
@@ -154,9 +154,9 @@
                 },
                 "down": {
                     "uv": [
-                        3,
-                        1,
                         8,
+                        1,
+                        3,
                         2
                     ],
                     "texture": "#2",
@@ -197,9 +197,9 @@
                 },
                 "south": {
                     "uv": [
-                        8,
-                        0,
                         13,
+                        0,
+                        8,
                         2
                     ],
                     "texture": "#2"
@@ -233,9 +233,9 @@
                 },
                 "down": {
                     "uv": [
-                        8,
-                        1,
                         13,
+                        1,
+                        8,
                         2
                     ],
                     "texture": "#2"

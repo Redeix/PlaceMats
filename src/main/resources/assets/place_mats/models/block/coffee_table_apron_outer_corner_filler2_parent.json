@@ -1,8 +1,10 @@
 {
     "parent": "minecraft:block/block",
     "textures": {
+        "0": "place_mats:block/storage_rack_base",
+        "1": "place_mats:block/storage_rack_fluted_leg",
         "2": "place_mats:block/storage_rack_base_1",
-        "particle": "#2"
+        "particle": "#0"
     },
     "elements": [{
         "rotation": {
@@ -28,9 +30,9 @@
         "faces": {
             "east": {
                 "uv": [
-                    0,
-                    0,
                     8,
+                    0,
+                    0,
                     2
                 ],
                 "texture": "#2"
@@ -74,9 +76,9 @@
             },
             "down": {
                 "uv": [
-                    0,
-                    1,
                     8,
+                    1,
+                    0,
                     2
                 ],
                 "texture": "#2",
