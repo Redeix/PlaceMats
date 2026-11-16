@@ -12,6 +12,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.client.renderer.CyclicLayerBakedModel;
 import net.placemats.client.renderer.DynamicTexturedBakedModel;
@@ -38,6 +39,9 @@ import net.placemats.common.CommonProxy;
 import net.placemats.common.data.resource.DefinitionManager;
 
 public class ClientProxy extends CommonProxy {
+    public static final ResourceLocation HUD_ARROWS_MODEL = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "hud/hud_arrows");
+    public static final ResourceLocation HUD_COMPASS_MODEL = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "hud/hud_compass");
+
     @SuppressWarnings("removal")
     public ClientProxy() {
         super();
@@ -51,6 +55,7 @@ public class ClientProxy extends CommonProxy {
         bus.addListener(this::registerRenderers);
         bus.addListener(this::registerTooltipFactories);
         bus.addListener(this::onModifyBakingResult);
+        bus.addListener(PlaceMatKeyMappings::registerKeyMappings);
     }
 
     public void clientSetup(FMLClientSetupEvent event) {
@@ -77,6 +82,8 @@ public class ClientProxy extends CommonProxy {
     public void registerSpecialModels(ModelEvent.RegisterAdditional event) {
         Minecraft mc = Minecraft.getInstance();
         DefinitionManager.registerModels(mc.getResourceManager(), event::register);
+        event.register(HUD_ARROWS_MODEL);
+        event.register(HUD_COMPASS_MODEL);
     }
 
     public void onModifyBakingResult(ModelEvent.ModifyBakingResult event) {

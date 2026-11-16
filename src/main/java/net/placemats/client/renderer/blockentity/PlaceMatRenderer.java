@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import net.placemats.config.PlaceMatConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import com.mojang.math.Axis;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -53,6 +55,8 @@ import net.minecraftforge.fluids.capability.IFluidHandlerItem;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 
+import net.placemats.client.ClientProxy;
+import net.placemats.client.renderer.PlaceMatRenderTypes;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
 import net.placemats.common.block.PlacementRange;
@@ -220,6 +224,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         float extraPitch = def.rot() != null ? def.rot().y : 0f;
         float extraYaw = def.rot() != null ? def.rot().z : 0f;
 
+        poseStack.pushPose();
         // Rotate around the 3D centerpoint of the collision shape.
         poseStack.mulPose(Axis.XP.rotationDegrees(pitch + pitchOffset + extraPitch));
         poseStack.mulPose(Axis.ZP.rotationDegrees(roll + rollOffset + extraRoll));
@@ -270,6 +275,7 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
 
         itemRenderer.render(stack, ItemDisplayContext.FIXED, false, poseStack, buffer, 15728880, OverlayTexture.NO_OVERLAY, model);
         poseStack.popPose();
+        poseStack.popPose();
 
         // Render bounding box.
         float y = (float) yMin + height + elevation;
@@ -284,11 +290,93 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         AABB snapBox = new AABB(pos.x, yMin, pos.y, (double) pos.x + size.x * multiplier, yMin + 0.01, (double) pos.y + size.y * multiplier);
         LevelRenderer.renderLineBox(poseStack, vertexConsumer, snapBox, r, g, b, 0.5f);
 
+        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+            bufferSource.endBatch();
+        }
+
+        // Render HUD rotation guide centered at collision center.
+        poseStack.pushPose();
+        poseStack.translate(collisionCenterX, collisionCenterY, collisionCenterZ);
+        renderHudArrows(poseStack, buffer, itemRenderer, size, multiplier, def.getItemHeight());
+        renderHudCompass(poseStack, buffer, itemRenderer, size, multiplier, def.getItemHeight(), pitch + pitchOffset + extraPitch, roll + rollOffset + extraRoll, rotation + yawOffset + extraYaw);
+        poseStack.popPose();
+
+        if (buffer instanceof MultiBufferSource.BufferSource bufferSource) {
+            bufferSource.endBatch();
+        }
+
         poseStack.popPose();
     }
 
     public static TextureAtlasSprite getBlockAtlasSprite(ResourceLocation textureLocation) {
         return Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(textureLocation);
+    }
+
+    /**
+     * Renders the placeable items transformation arrows guide display.
+     */
+    public static void renderHudArrows(PoseStack poseStack, MultiBufferSource buffer, ItemRenderer itemRenderer, Vec2 size, float multiplier, float itemHeight) {
+        if (!PlaceMatConfig.CLIENT.renderTransformationArrows.get()) {
+            return;
+        }
+
+        BakedModel hudArrowsModel = itemRenderer.getItemModelShaper().getModelManager().getModel(ClientProxy.HUD_ARROWS_MODEL);
+        if (hudArrowsModel == itemRenderer.getItemModelShaper().getModelManager().getMissingModel()) {
+            return;
+        }
+
+        poseStack.pushPose();
+
+        float previewSize = Math.max(size.x * multiplier, Math.max(size.y * multiplier, itemHeight * multiplier));
+        float hudScale = previewSize * 2f;
+        poseStack.scale(hudScale, hudScale, hudScale);
+        poseStack.translate(-0.5f, -0.5f, -0.5f);
+
+        List<BakedQuad> quads = new ArrayList<>();
+        RandomSource rand = RandomSource.create(42L);
+        for (Direction side : Direction.values()) {
+            quads.addAll(hudArrowsModel.getQuads(null, side, rand, ModelData.EMPTY, null));
+        }
+        quads.addAll(hudArrowsModel.getQuads(null, null, rand, ModelData.EMPTY, null));
+
+        VertexConsumer consumer = buffer.getBuffer(PlaceMatRenderTypes.HUD_TRANSLUCENT);
+        itemRenderer.renderQuadList(poseStack, consumer, quads, ItemStack.EMPTY, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
+    }
+
+    /**
+     * Renders the placeable items transformation compass guide display that rotates with the item.
+     */
+    public static void renderHudCompass(PoseStack poseStack, MultiBufferSource buffer, ItemRenderer itemRenderer, Vec2 size, float multiplier, float itemHeight, float pitch, float roll, float yaw) {
+        if (!PlaceMatConfig.CLIENT.renderTransformationCompass.get()) {
+            return;
+        }
+
+        BakedModel hudCompassModel = itemRenderer.getItemModelShaper().getModelManager().getModel(ClientProxy.HUD_COMPASS_MODEL);
+        if (hudCompassModel == itemRenderer.getItemModelShaper().getModelManager().getMissingModel()) {
+            return;
+        }
+
+        poseStack.pushPose();
+        poseStack.mulPose(Axis.XP.rotationDegrees(pitch));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(roll));
+        poseStack.mulPose(Axis.YP.rotationDegrees(yaw));
+
+        float previewSize = Math.max(size.x * multiplier, Math.max(size.y * multiplier, itemHeight * multiplier));
+        float hudScale = previewSize * 2f;
+        poseStack.scale(hudScale, hudScale, hudScale);
+        poseStack.translate(-0.5f, -0.5f, -0.5f);
+
+        List<BakedQuad> quads = new ArrayList<>();
+        RandomSource rand = RandomSource.create(42L);
+        for (Direction side : Direction.values()) {
+            quads.addAll(hudCompassModel.getQuads(null, side, rand, ModelData.EMPTY, null));
+        }
+        quads.addAll(hudCompassModel.getQuads(null, null, rand, ModelData.EMPTY, null));
+
+        VertexConsumer consumer = buffer.getBuffer(PlaceMatRenderTypes.HUD_TRANSLUCENT);
+        itemRenderer.renderQuadList(poseStack, consumer, quads, ItemStack.EMPTY, LightTexture.FULL_BRIGHT, OverlayTexture.NO_OVERLAY);
+        poseStack.popPose();
     }
 
     public static void renderOverlay(PoseStack poseStack, MultiBufferSource buffer, AABB box, float borderR, float borderG, float borderB, float borderA, int packedLight, TextureAtlasSprite sprite) {

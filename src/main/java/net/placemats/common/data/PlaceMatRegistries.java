@@ -25,7 +25,12 @@ public class PlaceMatRegistries {
             prov.add("emi.category.place_mats.place_mat", "Place Mat Interaction");
             prov.add("place_mats.tooltip.placemat.elevation", "§3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
             prov.add("place_mats.tooltip.placemat.roll", "§3Shift+Alt+Scroll§r for Roll. ");
-            prov.add("place_mats.tooltip.placemat.instructions", "§3Shift+Scroll§r for Yaw. §3Shift+Ctrl+Scroll§r for Tilt. §3Shift+Alt+Scroll§r for Roll. §3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
+            prov.add("place_mats.tooltip.placemat.instructions", "§3Shift+Scroll§r for Yaw. §3Shift+Ctrl+Scroll§r for Tilt. §3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
+            prov.add("key.categories.place_mats", "Place Mats");
+            prov.add("key.place_mats.y_rot", "Y-Rotation");
+            prov.add("key.place_mats.x_rot", "X-Rotation");
+            prov.add("key.place_mats.up", "Raise Elevation");
+            prov.add("key.place_mats.down", "Lower Elevation");
             prov.add("config.jade.plugin_place_mats.placemat.title", "Place Mat");
             prov.add("place_mats.tooltip.placemat.full", "§l§c⚠ Container Full!§r§r Max Stacks:§6 %s§r");
             prov.add("place_mats.tooltip.placemat.key", "§3RMB§r to lock/unlock.");

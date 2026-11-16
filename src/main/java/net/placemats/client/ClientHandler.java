@@ -138,6 +138,7 @@ public class ClientHandler {
                     if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb) {
                         if (pmb.getPlacementRanges(pmbe.getBlockState()).isEmpty()) {
                             poseStack.popPose();
+                            poseStack.popPose();
                             return;
                         }
                         PlacementRange targetedRange = pmb.getTargetedPlacementRange(pmbe.getBlockState(), location);
@@ -237,8 +238,11 @@ public class ClientHandler {
                         }
                     }
                 }
+                poseStack.popPose();
+                poseStack.popPose();
             }
         }
+        buffer.endBatch();
     }
 
     /**
@@ -479,8 +483,6 @@ public class ClientHandler {
                         instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
                     if (targetedRange == null || !targetedRange.pitchDisabled())
                         instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
-                    if (targetedRange == null || !targetedRange.rollDisabled())
-                        instructions.append(Component.translatable("place_mats.tooltip.placemat.roll"));
                     if (targetedRange == null || !targetedRange.elevationDisabled())
                         instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
 
@@ -518,6 +520,55 @@ public class ClientHandler {
                             return;
                         }
                         mc.options.keyJump.setDown(false);
+                    }
+                }
+            }
+        }
+
+        // Keybind driven item rotations/transformations.
+        if (player != null && (event.getAction() == 1 || event.getAction() == 2) && !player.getMainHandItem().isEmpty()) {
+            HitResult hit = mc.hitResult;
+            if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
+                assert mc.level != null;
+                BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
+                if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
+                    PlacementRange targetedRange = null;
+                    if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
+                        if (pmb.getPlacementRanges(pmbe.getBlockState()).isEmpty()) {
+                            return;
+                        }
+                        Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
+                        targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
+                    }
+
+                    if (PlaceMatKeyMappings.KEY_Y_ROT.matches(event.getKey(), event.getScanCode())) {
+                        if (targetedRange != null && targetedRange.yawDisabled())
+                            return;
+                        float rotation = pmbe.getCurrentRotation();
+                        rotation = (rotation + (Screen.hasControlDown() ? -15f : 15f)) % 360f;
+                        if (rotation < 0)
+                            rotation += 360f;
+                        pmbe.setCurrentRotation(rotation);
+                    } else if (PlaceMatKeyMappings.KEY_X_ROT.matches(event.getKey(), event.getScanCode())) {
+                        if (targetedRange != null && targetedRange.pitchDisabled())
+                            return;
+                        float pitch = pmbe.getCurrentPitch();
+                        pitch = (pitch + (Screen.hasControlDown() ? -15f : 15f)) % 360f;
+                        if (pitch < 0)
+                            pitch += 360f;
+                        pmbe.setCurrentPitch(pitch);
+                    } else if (PlaceMatKeyMappings.KEY_UP.matches(event.getKey(), event.getScanCode())) {
+                        if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
+                            return;
+                        float height = pmbe.getCurrentHeight();
+                        height = Math.min(1.0f, height + 0.015625f);
+                        pmbe.setCurrentHeight(height);
+                    } else if (PlaceMatKeyMappings.KEY_DOWN.matches(event.getKey(), event.getScanCode())) {
+                        if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
+                            return;
+                        float height = pmbe.getCurrentHeight();
+                        height = Math.max(0, height - 0.015625f);
+                        pmbe.setCurrentHeight(height);
                     }
                 }
             }
@@ -611,15 +662,7 @@ public class ClientHandler {
                         Vec3 location = blockHit.getLocation().subtract(blockHit.getBlockPos().getX(), blockHit.getBlockPos().getY(), blockHit.getBlockPos().getZ());
                         targetedRange = pmb.getTargetedPlacementRange(mc.level.getBlockState(blockHit.getBlockPos()), location);
                     }
-                    if (Screen.hasAltDown() && Screen.hasShiftDown()) {
-                        if (targetedRange != null && targetedRange.rollDisabled())
-                            return;
-                        float roll = pmbe.getCurrentRoll();
-                        roll = (roll + (float) event.getScrollDelta() * 15f) % 360f;
-                        if (roll < 0)
-                            roll += 360f;
-                        pmbe.setCurrentRoll(roll);
-                    } else if (Screen.hasControlDown()) {
+                    if (Screen.hasControlDown()) {
                         if (targetedRange != null && targetedRange.pitchDisabled())
                             return;
                         float pitch = pmbe.getCurrentPitch();
