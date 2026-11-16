@@ -2,6 +2,7 @@ package net.placemats.compat.tfc;
 
 import net.dries007.tfc.common.blocks.ExtendedProperties;
 import net.dries007.tfc.common.blocks.IForgeBlockExtension;
+import net.placemats.common.block.PlaceMatApronTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -89,6 +90,24 @@ public class TFCPlaceMatBlock extends PlaceMatBlock implements IForgeBlockExtens
         }
 
         public Table(ExtendedProperties properties) {
+            super(properties.properties());
+            this.extendedProperties = properties;
+        }
+
+        @Override
+        public @NotNull ExtendedProperties getExtendedProperties() {
+            return extendedProperties;
+        }
+    }
+
+    public static class ApronTable extends PlaceMatApronTableBlock implements IForgeBlockExtension {
+        private final ExtendedProperties extendedProperties;
+
+        public ApronTable(Block.Properties properties) {
+            this(ExtendedProperties.of(properties));
+        }
+
+        public ApronTable(ExtendedProperties properties) {
             super(properties.properties());
             this.extendedProperties = properties;
         }

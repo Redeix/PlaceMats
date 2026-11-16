@@ -13,6 +13,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraftforge.eventbus.api.IEventBus;
+import net.placemats.common.block.PlaceMatApronTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -84,5 +85,13 @@ public class PlaceMatRegistrate extends AbstractRegistrate<PlaceMatRegistrate> {
 
     public BlockBuilder<PlaceMatTableBlock, PlaceMatRegistrate> coffeeTable(String name) {
         return table(name);
+    }
+
+    public <T extends PlaceMatApronTableBlock> BlockBuilder<T, PlaceMatRegistrate> apronTable(String name, NonNullFunction<BlockBehaviour.Properties, T> factory) {
+        return block(name, factory);
+    }
+
+    public BlockBuilder<PlaceMatApronTableBlock, PlaceMatRegistrate> apronTable(String name) {
+        return placeMatBlock(name, p -> (PlaceMatApronTableBlock) TFCCompat.INSTANCE.createPlaceMatApronTableBlock(p));
     }
 }

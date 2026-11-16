@@ -15,10 +15,7 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.properties.WoodType;
 
 import net.placemats.PlaceMatMain;
-import net.placemats.common.block.CabinetMakerTableBlock;
-import net.placemats.common.block.PlaceMatAttachedStairsBlock;
-import net.placemats.common.block.PlaceMatCardinalBlock;
-import net.placemats.common.block.PlaceMatTableBlock;
+import net.placemats.common.block.*;
 import net.placemats.compat.tfc.TFCCompat;
 
 import static net.minecraft.world.level.block.Block.box;
@@ -257,6 +254,46 @@ public final class PlaceMatBlocks {
                         Map.of(
                                 0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
                                 1, Component.translatable("gui.place_mats.cabinet_maker.key.legs")
+                        )
+                );
+                block.previewYOffset(-5.0f);
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.COFFEE_TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.COFFEE_TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
+
+    // Dynamic Materials Apron Coffee Table
+    public static final BlockEntry<PlaceMatApronTableBlock> COFFEE_TABLE_APRON = PlaceMatRegistries.REGISTRATE.apronTable("coffee_table_apron")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Coffee Table [Apron]")
+            .blockstate(apronTableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")),
+                            new TextureConfig("2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1"))),
+                    "coffee_table_apron"
+            ))
+            .onRegister(block -> {
+                block.containerSize(12);
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 8, 16));
+                block.collisionShape(Block.box(0, 0, 0, 16, 8, 16));
+                block.addRange(basicPlacementRange(Block.box(0, 8, 0, 16, 16, 16), 16 / 16F));
+                block.dynamicBlock(3,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"),
+                                "2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
                         )
                 );
                 block.previewYOffset(-5.0f);

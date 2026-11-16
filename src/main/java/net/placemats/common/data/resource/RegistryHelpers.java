@@ -18,6 +18,7 @@ import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.client.model.generators.BlockModelBuilder;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
+import net.placemats.common.block.PlaceMatApronTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatStairsBlock;
@@ -235,6 +236,156 @@ public class RegistryHelpers {
             builder.part().modelFile(legModel).rotationY(270).addModel()
                 .condition(PlaceMatTableBlock.SOUTH, false)
                 .condition(PlaceMatTableBlock.WEST, false);
+        };
+    }
+
+    /**
+     * Helper method for creating multipart apron table blockstates with an unconditional base tabletop,
+     * corner legs, and perimeters.
+     * @param textures TextureConfig list.
+     * @param blockName Name of the table type.
+     * @return Blockstate provider.
+     */
+    public static <T extends PlaceMatApronTableBlock> NonNullBiConsumer<DataGenContext<Block, T>, RegistrateBlockstateProvider> apronTableBlockState(
+        List<TextureConfig> textures,
+        String blockName) {
+
+        return (ctx, prov) -> {
+            var baseModel = prov.models().withExistingParent(ctx.getName() + "_base", prov.modLoc("block/" + blockName + "_base_parent"));
+            var legModel = prov.models().withExistingParent(ctx.getName() + "_leg", prov.modLoc("block/" + blockName + "_leg_parent"));
+            var sideModel = prov.models().withExistingParent(ctx.getName() + "_side", prov.modLoc("block/" + blockName + "_side_parent"));
+            var innerCornerModel = prov.models().withExistingParent(ctx.getName() + "_inner_corner", prov.modLoc("block/" + blockName + "_inner_corner_parent"));
+            var outerCornerFillerModel = prov.models().withExistingParent(ctx.getName() + "_outer_corner_filler", prov.modLoc("block/" + blockName + "_outer_corner_filler_parent"));
+            var outerCornerFiller2Model = prov.models().withExistingParent(ctx.getName() + "_outer_corner_filler2", prov.modLoc("block/" + blockName + "_outer_corner_filler2_parent"));
+            var itemModel = prov.models().withExistingParent(ctx.getName(), prov.modLoc("block/" + blockName + "_parent"));
+
+            var allModels = new BlockModelBuilder[]{ baseModel, legModel, sideModel, innerCornerModel, outerCornerFillerModel, outerCornerFiller2Model, itemModel };
+            for (var model : allModels) {
+                for (TextureConfig texture : textures) {
+                    model.texture(texture.index(), texture.resource());
+                }
+            }
+
+            var builder = prov.getMultipartBuilder(ctx.getEntry());
+
+            // Base Tabletop Model
+            builder.part().modelFile(baseModel).addModel();
+
+            // NW Leg (rot 0)
+            builder.part().modelFile(legModel).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.WEST, false);
+
+            // NE Leg (rot 90)
+            builder.part().modelFile(legModel).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.EAST, false);
+
+            // SE Leg (rot 180)
+            builder.part().modelFile(legModel).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.EAST, false);
+
+            // SW Leg (rot 270)
+            builder.part().modelFile(legModel).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.WEST, false);
+
+            // West Side (rot 0)
+            builder.part().modelFile(sideModel).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.WEST, false)
+                .condition(PlaceMatTableBlock.NORTH, true)
+                .condition(PlaceMatTableBlock.SOUTH, true);
+
+            // North Side (rot 90)
+            builder.part().modelFile(sideModel).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.WEST, true)
+                .condition(PlaceMatTableBlock.EAST, true);
+
+            // East Side (rot 180)
+            builder.part().modelFile(sideModel).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.EAST, false)
+                .condition(PlaceMatTableBlock.NORTH, true)
+                .condition(PlaceMatTableBlock.SOUTH, true);
+
+            // South Side (rot 270)
+            builder.part().modelFile(sideModel).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.WEST, true)
+                .condition(PlaceMatTableBlock.EAST, true);
+
+            // NW Filler (rot 0)
+            builder.part().modelFile(outerCornerFillerModel).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.WEST, false)
+                .condition(PlaceMatTableBlock.SOUTH, true);
+
+            // NW Filler2 (rot 90)
+            builder.part().modelFile(outerCornerFiller2Model).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.WEST, false)
+                .condition(PlaceMatTableBlock.EAST, true);
+
+            // NE Filler (rot 90)
+            builder.part().modelFile(outerCornerFillerModel).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.EAST, false)
+                .condition(PlaceMatTableBlock.WEST, true);
+
+            // NE Filler2 (rot 180)
+            builder.part().modelFile(outerCornerFiller2Model).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.NORTH, false)
+                .condition(PlaceMatTableBlock.EAST, false)
+                .condition(PlaceMatTableBlock.SOUTH, true);
+
+            // SE Filler (rot 180)
+            builder.part().modelFile(outerCornerFillerModel).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.EAST, false)
+                .condition(PlaceMatTableBlock.NORTH, true);
+
+            // SE Filler2 (rot 270)
+            builder.part().modelFile(outerCornerFiller2Model).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.EAST, false)
+                .condition(PlaceMatTableBlock.WEST, true);
+
+            // SW Filler (rot 270)
+            builder.part().modelFile(outerCornerFillerModel).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.WEST, false)
+                .condition(PlaceMatTableBlock.EAST, true);
+
+            // SW Filler2 (rot 0)
+            builder.part().modelFile(outerCornerFiller2Model).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, false)
+                .condition(PlaceMatTableBlock.WEST, false)
+                .condition(PlaceMatTableBlock.NORTH, true);
+
+            // SE Inner Corner (rot 0)
+            builder.part().modelFile(innerCornerModel).rotationY(0).addModel()
+                .condition(PlaceMatTableBlock.EAST, true)
+                .condition(PlaceMatTableBlock.SOUTH, true)
+                .condition(PlaceMatApronTableBlock.SOUTH_EAST, false);
+
+            // SW Inner Corner (rot 90)
+            builder.part().modelFile(innerCornerModel).rotationY(90).addModel()
+                .condition(PlaceMatTableBlock.SOUTH, true)
+                .condition(PlaceMatTableBlock.WEST, true)
+                .condition(PlaceMatApronTableBlock.SOUTH_WEST, false);
+
+            // NW Inner Corner (rot 180)
+            builder.part().modelFile(innerCornerModel).rotationY(180).addModel()
+                .condition(PlaceMatTableBlock.WEST, true)
+                .condition(PlaceMatTableBlock.NORTH, true)
+                .condition(PlaceMatApronTableBlock.NORTH_WEST, false);
+
+            // NE Inner Corner (rot 270)
+            builder.part().modelFile(innerCornerModel).rotationY(270).addModel()
+                .condition(PlaceMatTableBlock.NORTH, true)
+                .condition(PlaceMatTableBlock.EAST, true)
+                .condition(PlaceMatApronTableBlock.NORTH_EAST, false);
         };
     }
 

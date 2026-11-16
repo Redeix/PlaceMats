@@ -14,6 +14,9 @@ import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * Place mat block that can form "multiblocks" that have special corner models.
+ */
 @SuppressWarnings({ "deprecation", "unused" })
 public class PlaceMatTableBlock extends PlaceMatBlock {
 

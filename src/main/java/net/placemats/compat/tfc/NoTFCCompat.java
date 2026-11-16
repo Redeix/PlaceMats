@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.level.block.Block;
 import com.google.gson.JsonElement;
 import net.minecraftforge.fluids.FluidStack;
+import net.placemats.common.block.PlaceMatApronTableBlock;
 import net.placemats.common.block.PlaceMatAttachedStairsBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -45,6 +46,9 @@ public class NoTFCCompat implements TFCCompat {
     }
     @Override public Block createPlaceMatTableBlock(Block.Properties properties) {
         return new PlaceMatTableBlock(properties);
+    }
+    @Override public Block createPlaceMatApronTableBlock(Block.Properties properties) {
+        return new PlaceMatApronTableBlock(properties);
     }
     @Override public FluidStack getContainedFluid(ItemStack stack) {
         return FluidStack.EMPTY;

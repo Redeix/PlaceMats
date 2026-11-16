@@ -1,0 +1,8 @@
+{
+  "parent": "place_mats:block/coffee_table_apron_outer_corner_filler_parent",
+  "textures": {
+    "0": "place_mats:block/storage_rack_base",
+    "1": "place_mats:block/storage_rack_fluted_leg",
+    "2": "place_mats:block/storage_rack_base_1"
+  }
+}
