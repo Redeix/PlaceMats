@@ -103,6 +103,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
     private final Map<String, ResourceLocation> chosenTextures = new HashMap<>();
     private final Map<String, Integer> chosenColors = new HashMap<>();
+    private final Map<String, Integer> chosenEmissives = new HashMap<>();
     private final Map<Integer, List<ResourceLocation>> availableTexturesPerKey = new HashMap<>();
     private final List<BlockState> cycleableBlockStates = new ArrayList<>();
     private int currentBlockStateIndex = 0;
@@ -128,7 +129,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         this.confirmButton = Button.builder(Component.literal("▼"), btn -> {
             boolean transformAll = hasShiftDown();
-            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), new HashMap<>(chosenColors), transformAll));
+            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), new HashMap<>(chosenColors), new HashMap<>(chosenEmissives), transformAll));
         })
             .bounds(this.leftPos + BUTTON_X, this.topPos + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
             .tooltip(Tooltip.create(Component.translatable("gui.place_mats.cabinet_maker.confirm")))
@@ -136,7 +137,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         this.addRenderableWidget(this.confirmButton);
 
-        this.colorPickerWidget = new ColorPickerWidget(this.font, this.leftPos + this.imageWidth, this.topPos + MATERIAL_SLOT_Y, this::onColorPickerChanged);
+        this.colorPickerWidget = new ColorPickerWidget(this.font, this.leftPos + this.imageWidth, this.topPos + MATERIAL_SLOT_Y, true, this::onColorPickerChanged, this::onEmissiveChanged);
         this.colorPickerWidget.visible = false;
         this.addRenderableWidget(this.colorPickerWidget);
 
@@ -149,6 +150,21 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         if (dynamicBlock != null && activeColorKeyIndex >= 0 && activeColorKeyIndex < keyCount && activeColorKeyIndex < dynamicBlock.getTextureKeys().size()) {
             String key = dynamicBlock.getTextureKeys().get(activeColorKeyIndex);
             chosenColors.put(key, color);
+            updateConfirmButton();
+        }
+    }
+
+    private void onEmissiveChanged(float emissive) {
+        int keyCount = this.menu.getDynamicKeyCount();
+        IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
+        if (dynamicBlock != null && activeColorKeyIndex >= 0 && activeColorKeyIndex < keyCount && activeColorKeyIndex < dynamicBlock.getTextureKeys().size()) {
+            String key = dynamicBlock.getTextureKeys().get(activeColorKeyIndex);
+            int skylight = Math.round(emissive * 15.0f);
+            if (skylight > 0) {
+                chosenEmissives.put(key, skylight);
+            } else {
+                chosenEmissives.remove(key);
+            }
             updateConfirmButton();
         }
     }
@@ -304,6 +320,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 lastInputStack = currentInput.copy();
                 chosenTextures.clear();
                 chosenColors.clear();
+                chosenEmissives.clear();
                 cycleableBlockStates.clear();
                 currentBlockStateIndex = 0;
                 if (!currentInput.isEmpty() && currentInput.getItem() instanceof BlockItem bi) {
@@ -313,6 +330,8 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 chosenTextures.putAll(existing);
                 Map<String, Integer> existingColors = IDynamicTexturedBlock.getDynamicColors(currentInput);
                 chosenColors.putAll(existingColors);
+                Map<String, Integer> existingEmissives = IDynamicTexturedBlock.getDynamicEmissives(currentInput);
+                chosenEmissives.putAll(existingEmissives);
             }
             updateState();
         }
@@ -364,11 +383,14 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     String activeKey = keys.get(activeColorKeyIndex);
                     Integer col = chosenColors.get(activeKey);
                     colorPickerWidget.setColor(col != null ? col : 0xFFFFFFFF);
+                    Integer em = chosenEmissives.get(activeKey);
+                    colorPickerWidget.setSkylightLevel(em != null ? em : 0);
                 }
             }
         } else {
             chosenTextures.clear();
             chosenColors.clear();
+            chosenEmissives.clear();
             if (colorPickerWidget != null) {
                 colorPickerWidget.visible = false;
                 colorPickerWidget.getHexEditBox().setFocused(false);
@@ -386,16 +408,21 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             int keyCount = this.menu.getDynamicKeyCount();
             IDynamicTexturedBlock dynamicBlock = this.menu.getDynamicBlock();
             ItemStack inputStack = this.menu.getContainer().getItem(CabinetMakerTableContainer.INPUT_SLOT);
-            confirmButton.active = keyCount > 0 && !inputStack.isEmpty() && hasCraftChanges(inputStack, dynamicBlock, chosenTextures, chosenColors);
+            confirmButton.active = keyCount > 0 && !inputStack.isEmpty() && hasCraftChanges(inputStack, dynamicBlock, chosenTextures, chosenColors, chosenEmissives);
         }
     }
 
     public static boolean hasCraftChanges(ItemStack input, IDynamicTexturedBlock dynamicBlock, Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors) {
+        return hasCraftChanges(input, dynamicBlock, chosenTextures, chosenColors, Collections.emptyMap());
+    }
+
+    public static boolean hasCraftChanges(ItemStack input, IDynamicTexturedBlock dynamicBlock, Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, Map<String, Integer> chosenEmissives) {
         if (input.isEmpty() || dynamicBlock == null) {
             return false;
         }
         Map<String, ResourceLocation> existingTextures = IDynamicTexturedBlock.getDynamicTextures(input);
         Map<String, Integer> existingColors = IDynamicTexturedBlock.getDynamicColors(input);
+        Map<String, Integer> existingEmissives = IDynamicTexturedBlock.getDynamicEmissives(input);
 
         for (String key : dynamicBlock.getTextureKeys()) {
             ResourceLocation chosen = chosenTextures != null ? chosenTextures.get(key) : null;
@@ -410,6 +437,14 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             Integer chosenCol = chosenColors != null ? chosenColors.get(key) : null;
             Integer currentCol = existingColors.get(key);
             if (!Objects.equals(chosenCol, currentCol)) {
+                return true;
+            }
+
+            Integer chosenEm = chosenEmissives != null ? chosenEmissives.get(key) : null;
+            Integer currentEm = existingEmissives.get(key);
+            int chosenEmVal = chosenEm != null ? chosenEm : 0;
+            int currentEmVal = currentEm != null ? currentEm : 0;
+            if (chosenEmVal != currentEmVal) {
                 return true;
             }
         }
@@ -569,6 +604,8 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                             String key = keys.get(keyIdx);
                             Integer currentTint = this.chosenColors.get(key);
                             this.colorPickerWidget.setColor(currentTint != null ? currentTint : 0xFFFFFFFF);
+                            Integer currentEm = this.chosenEmissives.get(key);
+                            this.colorPickerWidget.setSkylightLevel(currentEm != null ? currentEm : 0);
                             this.colorPickerWidget.visible = true;
                             this.colorPickerWidget.getHexEditBox().setFocused(false);
                         }
@@ -728,7 +765,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                     matStates.put(String.valueOf(i), biMat.getBlock().defaultBlockState());
                 }
             }
-            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, stateToRender, matStates, chosenTextures, chosenColors);
+            render3DPreview(graphics, this.leftPos + PREVIEW_BOX_X + (PREVIEW_BOX_SIZE / 2), this.topPos + PREVIEW_BOX_Y + (PREVIEW_BOX_SIZE / 2), PREVIEW_BOX_SIZE - 10, rotY, inputStack, stateToRender, matStates, chosenTextures, chosenColors, chosenEmissives);
         }
     }
 
@@ -824,7 +861,11 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
      * @param colors the color selections to apply.
      */
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, null, textures, colors);
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, null, textures, colors, Collections.emptyMap());
+    }
+
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, Map<String, ResourceLocation> textures, Map<String, Integer> colors, Map<String, Integer> emissives) {
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, null, textures, colors, emissives);
     }
 
     /**
@@ -842,15 +883,24 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
      * @param colors the color selections to apply.
      */
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
-        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, (Map<String, BlockState>) null, textures, colors);
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, (Map<String, BlockState>) null, textures, colors, Collections.emptyMap());
+    }
+
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, Map<String, ResourceLocation> textures, Map<String, Integer> colors, Map<String, Integer> emissives) {
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, (Map<String, BlockState>) null, textures, colors, emissives);
     }
 
     public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
         Map<String, BlockState> materials = materialState != null ? Collections.singletonMap("0", materialState) : null;
-        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, materials, textures, colors);
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, materials, textures, colors, Collections.emptyMap());
     }
 
-    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> textures, Map<String, Integer> colors) {
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> textures, Map<String, Integer> colors, Map<String, Integer> emissives) {
+        Map<String, BlockState> materials = materialState != null ? Collections.singletonMap("0", materialState) : null;
+        render3DPreview(guiGraphics, x, y, size, rotationY, inputStack, blockState, materials, textures, colors, emissives);
+    }
+
+    public static void render3DPreview(GuiGraphics guiGraphics, int x, int y, int size, float rotationY, ItemStack inputStack, @Nullable BlockState blockState, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> textures, Map<String, Integer> colors, Map<String, Integer> emissives) {
         if (inputStack.isEmpty()) {
             return;
         }
@@ -879,13 +929,13 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         BakedModel modelToRender = baseModel;
         if (baseModel instanceof DynamicTexturedBakedModel dtbm) {
             dynamicBlock = dtbm.getDynamicBlock();
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, effectiveMaterial, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtbm, blockState, effectiveMaterial, textures, colors, emissives);
         } else if (baseModel instanceof DynamicTexturedBakedModel.DynamicTexturedItemBakedModel dtibm) {
             dynamicBlock = dtibm.getParent().getDynamicBlock();
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, effectiveMaterial, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(dtibm.getParent(), blockState, effectiveMaterial, textures, colors, emissives);
         } else if (dynamicBlock != null) {
             DynamicTexturedBakedModel tempDtbm = new DynamicTexturedBakedModel(baseModel, dynamicBlock);
-            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, effectiveMaterial, textures, colors);
+            modelToRender = new DynamicTexturedBakedModel.DynamicTexturedItemBakedModel(tempDtbm, blockState, effectiveMaterial, textures, colors, emissives);
         } else if (blockState != null && blockState.getBlock() instanceof IDynamicTexturedBlock dtb) {
             dynamicBlock = dtb;
         }
@@ -910,7 +960,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             false,
             poseStack,
             bufferSource,
-            LightTexture.FULL_SKY,
+            LightTexture.FULL_BLOCK,
             OverlayTexture.NO_OVERLAY,
             modelToRender
         );

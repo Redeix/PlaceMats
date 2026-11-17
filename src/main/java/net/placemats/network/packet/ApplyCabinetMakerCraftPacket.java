@@ -1,5 +1,6 @@
 package net.placemats.network.packet;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -9,15 +10,22 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
 
+@SuppressWarnings("unused")
 public class ApplyCabinetMakerCraftPacket {
 
     private final Map<String, ResourceLocation> chosenTextures;
     private final Map<String, Integer> chosenColors;
+    private final Map<String, Integer> chosenEmissives;
     private final boolean transformAll;
 
     public ApplyCabinetMakerCraftPacket(Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, boolean transformAll) {
+        this(chosenTextures, chosenColors, Collections.emptyMap(), transformAll);
+    }
+
+    public ApplyCabinetMakerCraftPacket(Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, Map<String, Integer> chosenEmissives, boolean transformAll) {
         this.chosenTextures = chosenTextures != null ? chosenTextures : new HashMap<>();
         this.chosenColors = chosenColors != null ? chosenColors : new HashMap<>();
+        this.chosenEmissives = chosenEmissives != null ? chosenEmissives : new HashMap<>();
         this.transformAll = transformAll;
     }
 
@@ -29,6 +37,11 @@ public class ApplyCabinetMakerCraftPacket {
         }
         buf.writeVarInt(msg.chosenColors.size());
         for (Map.Entry<String, Integer> entry : msg.chosenColors.entrySet()) {
+            buf.writeUtf(entry.getKey());
+            buf.writeInt(entry.getValue());
+        }
+        buf.writeVarInt(msg.chosenEmissives.size());
+        for (Map.Entry<String, Integer> entry : msg.chosenEmissives.entrySet()) {
             buf.writeUtf(entry.getKey());
             buf.writeInt(entry.getValue());
         }
@@ -50,8 +63,15 @@ public class ApplyCabinetMakerCraftPacket {
             int color = buf.readInt();
             colors.put(key, color);
         }
+        int emissiveSize = buf.readVarInt();
+        Map<String, Integer> emissives = new HashMap<>();
+        for (int i = 0; i < emissiveSize; i++) {
+            String key = buf.readUtf();
+            int emissive = buf.readInt();
+            emissives.put(key, emissive);
+        }
         boolean transformAll = buf.readBoolean();
-        return new ApplyCabinetMakerCraftPacket(textures, colors, transformAll);
+        return new ApplyCabinetMakerCraftPacket(textures, colors, emissives, transformAll);
     }
 
     public static void handle(ApplyCabinetMakerCraftPacket msg, Supplier<NetworkEvent.Context> ctxSupplier) {
@@ -59,7 +79,7 @@ public class ApplyCabinetMakerCraftPacket {
         ctx.enqueueWork(() -> {
             ServerPlayer player = ctx.getSender();
             if (player != null && player.containerMenu instanceof CabinetMakerTableContainer menu) {
-                menu.executeCraft(msg.chosenTextures, msg.chosenColors, msg.transformAll);
+                menu.executeCraft(msg.chosenTextures, msg.chosenColors, msg.chosenEmissives, msg.transformAll);
             }
         });
         ctx.setPacketHandled(true);

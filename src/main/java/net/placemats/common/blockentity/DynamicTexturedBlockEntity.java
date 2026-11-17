@@ -26,6 +26,7 @@ public abstract class DynamicTexturedBlockEntity extends BlockEntity implements 
 
     protected final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     protected final Map<String, Integer> dynamicColors = new HashMap<>();
+    protected final Map<String, Integer> dynamicEmissives = new HashMap<>();
     protected final Map<String, BlockState> dynamicMaterials = new HashMap<>();
     @Nullable
     protected BlockState dynamicMaterial;
@@ -115,6 +116,23 @@ public abstract class DynamicTexturedBlockEntity extends BlockEntity implements 
         this.dynamicColors.clear();
         if (colors != null) {
             this.dynamicColors.putAll(colors);
+        }
+        setChanged();
+        if (this.level != null && this.level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
+    @Override
+    public Map<String, Integer> getDynamicEmissives() {
+        return Collections.unmodifiableMap(this.dynamicEmissives);
+    }
+
+    @Override
+    public void setDynamicEmissives(Map<String, Integer> emissives) {
+        this.dynamicEmissives.clear();
+        if (emissives != null) {
+            this.dynamicEmissives.putAll(emissives);
         }
         setChanged();
         if (this.level != null && this.level.isClientSide) {

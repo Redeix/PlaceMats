@@ -72,6 +72,7 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
     private final List<PlacedItem> placedItems = new ArrayList<>();
     private final Map<String, ResourceLocation> dynamicTextures = new HashMap<>();
     private final Map<String, Integer> dynamicColors = new HashMap<>();
+    private final Map<String, Integer> dynamicEmissives = new HashMap<>();
     private final Map<String, BlockState> dynamicMaterials = new HashMap<>();
     @Nullable
     private BlockState dynamicMaterial;
@@ -137,6 +138,23 @@ public class PlaceMatBlockEntity extends BlockEntity implements IDynamicTextured
         }
         setChanged();
         if (level != null && level.isClientSide) {
+            requestModelDataUpdate();
+        }
+    }
+
+    @Override
+    public Map<String, Integer> getDynamicEmissives() {
+        return Collections.unmodifiableMap(this.dynamicEmissives);
+    }
+
+    @Override
+    public void setDynamicEmissives(Map<String, Integer> emissives) {
+        this.dynamicEmissives.clear();
+        if (emissives != null) {
+            this.dynamicEmissives.putAll(emissives);
+        }
+        setChanged();
+        if (this.level != null && this.level.isClientSide) {
             requestModelDataUpdate();
         }
     }

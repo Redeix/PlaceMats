@@ -1,6 +1,6 @@
 package net.placemats.common.inventory;
 
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.Map;
 import lombok.Getter;
 import net.minecraft.resources.ResourceLocation;
@@ -16,7 +16,6 @@ import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.block.state.BlockState;
 import net.placemats.client.gui.CabinetMakerTableScreen;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.data.PlaceMatBlocks;
@@ -24,6 +23,7 @@ import net.placemats.common.data.PlaceMatContainers;
 import net.placemats.common.data.PlaceMatTags;
 import org.jetbrains.annotations.NotNull;
 
+@SuppressWarnings("unused")
 public class CabinetMakerTableContainer extends AbstractContainerMenu {
 
     public static final int INPUT_SLOT = 0;
@@ -165,12 +165,16 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
     }
 
     public void executeCraft(Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, boolean transformAll) {
+        executeCraft(chosenTextures, chosenColors, Collections.emptyMap(), transformAll);
+    }
+
+    public void executeCraft(Map<String, ResourceLocation> chosenTextures, Map<String, Integer> chosenColors, Map<String, Integer> chosenEmissives, boolean transformAll) {
         ItemStack input = this.container.getItem(INPUT_SLOT);
         if (input.isEmpty() || !(input.getItem() instanceof BlockItem bi) || !(bi.getBlock() instanceof IDynamicTexturedBlock dtb)) {
             return;
         }
 
-        if (!CabinetMakerTableScreen.hasCraftChanges(input, dtb, chosenTextures, chosenColors)) {
+        if (!CabinetMakerTableScreen.hasCraftChanges(input, dtb, chosenTextures, chosenColors, chosenEmissives)) {
             return;
         }
 
@@ -180,6 +184,7 @@ public class CabinetMakerTableContainer extends AbstractContainerMenu {
         outputTemplate.setCount(1);
         IDynamicTexturedBlock.setDynamicTextures(outputTemplate, chosenTextures);
         IDynamicTexturedBlock.setDynamicColors(outputTemplate, chosenColors);
+        IDynamicTexturedBlock.setDynamicEmissives(outputTemplate, chosenEmissives);
 
         ItemStack matSlot0 = this.container.getItem(MATERIAL_SLOT_START);
         if (!matSlot0.isEmpty() && matSlot0.getItem() instanceof BlockItem biMat) {

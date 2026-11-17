@@ -24,12 +24,14 @@ import org.jetbrains.annotations.NotNull;
 /**
  * HSVA Color Picker Widget.
  */
-@SuppressWarnings("UnnecessaryLocalVariable")
+@SuppressWarnings({"UnnecessaryLocalVariable", "unused"})
 public class ColorPickerWidget extends AbstractWidget {
     public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "textures/gui/widget/color_picker_widget.png");
+    public static final ResourceLocation EMISSIVE_TEXTURE = ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "textures/gui/widget/emissive_color_picker_widget.png");
     public static final int TEXTURE_SIZE = 128;
 
     public static final int TAB_WIDTH = 68;
+    public static final int TAB_WIDTH_EMISSIVE = 84;
     public static final int TAB_HEIGHT = 127;
     public static final int TAB_U = 0;
     public static final int TAB_V = 0;
@@ -42,10 +44,10 @@ public class ColorPickerWidget extends AbstractWidget {
     private static final int COLOR_TEXT_Y = COLOR_PREVIEW_Y;
     private static final int COLOR_TEXT_WIDTH = 48;
 
-    private static final int SLIDER_BAR_U = TAB_WIDTH;
-    private static final int SLIDER_BAR_V = 0;
-    private static final int SLIDER_BAR_WIDTH = 6;
     private static final int SLIDER_BAR_HEIGHT = 3;
+    private static final int SLIDER_BAR_WIDTH = 6;
+    private static final int SLIDER_BAR_U = TEXTURE_SIZE - SLIDER_BAR_WIDTH;
+    private static final int SLIDER_BAR_V = 0;
 
     private static final int COLOR_BAR_WIDTH = 2;
     private static final int COLOR_BAR_HEIGHT = 76;
@@ -59,17 +61,22 @@ public class ColorPickerWidget extends AbstractWidget {
     private static final int V_BAR_Y = H_BAR_Y;
     private static final int A_BAR_X = V_BAR_X + COLOR_BAR_SPACING;
     private static final int A_BAR_Y = H_BAR_Y;
+    private static final int E_BAR_X = A_BAR_X + COLOR_BAR_SPACING;
+    private static final int E_BAR_Y = H_BAR_Y;
 
-    public static final int OPEN_TAB_BUTTON_U = SLIDER_BAR_U;
-    public static final int OPEN_TAB_BUTTON_V = SLIDER_BAR_V + SLIDER_BAR_HEIGHT;
     public static final int OPEN_TAB_WIDTH = 16;
     public static final int OPEN_TAB_HEIGHT = 7;
+    public static final int OPEN_TAB_BUTTON_U = TEXTURE_SIZE - OPEN_TAB_WIDTH;
+    public static final int OPEN_TAB_BUTTON_V = SLIDER_BAR_V + SLIDER_BAR_HEIGHT;
     public static final int CLOSE_TAB_BUTTON_U = OPEN_TAB_BUTTON_U;
     public static final int CLOSE_TAB_BUTTON_V = OPEN_TAB_BUTTON_V + OPEN_TAB_HEIGHT;
 
     private final Font font;
     @Getter private final EditBox hexEditBox;
     @Setter private Consumer<Integer> colorChangeListener;
+    @Setter private Consumer<Float> emissiveChangeListener;
+    @Getter private boolean emissive;
+    @Getter private float emissiveValue = 0.0f;
 
     @Getter private float hue = 0.0f;
     @Getter private float saturation = 1.0f;
@@ -83,19 +90,50 @@ public class ColorPickerWidget extends AbstractWidget {
     private long lastTextClickTime = 0L;
 
     private enum SliderType {
-        NONE, HUE, SATURATION, VALUE, ALPHA
+        NONE, HUE, SATURATION, VALUE, ALPHA, EMISSIVE
     }
 
     public ColorPickerWidget(Font font, int x, int y, Consumer<Integer> colorChangeListener) {
-        super(x, y, TAB_WIDTH, TAB_HEIGHT, Component.empty());
+        this(font, x, y, false, colorChangeListener, null);
+    }
+
+    public ColorPickerWidget(Font font, int x, int y, boolean emissive, Consumer<Integer> colorChangeListener) {
+        this(font, x, y, emissive, colorChangeListener, null);
+    }
+
+    public ColorPickerWidget(Font font, int x, int y, Consumer<Integer> colorChangeListener, Consumer<Float> emissiveChangeListener) {
+        this(font, x, y, true, colorChangeListener, emissiveChangeListener);
+    }
+
+    public ColorPickerWidget(Font font, int x, int y, boolean emissive, Consumer<Integer> colorChangeListener, Consumer<Float> emissiveChangeListener) {
+        super(x, y, emissive ? TAB_WIDTH_EMISSIVE : TAB_WIDTH, TAB_HEIGHT, Component.empty());
         this.font = font;
+        this.emissive = emissive;
         this.colorChangeListener = colorChangeListener;
+        this.emissiveChangeListener = emissiveChangeListener;
         this.hexEditBox = new EditBox(font, x + COLOR_TEXT_X, y + COLOR_TEXT_Y, COLOR_TEXT_WIDTH, 10, Component.literal(""));
         this.hexEditBox.setBordered(false);
         this.hexEditBox.setMaxLength(8);
         this.hexEditBox.setTextColor(0xFFFFFF);
         this.hexEditBox.setResponder(this::onHexInputChanged);
         setColor(0xFFFFFFFF, true);
+    }
+
+    public void setEmissive(boolean emissive) {
+        this.emissive = emissive;
+        this.width = emissive ? TAB_WIDTH_EMISSIVE : TAB_WIDTH;
+    }
+
+    public void setEmissiveValue(float emissiveValue) {
+        this.emissiveValue = Mth.clamp(emissiveValue, 0.0f, 1.0f);
+    }
+
+    public int getSkylightLevel() {
+        return Math.round(this.emissiveValue * 15.0f);
+    }
+
+    public void setSkylightLevel(int level) {
+        setEmissiveValue(level / 15.0f);
     }
 
     @Override
@@ -215,16 +253,35 @@ public class ColorPickerWidget extends AbstractWidget {
 
     private void updateSliderFromMouse(double mouseY, SliderType type) {
         int barY = getY() + H_BAR_Y;
-        float val = 1.0f - (float) (mouseY - barY) / (float) (COLOR_BAR_HEIGHT - 1);
+        float val = (type == SliderType.EMISSIVE)
+                ? (float) (mouseY - barY) / (float) (COLOR_BAR_HEIGHT - 1)
+                : 1.0f - (float) (mouseY - barY) / (float) (COLOR_BAR_HEIGHT - 1);
         val = Mth.clamp(val, 0.0f, 1.0f);
         switch (type) {
-            case HUE -> this.hue = val;
-            case SATURATION -> this.saturation = val;
-            case VALUE -> this.value = val;
-            case ALPHA -> this.alpha = val;
+            case HUE -> {
+                this.hue = val;
+                recalculateColorFromHsv();
+            }
+            case SATURATION -> {
+                this.saturation = val;
+                recalculateColorFromHsv();
+            }
+            case VALUE -> {
+                this.value = val;
+                recalculateColorFromHsv();
+            }
+            case ALPHA -> {
+                this.alpha = val;
+                recalculateColorFromHsv();
+            }
+            case EMISSIVE -> {
+                this.emissiveValue = val;
+                if (this.emissiveChangeListener != null) {
+                    this.emissiveChangeListener.accept(this.emissiveValue);
+                }
+            }
             default -> {}
         }
-        recalculateColorFromHsv();
     }
 
     public void tick() {
@@ -277,7 +334,13 @@ public class ColorPickerWidget extends AbstractWidget {
                 updateSliderFromMouse(mouseY, SliderType.ALPHA);
                 return true;
             }
-            return mouseX >= getX() && mouseX < getX() + TAB_WIDTH && mouseY >= getY() && mouseY < getY() + TAB_HEIGHT;
+            if (this.emissive && isMouseOverBar(mouseX, mouseY, E_BAR_X)) {
+                this.activeSlider = SliderType.EMISSIVE;
+                updateSliderFromMouse(mouseY, SliderType.EMISSIVE);
+                return true;
+            }
+            int tabWidth = this.emissive ? TAB_WIDTH_EMISSIVE : TAB_WIDTH;
+            return mouseX >= getX() && mouseX < getX() + tabWidth && mouseY >= getY() && mouseY < getY() + TAB_HEIGHT;
         }
         return false;
     }
@@ -389,7 +452,9 @@ public class ColorPickerWidget extends AbstractWidget {
         }
 
         // Tab Background
-        graphics.blit(TEXTURE, getX(), getY(), 0, TAB_U, TAB_V, TAB_WIDTH, TAB_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+        ResourceLocation tabTexture = this.emissive ? EMISSIVE_TEXTURE : TEXTURE;
+        int tabWidth = this.emissive ? TAB_WIDTH_EMISSIVE : TAB_WIDTH;
+        graphics.blit(tabTexture, getX(), getY(), 0, TAB_U, TAB_V, tabWidth, TAB_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
 
         // Color Preview
         int previewX = getX() + COLOR_PREVIEW_X;
@@ -426,6 +491,9 @@ public class ColorPickerWidget extends AbstractWidget {
         graphics.drawCenteredString(this.font, "S", getX() + S_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
         graphics.drawCenteredString(this.font, "V", getX() + V_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
         graphics.drawCenteredString(this.font, "A", getX() + A_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
+        if (this.emissive) {
+            graphics.drawCenteredString(this.font, "E", getX() + E_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
+        }
 
         // Color Bar Gradients
         int hX = getX() + H_BAR_X;
@@ -436,6 +504,8 @@ public class ColorPickerWidget extends AbstractWidget {
         int vY = getY() + V_BAR_Y;
         int aX = getX() + A_BAR_X;
         int aY = getY() + A_BAR_Y;
+        int eX = getX() + E_BAR_X;
+        int eY = getY() + E_BAR_Y;
 
         for (int i = 0; i < COLOR_BAR_HEIGHT; i++) {
             float frac = 1.0f - (float) i / (float) (COLOR_BAR_HEIGHT - 1);
@@ -451,6 +521,11 @@ public class ColorPickerWidget extends AbstractWidget {
             // V
             int vRgb = hsvToRgb(this.hue, 1.0f, frac);
             graphics.fill(vX, vY + i, vX + COLOR_BAR_WIDTH, vY + i + 1, 0xFF000000 | vRgb);
+
+            // E
+            if (this.emissive) {
+                graphics.fill(eX, eY + i, eX + COLOR_BAR_WIDTH, eY + i + 1, 0xFF000000 | sRgb);
+            }
         }
 
         // A
@@ -459,15 +534,19 @@ public class ColorPickerWidget extends AbstractWidget {
         graphics.fillGradient(aX, aY, aX + COLOR_BAR_WIDTH, aY + COLOR_BAR_HEIGHT, topA, bottomA);
 
         // Slider Handles
-        renderSliderHandle(graphics, hX, hY, this.hue);
-        renderSliderHandle(graphics, sX, sY, this.saturation);
-        renderSliderHandle(graphics, vX, vY, this.value);
-        renderSliderHandle(graphics, aX, aY, this.alpha);
+        renderSliderHandle(graphics, hX, hY, this.hue, true);
+        renderSliderHandle(graphics, sX, sY, this.saturation, true);
+        renderSliderHandle(graphics, vX, vY, this.value, true);
+        renderSliderHandle(graphics, aX, aY, this.alpha, true);
+        if (this.emissive) {
+            renderSliderHandle(graphics, eX, eY, this.emissiveValue, false);
+        }
     }
 
-    private void renderSliderHandle(GuiGraphics graphics, int barX, int barY, float val) {
+    private void renderSliderHandle(GuiGraphics graphics, int barX, int barY, float val, boolean inverted) {
         int indicatorX = barX + (COLOR_BAR_WIDTH - SLIDER_BAR_WIDTH) / 2;
-        int indicatorY = barY + Math.round((1.0f - val) * (COLOR_BAR_HEIGHT - 1)) - (SLIDER_BAR_HEIGHT / 2);
+        float frac = inverted ? (1.0f - val) : val;
+        int indicatorY = barY + Math.round(frac * (COLOR_BAR_HEIGHT - 1)) - (SLIDER_BAR_HEIGHT / 2);
         graphics.blit(TEXTURE, indicatorX, indicatorY, 0, SLIDER_BAR_U, SLIDER_BAR_V, SLIDER_BAR_WIDTH, SLIDER_BAR_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
     }
 

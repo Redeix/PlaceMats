@@ -31,6 +31,7 @@ public interface IDynamicTexturedBlock {
 
     String NBT_DYNAMIC_TEXTURES = "DynamicTextures";
     String NBT_DYNAMIC_COLORS = "DynamicColors";
+    String NBT_DYNAMIC_EMISSIVES = "DynamicEmissives";
     String NBT_DYNAMIC_MATERIAL = "DynamicMaterial";
     String NBT_DYNAMIC_MATERIALS = "DynamicMaterials";
 
@@ -274,6 +275,25 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
+     * Extracts dynamic emissive overrides from an ItemStack's NBT.
+     */
+    static Map<String, Integer> getDynamicEmissives(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        CompoundTag tag = stack.getTag();
+        if (tag == null || !tag.contains(NBT_DYNAMIC_EMISSIVES, Tag.TAG_COMPOUND)) {
+            return Collections.emptyMap();
+        }
+        CompoundTag deTag = tag.getCompound(NBT_DYNAMIC_EMISSIVES);
+        Map<String, Integer> map = new HashMap<>();
+        for (String key : deTag.getAllKeys()) {
+            map.put(key, deTag.getInt(key));
+        }
+        return map;
+    }
+
+    /**
      * Saves dynamic color overrides to an ItemStack's NBT.
      */
     static void setDynamicColors(ItemStack stack, Map<String, Integer> colors) {
@@ -295,6 +315,30 @@ public interface IDynamicTexturedBlock {
             dcTag.putInt(entry.getKey(), entry.getValue());
         }
         stack.addTagElement(NBT_DYNAMIC_COLORS, dcTag);
+    }
+
+    /**
+     * Saves dynamic emissive overrides to an ItemStack's NBT.
+     */
+    static void setDynamicEmissives(ItemStack stack, Map<String, Integer> emissives) {
+        if (stack.isEmpty()) {
+            return;
+        }
+        if (emissives.isEmpty()) {
+            if (stack.hasTag()) {
+                assert stack.getTag() != null;
+                stack.getTag().remove(NBT_DYNAMIC_EMISSIVES);
+                if (stack.getTag().isEmpty()) {
+                    stack.setTag(null);
+                }
+            }
+            return;
+        }
+        CompoundTag deTag = new CompoundTag();
+        for (Map.Entry<String, Integer> entry : emissives.entrySet()) {
+            deTag.putInt(entry.getKey(), entry.getValue());
+        }
+        stack.addTagElement(NBT_DYNAMIC_EMISSIVES, deTag);
     }
 
     /**
@@ -506,6 +550,17 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
+     * Checks if an ItemStack has dynamic emissive overrides.
+     */
+    static boolean hasDynamicEmissives(ItemStack stack) {
+        if (stack.isEmpty()) {
+            return false;
+        }
+        CompoundTag tag = stack.getTag();
+        return tag != null && tag.contains(NBT_DYNAMIC_EMISSIVES, Tag.TAG_COMPOUND) && !tag.getCompound(NBT_DYNAMIC_EMISSIVES).isEmpty();
+    }
+
+    /**
      * Checks if an ItemStack has dynamic material override.
      */
     static boolean hasDynamicMaterial(ItemStack stack) {
@@ -527,7 +582,7 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
-     * Applies dynamic textures, colors, and material from an ItemStack to a target BlockEntity.
+     * Applies dynamic textures, colors, emissives, and material from an ItemStack to a target BlockEntity.
      */
     static void applyDynamicDataToBlockEntity(@Nullable BlockEntity be, ItemStack stack) {
         if (be instanceof IDynamicTexturedBlockEntity dtbe) {
@@ -536,6 +591,9 @@ public interface IDynamicTexturedBlock {
             }
             if (hasDynamicColors(stack)) {
                 dtbe.setDynamicColors(getDynamicColors(stack));
+            }
+            if (hasDynamicEmissives(stack)) {
+                dtbe.setDynamicEmissives(getDynamicEmissives(stack));
             }
             if (hasDynamicMaterials(stack)) {
                 dtbe.setDynamicMaterials(getDynamicMaterials(stack));
@@ -546,7 +604,7 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
-     * Copies dynamic textures, colors, and material from a BlockEntity into an ItemStack.
+     * Applies dynamic textures, colors, emissives, and material from a BlockEntity to an ItemStack.
      */
     static ItemStack applyDynamicDataToItemStack(ItemStack stack, @Nullable BlockEntity be) {
         if (be instanceof IDynamicTexturedBlockEntity dtbe) {
@@ -555,6 +613,9 @@ public interface IDynamicTexturedBlock {
             }
             if (dtbe.hasDynamicColors()) {
                 setDynamicColors(stack, dtbe.getDynamicColors());
+            }
+            if (dtbe.hasDynamicEmissives()) {
+                setDynamicEmissives(stack, dtbe.getDynamicEmissives());
             }
             if (dtbe.hasDynamicMaterials()) {
                 setDynamicMaterials(stack, dtbe.getDynamicMaterials());
@@ -566,10 +627,10 @@ public interface IDynamicTexturedBlock {
     }
 
     /**
-     * Applies dynamic textures, colors, and material from a BlockEntity to the dropped item.
+     * Applies dynamic textures, colors, emissives, and material from a BlockEntity to the dropped item.
      */
     static void applyDynamicDataToDrops(List<ItemStack> drops, @Nullable BlockEntity be, Block block) {
-        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors() || dtbe.hasDynamicMaterial() || dtbe.hasDynamicMaterials())) {
+        if (be instanceof IDynamicTexturedBlockEntity dtbe && (dtbe.hasDynamicTextures() || dtbe.hasDynamicColors() || dtbe.hasDynamicEmissives() || dtbe.hasDynamicMaterial() || dtbe.hasDynamicMaterials())) {
             for (ItemStack drop : drops) {
                 if (drop.getItem() == block.asItem()) {
                     applyDynamicDataToItemStack(drop, be);

@@ -8,6 +8,7 @@ import java.util.Map;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -45,6 +46,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     public static final ModelProperty<Map<String, ResourceLocation>> DYNAMIC_TEXTURES_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<Map<String, Integer>> DYNAMIC_COLORS_PROPERTY = new ModelProperty<>();
+    public static final ModelProperty<Map<String, Integer>> DYNAMIC_EMISSIVES_PROPERTY = new ModelProperty<>();
     public static final ModelProperty<BlockState> MATERIAL_STATE_PROPERTY = new ModelProperty<>();
 
     private static final ThreadLocal<Boolean> THREAD_GUARD = ThreadLocal.withInitial(() -> Boolean.FALSE);
@@ -83,6 +85,9 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                             if (modelData.has(DYNAMIC_COLORS_PROPERTY) && !matData.has(DYNAMIC_COLORS_PROPERTY)) {
                                 builder.with(DYNAMIC_COLORS_PROPERTY, modelData.get(DYNAMIC_COLORS_PROPERTY));
                             }
+                            if (modelData.has(DYNAMIC_EMISSIVES_PROPERTY) && !matData.has(DYNAMIC_EMISSIVES_PROPERTY)) {
+                                builder.with(DYNAMIC_EMISSIVES_PROPERTY, modelData.get(DYNAMIC_EMISSIVES_PROPERTY));
+                            }
                             if (modelData.has(MATERIAL_STATE_PROPERTY) && !matData.has(MATERIAL_STATE_PROPERTY)) {
                                 builder.with(MATERIAL_STATE_PROPERTY, modelData.get(MATERIAL_STATE_PROPERTY));
                             }
@@ -99,7 +104,12 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
-        return ChunkRenderTypeSet.of(RenderType.translucent());
+        Map<String, Integer> customColors = data.get(DYNAMIC_COLORS_PROPERTY);
+        if (customColors != null && customColors.values().stream()
+                .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c) || DynamicTexturedBakedModel.isTranslucentColor(c))) {
+            return ChunkRenderTypeSet.none();
+        }
+        return this.originalModel.getRenderTypes(state, rand, data);
     }
 
     @Override
@@ -134,31 +144,31 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
-        if (renderType != null && renderType != RenderType.translucent()) {
-            return Collections.emptyList();
-        }
-
         if (THREAD_GUARD.get()) {
             return super.getQuads(state, side, rand, extraData, renderType);
         }
 
         Map<String, Integer> customColors = extraData.get(DYNAMIC_COLORS_PROPERTY);
         if (customColors != null && customColors.values().stream()
-            .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c) || isTranslucentColor(c))) {
+            .anyMatch(c -> IDynamicTexturedBlock.isRainbowColor(c) || IDynamicTexturedBlock.isMultiColor(c) || DynamicTexturedBakedModel.isTranslucentColor(c))) {
             return Collections.emptyList();
         }
 
         Map<String, ResourceLocation> customTextures = extraData.get(DYNAMIC_TEXTURES_PROPERTY);
+        Map<String, Integer> customEmissives = extraData.get(DYNAMIC_EMISSIVES_PROPERTY);
         BlockState materialState = extraData.get(MATERIAL_STATE_PROPERTY);
 
-        if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()) && materialState == null) {
+        if ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()) && (customEmissives == null || customEmissives.isEmpty()) && materialState == null) {
             return super.getQuads(state, side, rand, extraData, renderType);
         }
 
         THREAD_GUARD.set(true);
         try {
-            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, null);
-            return remapQuads(quads, materialState, customTextures, customColors, extraData, rand, renderType);
+            List<BakedQuad> quads = super.getQuads(state, side, rand, extraData, renderType);
+            if (quads.isEmpty() && renderType != null) {
+                quads = super.getQuads(state, side, rand, extraData, null);
+            }
+            return remapQuads(quads, materialState, customTextures, customColors, customEmissives, extraData, rand, renderType);
         } finally {
             THREAD_GUARD.set(false);
         }
@@ -180,62 +190,93 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         public BakedModel resolve(@NotNull BakedModel model, @NotNull ItemStack stack, @Nullable ClientLevel level, @Nullable LivingEntity entity, int seed) {
             Map<String, ResourceLocation> customTextures = IDynamicTexturedBlock.getDynamicTextures(stack);
             Map<String, Integer> customColors = IDynamicTexturedBlock.getDynamicColors(stack);
+            Map<String, Integer> customEmissives = IDynamicTexturedBlock.getDynamicEmissives(stack);
             BlockState materialState = IDynamicTexturedBlock.getMaterialBlockState(stack);
-            if (customTextures.isEmpty() && customColors.isEmpty() && materialState == null) {
+            if (customTextures.isEmpty() && customColors.isEmpty() && customEmissives.isEmpty() && materialState == null) {
                 return DynamicTexturedBakedModel.this;
             }
-            return new DynamicTexturedItemBakedModel(DynamicTexturedBakedModel.this, null, materialState, customTextures, customColors);
+            return new DynamicTexturedItemBakedModel(DynamicTexturedBakedModel.this, null, materialState, customTextures, customColors, customEmissives);
         }
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures) {
-        return remapQuads(quads, (BlockState) null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null);
+        return remapQuads(quads, (BlockState) null, customTextures, Collections.emptyMap(), Collections.emptyMap(), ModelData.EMPTY, null, null);
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-        return remapQuads(quads, (BlockState) null, customTextures, customColors, ModelData.EMPTY, null, null);
+        return remapQuads(quads, (BlockState) null, customTextures, customColors, Collections.emptyMap(), ModelData.EMPTY, null, null);
+    }
+
+    public List<BakedQuad> remapQuads(List<BakedQuad> quads, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
+        return remapQuads(quads, (BlockState) null, customTextures, customColors, customEmissives, ModelData.EMPTY, null, null);
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
-        if (quads.isEmpty() || ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()) && materialState == null)) {
+        return remapQuads(quads, materialState, customTextures, customColors, Collections.emptyMap(), extraData, rand, renderType);
+    }
+
+    public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
+        if (quads.isEmpty() || ((customTextures == null || customTextures.isEmpty()) && (customColors == null || customColors.isEmpty()) && (customEmissives == null || customEmissives.isEmpty()) && materialState == null)) {
             return quads;
         }
         List<BakedQuad> remapped = new ArrayList<>(quads.size());
         for (BakedQuad quad : quads) {
-            remapQuad(quad, materialState, customTextures, customColors, extraData, rand, renderType, remapped);
+            remapQuad(quad, materialState, customTextures, customColors, customEmissives, extraData, rand, renderType, remapped);
         }
         return remapped;
     }
 
     public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
+        return remapQuads(quads, materials, customTextures, customColors, Collections.emptyMap(), extraData, rand, renderType);
+    }
+
+    public List<BakedQuad> remapQuads(List<BakedQuad> quads, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
         BlockState matState = materials != null ? materials.get("0") : null;
-        return remapQuads(quads, matState, customTextures, customColors, extraData, rand, renderType);
+        return remapQuads(quads, matState, customTextures, customColors, customEmissives, extraData, rand, renderType);
     }
 
     public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures) {
         List<BakedQuad> out = new ArrayList<>(1);
-        remapQuad(quad, (BlockState) null, customTextures, Collections.emptyMap(), ModelData.EMPTY, null, null, out);
+        remapQuad(quad, (BlockState) null, customTextures, Collections.emptyMap(), Collections.emptyMap(), ModelData.EMPTY, null, null, out);
         return out.isEmpty() ? quad : out.get(0);
     }
 
     public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
         List<BakedQuad> out = new ArrayList<>(1);
-        remapQuad(quad, (BlockState) null, customTextures, customColors, ModelData.EMPTY, null, null, out);
+        remapQuad(quad, (BlockState) null, customTextures, customColors, Collections.emptyMap(), ModelData.EMPTY, null, null, out);
+        return out.isEmpty() ? quad : out.get(0);
+    }
+
+    public BakedQuad remapQuad(BakedQuad quad, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
+        List<BakedQuad> out = new ArrayList<>(1);
+        remapQuad(quad, (BlockState) null, customTextures, customColors, customEmissives, ModelData.EMPTY, null, null, out);
         return out.isEmpty() ? quad : out.get(0);
     }
 
     public BakedQuad remapQuad(BakedQuad quad, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
+        return remapQuad(quad, materialState, customTextures, customColors, Collections.emptyMap(), extraData, rand, renderType);
+    }
+
+    public BakedQuad remapQuad(BakedQuad quad, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType) {
         List<BakedQuad> out = new ArrayList<>(1);
-        remapQuad(quad, materialState, customTextures, customColors, extraData, rand, renderType, out);
+        remapQuad(quad, materialState, customTextures, customColors, customEmissives, extraData, rand, renderType, out);
         return out.isEmpty() ? quad : out.get(0);
     }
 
     public void remapQuad(BakedQuad quad, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
+        remapQuad(quad, materials, customTextures, customColors, Collections.emptyMap(), extraData, rand, renderType, out);
+    }
+
+    public void remapQuad(BakedQuad quad, @Nullable Map<String, BlockState> materials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
         BlockState matState = materials != null ? materials.get("0") : null;
-        remapQuad(quad, matState, customTextures, customColors, extraData, rand, renderType, out);
+        remapQuad(quad, matState, customTextures, customColors, customEmissives, extraData, rand, renderType, out);
     }
 
     public void remapQuad(BakedQuad quad, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
+        remapQuad(quad, materialState, customTextures, customColors, Collections.emptyMap(), extraData, rand, renderType, out);
+    }
+
+    public void remapQuad(BakedQuad quad, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives, @NotNull ModelData extraData, @Nullable RandomSource rand, @Nullable RenderType renderType, List<BakedQuad> out) {
         String matchedKey = findMatchingKey(quad);
         if (matchedKey == null) {
             out.add(quad);
@@ -244,6 +285,8 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
         ResourceLocation targetTex = customTextures != null ? customTextures.get(matchedKey) : null;
         Integer tintColor = customColors != null ? customColors.get(matchedKey) : null;
+        Integer emissiveLevel = customEmissives != null ? customEmissives.get(matchedKey) : null;
+        int emissive = emissiveLevel != null ? emissiveLevel : 0;
         int tint = tintColor != null ? tintColor : -1;
         if (IDynamicTexturedBlock.isRainbowColor(tint)) {
             tint = CabinetMakerTableScreen.getRainbowColor();
@@ -305,11 +348,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         }
 
         if (useMaterialModel && !matQuads.isEmpty()) {
-            remapQuadWithMaterialQuads(quad, matQuads, tint, out);
+            remapQuadWithMaterialQuads(quad, matQuads, tint, emissive, out);
         } else if (targetTex != null) {
             TextureAtlasSprite newSprite = Minecraft.getInstance().getTextureAtlas(InventoryMenu.BLOCK_ATLAS).apply(targetTex);
             if (isValidSprite(newSprite)) {
-                out.add(remapSprite(quad, newSprite, tint));
+                out.add(remapSprite(quad, newSprite, tint, emissive));
             } else {
                 TextureAtlasSprite fallbackSprite = null;
                 if (materialForLayer != null && !(materialForLayer.getBlock() instanceof IDynamicTexturedBlock)) {
@@ -334,11 +377,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                     }
                 }
                 if (fallbackSprite != null) {
-                    out.add(remapSprite(quad, fallbackSprite, tint));
+                    out.add(remapSprite(quad, fallbackSprite, tint, emissive));
                 } else if (newSprite != null) {
-                    out.add(remapSprite(quad, newSprite, tint));
-                } else if (tint != -1) {
-                    out.add(remapSprite(quad, quad.getSprite(), tint));
+                    out.add(remapSprite(quad, newSprite, tint, emissive));
+                } else if (tint != -1 || emissive > 0) {
+                    out.add(remapSprite(quad, quad.getSprite(), tint, emissive));
                 } else {
                     out.add(quad);
                 }
@@ -353,14 +396,14 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                 }
             }
             if (isValidSprite(matParticle)) {
-                out.add(remapSprite(quad, matParticle, tint));
-            } else if (tint != -1) {
-                out.add(remapSprite(quad, quad.getSprite(), tint));
+                out.add(remapSprite(quad, matParticle, tint, emissive));
+            } else if (tint != -1 || emissive > 0) {
+                out.add(remapSprite(quad, quad.getSprite(), tint, emissive));
             } else {
                 out.add(quad);
             }
-        } else if (tint != -1) {
-            out.add(remapSprite(quad, quad.getSprite(), tint));
+        } else if (tint != -1 || emissive > 0) {
+            out.add(remapSprite(quad, quad.getSprite(), tint, emissive));
         } else {
             out.add(quad);
         }
@@ -370,7 +413,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         return quad.getDirection();
     }
 
-    private void remapQuadWithMaterialQuads(BakedQuad quad, List<BakedQuad> matQuads, int tint, List<BakedQuad> out) {
+    private void remapQuadWithMaterialQuads(BakedQuad quad, List<BakedQuad> matQuads, int tint, int emissive, List<BakedQuad> out) {
         Direction dir = getEffectiveDirection(quad);
         List<MatQuadBounds> boundsList = new ArrayList<>(matQuads.size());
         for (BakedQuad mq : matQuads) {
@@ -378,7 +421,7 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         }
 
         if (matQuads.size() == 1) {
-            out.add(remapSingleQuadFromBounds(quad, boundsList.get(0), tint, dir));
+            out.add(remapSingleQuadFromBounds(quad, boundsList.get(0), tint, emissive, dir));
             return;
         }
 
@@ -437,11 +480,11 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                     break;
                 }
             }
-            out.add(remapSingleQuadFromBounds(piece, best, tint, dir));
+            out.add(remapSingleQuadFromBounds(piece, best, tint, emissive, dir));
         }
     }
 
-    private static BakedQuad remapSingleQuadFromBounds(BakedQuad quad, MatQuadBounds bounds, int tint, @NotNull Direction dir) {
+    private static BakedQuad remapSingleQuadFromBounds(BakedQuad quad, MatQuadBounds bounds, int tint, int emissive, @NotNull Direction dir) {
         int[] v = Arrays.copyOf(quad.getVertices(), quad.getVertices().length);
         int stride = IQuadTransformer.STRIDE;
 
@@ -462,9 +505,19 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                 int abgr = QuadTransformers.toABGR(tint);
                 v[i * stride + IQuadTransformer.COLOR] = abgr;
             }
+
+            if (emissive > 0) {
+                int uv2 = v[i * stride + IQuadTransformer.UV2];
+                int block = LightTexture.block(uv2);
+                int sky = LightTexture.sky(uv2);
+                int emissiveLevel = Math.min(15, emissive);
+                v[i * stride + IQuadTransformer.UV2] = LightTexture.pack(Math.max(block, emissiveLevel), Math.max(sky, emissiveLevel));
+            }
         }
 
-        return new BakedQuad(v, -1, quad.getDirection(), bounds.matQuad.getSprite(), quad.isShade(), quad.hasAmbientOcclusion());
+        boolean shade = emissive <= 0 && quad.isShade();
+        boolean ao = emissive <= 0 && quad.hasAmbientOcclusion();
+        return new BakedQuad(v, -1, quad.getDirection(), bounds.matQuad.getSprite(), shade, ao);
     }
 
     private static void splitQuadByFaceCoord(BakedQuad quad, Direction dir, boolean isUAxis, List<BakedQuad> out) {
@@ -794,6 +847,10 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     public static BakedQuad remapSprite(BakedQuad quad, TextureAtlasSprite newSprite, int tintColor) {
+        return remapSprite(quad, newSprite, tintColor, 0);
+    }
+
+    public static BakedQuad remapSprite(BakedQuad quad, TextureAtlasSprite newSprite, int tintColor, int emissive) {
         TextureAtlasSprite oldSprite = quad.getSprite();
         int[] v = Arrays.copyOf(quad.getVertices(), quad.getVertices().length);
         int stride = IQuadTransformer.STRIDE;
@@ -826,51 +883,88 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
                 int abgr = QuadTransformers.toABGR(tintColor);
                 v[i * stride + IQuadTransformer.COLOR] = abgr;
             }
+
+            if (emissive > 0) {
+                int uv2 = v[i * stride + IQuadTransformer.UV2];
+                int block = LightTexture.block(uv2);
+                int sky = LightTexture.sky(uv2);
+                int emissiveLevel = Math.min(15, emissive);
+                v[i * stride + IQuadTransformer.UV2] = LightTexture.pack(Math.max(block, emissiveLevel), Math.max(sky, emissiveLevel));
+            }
         }
 
-        return new BakedQuad(v, -1, quad.getDirection(), newSprite, quad.isShade(), quad.hasAmbientOcclusion());
+        boolean shade = emissive <= 0 && quad.isShade();
+        boolean ao = emissive <= 0 && quad.hasAmbientOcclusion();
+        return new BakedQuad(v, -1, quad.getDirection(), newSprite, shade, ao);
     }
 
+    @SuppressWarnings("deprecation")
     public static class DynamicTexturedItemBakedModel extends BakedModelWrapper<BakedModel> {
         @Getter private final DynamicTexturedBakedModel parent;
         @Getter private final BlockState blockState;
         @Getter private final BlockState materialState;
         @Getter private final Map<String, ResourceLocation> customTextures;
         @Getter private final Map<String, Integer> customColors;
+        @Getter private final Map<String, Integer> customEmissives;
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures) {
-            this(parent, null, (BlockState) null, customTextures, Collections.emptyMap());
+            this(parent, null, (BlockState) null, customTextures, Collections.emptyMap(), Collections.emptyMap());
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-            this(parent, null, (BlockState) null, customTextures, customColors);
+            this(parent, null, (BlockState) null, customTextures, customColors, Collections.emptyMap());
+        }
+
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
+            this(parent, null, (BlockState) null, customTextures, customColors, customEmissives);
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-            this(parent, blockState, (BlockState) null, customTextures, customColors);
+            this(parent, blockState, (BlockState) null, customTextures, customColors, Collections.emptyMap());
+        }
+
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
+            this(parent, blockState, (BlockState) null, customTextures, customColors, customEmissives);
         }
 
         public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
+            this(parent, blockState, materialState, customTextures, customColors, Collections.emptyMap());
+        }
+
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable BlockState materialState, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
             super(parent.originalModel);
             this.parent = parent;
             this.blockState = blockState;
             this.materialState = materialState;
             this.customTextures = customTextures != null ? customTextures : Collections.emptyMap();
             this.customColors = customColors != null ? customColors : Collections.emptyMap();
+            this.customEmissives = customEmissives != null ? customEmissives : Collections.emptyMap();
         }
 
-        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable Map<String, BlockState> dynamicMaterials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors) {
-            this(parent, blockState, dynamicMaterials != null ? dynamicMaterials.get("0") : null, customTextures, customColors);
+        public DynamicTexturedItemBakedModel(DynamicTexturedBakedModel parent, @Nullable BlockState blockState, @Nullable Map<String, BlockState> dynamicMaterials, Map<String, ResourceLocation> customTextures, Map<String, Integer> customColors, Map<String, Integer> customEmissives) {
+            this(parent, blockState, dynamicMaterials != null ? dynamicMaterials.get("0") : null, customTextures, customColors, customEmissives);
         }
 
         @Override
         public @NotNull ChunkRenderTypeSet getRenderTypes(@NotNull BlockState state, @NotNull RandomSource rand, @NotNull ModelData data) {
-            return ChunkRenderTypeSet.of(RenderType.translucent());
+            boolean hasTranslucent = customColors.values().stream().anyMatch(DynamicTexturedBakedModel::isTranslucentColor);
+            if (hasTranslucent) {
+                return ChunkRenderTypeSet.of(RenderType.translucent());
+            }
+            return this.originalModel.getRenderTypes(state, rand, data);
         }
 
         @Override
         public @NotNull List<RenderType> getRenderTypes(@NotNull ItemStack itemStack, boolean fabulous) {
-            return Collections.singletonList(Sheets.translucentItemSheet());
+            boolean hasTranslucent = customColors.values().stream().anyMatch(DynamicTexturedBakedModel::isTranslucentColor);
+            if (hasTranslucent) {
+                return Collections.singletonList(Sheets.translucentItemSheet());
+            }
+            List<RenderType> types = this.originalModel.getRenderTypes(itemStack, fabulous);
+            if (types.isEmpty()) {
+                return List.of(net.minecraftforge.client.RenderTypeHelper.getFallbackItemRenderType(itemStack, this.originalModel, fabulous));
+            }
+            return types;
         }
 
         @Override
@@ -881,25 +975,29 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
             BlockState targetState = state != null ? state : this.blockState;
-            List<BakedQuad> quads = super.getQuads(targetState, side, rand);
-            return parent.remapQuads(quads, this.materialState, customTextures, customColors, ModelData.EMPTY, rand, null);
+            List<BakedQuad> quads = this.originalModel.getQuads(targetState, side, rand);
+            return parent.remapQuads(quads, this.materialState, customTextures, customColors, customEmissives, ModelData.EMPTY, rand, null);
         }
 
         @Override
         public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand, @NotNull ModelData extraData, @Nullable RenderType renderType) {
-            if (renderType != null && renderType != Sheets.translucentItemSheet() && renderType != RenderType.translucent()) {
+            boolean hasTranslucent = customColors.values().stream().anyMatch(DynamicTexturedBakedModel::isTranslucentColor);
+            if (hasTranslucent && renderType != null && renderType != Sheets.translucentItemSheet() && renderType != RenderType.translucent()) {
                 return Collections.emptyList();
             }
             BlockState targetState = state != null ? state : this.blockState;
             BlockState mat = this.materialState != null ? this.materialState : extraData.get(MATERIAL_STATE_PROPERTY);
-            List<BakedQuad> quads = super.getQuads(targetState, side, rand, extraData, null);
-            return parent.remapQuads(quads, mat, customTextures, customColors, extraData, rand, renderType);
+            List<BakedQuad> quads = this.originalModel.getQuads(targetState, side, rand, extraData, renderType);
+            if (quads.isEmpty() && renderType != null) {
+                quads = this.originalModel.getQuads(targetState, side, rand, extraData, null);
+            }
+            return parent.remapQuads(quads, mat, customTextures, customColors, customEmissives, extraData, rand, renderType);
         }
 
         @Override
         public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
             BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
-            return model == this.originalModel ? this : new DynamicTexturedItemBakedModel(new DynamicTexturedBakedModel(model, this.parent.getDynamicBlock()), this.blockState, this.materialState, this.customTextures, this.customColors);
+            return model == this.originalModel ? this : new DynamicTexturedItemBakedModel(new DynamicTexturedBakedModel(model, this.parent.getDynamicBlock()), this.blockState, this.materialState, this.customTextures, this.customColors, this.customEmissives);
         }
 
         @Override
