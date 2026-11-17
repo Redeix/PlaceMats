@@ -1,9 +1,11 @@
 package net.placemats.client.gui.util;
 
+import java.util.List;
 import java.util.function.Consumer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
@@ -14,6 +16,7 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.placemats.PlaceMatMain;
@@ -487,12 +490,12 @@ public class ColorPickerWidget extends AbstractWidget {
 
         // HSVA Text
         int textY = getY() + H_BAR_Y - this.font.lineHeight - 3;
-        graphics.drawCenteredString(this.font, "H", getX() + H_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
-        graphics.drawCenteredString(this.font, "S", getX() + S_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
-        graphics.drawCenteredString(this.font, "V", getX() + V_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
-        graphics.drawCenteredString(this.font, "A", getX() + A_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
+        renderSliderLabel(graphics, "H", H_BAR_X, textY, "hue", mouseX, mouseY);
+        renderSliderLabel(graphics, "S", S_BAR_X, textY, "saturation", mouseX, mouseY);
+        renderSliderLabel(graphics, "V", V_BAR_X, textY, "value", mouseX, mouseY);
+        renderSliderLabel(graphics, "A", A_BAR_X, textY, "alpha", mouseX, mouseY);
         if (this.emissive) {
-            graphics.drawCenteredString(this.font, "E", getX() + E_BAR_X + (COLOR_BAR_WIDTH / 2), textY, 0xFFFFFFFF);
+            renderSliderLabel(graphics, "E", E_BAR_X, textY, "emissive", mouseX, mouseY);
         }
 
         // Color Bar Gradients
@@ -524,7 +527,8 @@ public class ColorPickerWidget extends AbstractWidget {
 
             // E
             if (this.emissive) {
-                graphics.fill(eX, eY + i, eX + COLOR_BAR_WIDTH, eY + i + 1, 0xFF000000 | sRgb);
+                int eRgb = hsvToRgb(this.hue, 1.0f, 1 - frac + 0.4f);
+                graphics.fill(eX, eY + i, eX + COLOR_BAR_WIDTH, eY + i + 1, 0xFF000000 | eRgb);
             }
         }
 
@@ -534,20 +538,68 @@ public class ColorPickerWidget extends AbstractWidget {
         graphics.fillGradient(aX, aY, aX + COLOR_BAR_WIDTH, aY + COLOR_BAR_HEIGHT, topA, bottomA);
 
         // Slider Handles
-        renderSliderHandle(graphics, hX, hY, this.hue, true);
-        renderSliderHandle(graphics, sX, sY, this.saturation, true);
-        renderSliderHandle(graphics, vX, vY, this.value, true);
-        renderSliderHandle(graphics, aX, aY, this.alpha, true);
+        renderSliderHandle(graphics, hX, hY, this.hue, mouseX, mouseY);
+        renderSliderHandle(graphics, sX, sY, this.saturation, mouseX, mouseY);
+        renderSliderHandle(graphics, vX, vY, this.value, mouseX, mouseY);
+        renderSliderHandle(graphics, aX, aY, this.alpha, mouseX, mouseY);
         if (this.emissive) {
-            renderSliderHandle(graphics, eX, eY, this.emissiveValue, false);
+            renderSliderHandle(graphics, eX, eY, this.emissiveValue, false, mouseX, mouseY, true);
         }
     }
 
-    private void renderSliderHandle(GuiGraphics graphics, int barX, int barY, float val, boolean inverted) {
+    private void renderSliderLabel(GuiGraphics graphics, String label, int barX, int textY, String langKey, int mouseX, int mouseY) {
+        int centerX = getX() + barX + (COLOR_BAR_WIDTH / 2);
+        int halfWidth = this.font.width(label) / 2;
+        int pad = 2;
+
+        graphics.drawCenteredString(this.font, label, centerX, textY, 0xFFFFFFFF);
+
+        if (mouseX >= centerX - halfWidth - pad && mouseX <= centerX + halfWidth + pad
+                && mouseY >= textY && mouseY <= textY + this.font.lineHeight) {
+            String baseKey = "gui.place_mats.cabinet_maker." + langKey;
+            graphics.renderComponentTooltip(
+                    this.font,
+                    List.of(
+                            Component.translatable(baseKey).withStyle(ChatFormatting.YELLOW),
+                            Component.translatable(baseKey + ".info")
+                    ),
+                    mouseX, mouseY
+            );
+        }
+    }
+
+
+    private void renderSliderHandle(GuiGraphics graphics, int barX, int barY, float val, int mouseX, int mouseY) {
+        renderSliderHandle(graphics, barX, barY, val, true, mouseX, mouseY, false);
+    }
+
+    private void renderSliderHandle(GuiGraphics graphics, int barX, int barY, float val, boolean inverted, int mouseX, int mouseY, boolean isEmissive) {
         int indicatorX = barX + (COLOR_BAR_WIDTH - SLIDER_BAR_WIDTH) / 2;
         float frac = inverted ? (1.0f - val) : val;
         int indicatorY = barY + Math.round(frac * (COLOR_BAR_HEIGHT - 1)) - (SLIDER_BAR_HEIGHT / 2);
         graphics.blit(TEXTURE, indicatorX, indicatorY, 0, SLIDER_BAR_U, SLIDER_BAR_V, SLIDER_BAR_WIDTH, SLIDER_BAR_HEIGHT, TEXTURE_SIZE, TEXTURE_SIZE);
+
+        int centerX = barX + COLOR_BAR_WIDTH / 2;
+        int halfWidth = SLIDER_BAR_WIDTH / 2;
+        int pad = 2;
+        MutableComponent percentTooltip = Component.literal(String.format("%.0f%%", val * 100));
+        MutableComponent tooltip;
+
+        if (isEmissive) {
+            int emissiveVal = Math.round(Math.max(0.0f, Math.min(1.0f, val)) * 15.0f);
+            MutableComponent emissiveTooltip = Component.literal(String.valueOf(emissiveVal))
+                    .withStyle(ChatFormatting.DARK_GRAY);
+            tooltip = percentTooltip.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY).append(emissiveTooltip));
+        } else {
+            MutableComponent hexTooltip = Component.literal(String.format("%02X", Math.round(val * 255.0f)))
+                    .withStyle(ChatFormatting.DARK_GRAY);
+            tooltip = percentTooltip.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY).append(hexTooltip));
+        }
+
+        if (mouseX >= centerX - halfWidth - pad && mouseX <= centerX + halfWidth + pad
+                && mouseY >= indicatorY && mouseY <= indicatorY + this.font.lineHeight) {
+            graphics.renderTooltip(font, tooltip, mouseX, mouseY);
+        }
     }
 
     @Override

@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.Mth;
@@ -101,6 +102,8 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     private static final int TEXTURE_SWATCH_SIZE = 16;
     public static final int MAX_TEXTURE_SWATCHES = 5;
 
+    private static final int COLOR_TAB_BUTTON_Y = MATERIAL_SLOT_Y + ((MAX_TEXTURE_SWATCHES + 1) * SLOT_SIZE) + MAX_TEXTURE_SWATCHES + 3;
+
     private final Map<String, ResourceLocation> chosenTextures = new HashMap<>();
     private final Map<String, Integer> chosenColors = new HashMap<>();
     private final Map<String, Integer> chosenEmissives = new HashMap<>();
@@ -109,6 +112,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     private int currentBlockStateIndex = 0;
     private ItemStack lastInputStack = ItemStack.EMPTY;
     private final ItemStack[] lastMaterialStacks = new ItemStack[CabinetMakerTableContainer.MATERIAL_SLOT_COUNT];
+    private boolean lastShiftDown = false;
 
     private Button confirmButton;
     @Getter private ColorPickerWidget colorPickerWidget;
@@ -128,12 +132,14 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         super.init();
 
         this.confirmButton = Button.builder(Component.literal("▼"), btn -> {
-            boolean transformAll = hasShiftDown();
-            PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), new HashMap<>(chosenColors), new HashMap<>(chosenEmissives), transformAll));
-        })
-            .bounds(this.leftPos + BUTTON_X, this.topPos + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
-            .tooltip(Tooltip.create(Component.translatable("gui.place_mats.cabinet_maker.confirm")))
-            .build();
+                    boolean transformAll = hasShiftDown();
+                    PlaceMatsNetworkHandler.INSTANCE.sendToServer(new ApplyCabinetMakerCraftPacket(new HashMap<>(chosenTextures), new HashMap<>(chosenColors), new HashMap<>(chosenEmissives), transformAll));
+                })
+                .bounds(this.leftPos + BUTTON_X, this.topPos + BUTTON_Y, BUTTON_WIDTH, BUTTON_HEIGHT)
+                .build();
+
+        this.lastShiftDown = hasShiftDown();
+        updateConfirmTooltip();
 
         this.addRenderableWidget(this.confirmButton);
 
@@ -589,7 +595,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 int matSpacing = SLOT_SIZE + 3;
 
                 // Open Tab Buttons
-                int btnY = this.topPos + 146;
+                int btnY = this.topPos + COLOR_TAB_BUTTON_Y;
                 for (int keyIdx = 0; keyIdx < keyCount && keyIdx < keys.size(); keyIdx++) {
                     int colX = this.leftPos + MATERIAL_SLOT_X + (keyIdx * matSpacing);
                     int btnX = colX + 1;
@@ -722,7 +728,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             }
 
             // Color Tab Buttons
-            int btnY = this.topPos + 146;
+            int btnY = this.topPos + COLOR_TAB_BUTTON_Y;
             for (int keyIdx = 0; keyIdx < keyCount && keyIdx < keys.size(); keyIdx++) {
                 int colX = matStartX + (keyIdx * matSpacing);
                 int btnX = colX + 1;
@@ -778,10 +784,24 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
     @Override
     public void render(@NotNull GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+        boolean shiftDown = hasShiftDown();
+        if (shiftDown != this.lastShiftDown) {
+            this.lastShiftDown = shiftDown;
+            updateConfirmTooltip();
+        }
+        super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
         renderCustomTooltips(guiGraphics, mouseX, mouseY);
+    }
+
+    private void updateConfirmTooltip() {
+        MutableComponent tooltip = Component.translatable("gui.place_mats.cabinet_maker.confirm");
+        if (this.lastShiftDown) {
+            tooltip.append(Component.literal(" (").append(Component.translatable("gui.place_mats.cabinet_maker.stack")).append(")"));
+        }
+        this.confirmButton.setTooltip(Tooltip.create(tooltip));
     }
 
     private void renderCustomTooltips(GuiGraphics guiGraphics, int mouseX, int mouseY) {
@@ -823,7 +843,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 }
 
                 // Material Slot Tooltips
-                if (mouseX >= colX && mouseX < colX + 18 && mouseY >= this.topPos + MATERIAL_SLOT_Y - 10 && mouseY < this.topPos + MATERIAL_SLOT_Y) {
+                if (mouseX >= colX && mouseX < colX + SLOT_SIZE && mouseY >= this.topPos + MATERIAL_SLOT_Y - 10 && mouseY < this.topPos + MATERIAL_SLOT_Y) {
                     Component keyName = dynamicBlock.getTextureKeyName(keyIdx);
                     List<Component> tooltip = new ArrayList<>();
                     tooltip.add(Component.translatable("gui.place_mats.cabinet_maker.key_slot_title", keyIdx + 1, keyName).withStyle(ChatFormatting.YELLOW));
@@ -833,7 +853,7 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
                 }
 
                 // Open Tab Button Tooltips
-                int btnY = this.topPos + 146;
+                int btnY = this.topPos + COLOR_TAB_BUTTON_Y;
                 int btnX = colX + 1;
                 if (mouseX >= btnX && mouseX < btnX + ColorPickerWidget.OPEN_TAB_WIDTH &&
                         mouseY >= btnY && mouseY < btnY + ColorPickerWidget.OPEN_TAB_HEIGHT) {

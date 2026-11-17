@@ -353,10 +353,10 @@ public final class PlaceMatBlocks {
                 );
                 block.previewItemModel();
             })
-            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TALL_TABLES, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
             .loot(RegistrateBlockLootTables::dropSelf)
             .item()
-            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TALL_TABLES, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
             .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/dining_table_apron")))
             .build()
             .register();

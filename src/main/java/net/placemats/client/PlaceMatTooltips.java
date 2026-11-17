@@ -41,7 +41,7 @@ public class PlaceMatTooltips{
             return;
         }
 
-        // Cabinetmaker's table
+        // Cabinetmaker's Table
         if (block instanceof CabinetMakerTableBlock) {
             MutableComponent text = Component.translatable("place_mats.emi.cabinet_maker.desc1");
             text.append(CommonComponents.NEW_LINE);
@@ -49,7 +49,7 @@ public class PlaceMatTooltips{
             text.append(CommonComponents.NEW_LINE);
             text.append(Component.translatable("place_mats.emi.cabinet_maker.desc3"));
 
-            tooltip.add(1, shiftHintTooltip(text));
+            tooltip.add(shiftHintTooltip(text));
         }
     }
 
@@ -69,7 +69,18 @@ public class PlaceMatTooltips{
             text.append(CommonComponents.NEW_LINE);
             text.append(Component.translatable("place_mats.tooltip.key.joke").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
 
-            tooltip.add(1, shiftHintTooltip(text));
+            tooltip.add(shiftHintTooltip(text));
+        }
+
+        // Tall Tables
+        if (stack.is(PlaceMatTags.Items.TALL_TABLES)) {
+            MutableComponent text = Component.translatable("place_mats.tooltip.tall_tables.desc1");
+            text.append(CommonComponents.NEW_LINE);
+            text.append(Component.translatable("place_mats.tooltip.tall_tables.desc2"));
+            text.append(CommonComponents.NEW_LINE);
+            text.append(Component.translatable("place_mats.tooltip.tall_tables.desc3"));
+
+            tooltip.add(shiftHintTooltip(text));
         }
 
         // Supports Dynamic Materials
@@ -80,13 +91,13 @@ public class PlaceMatTooltips{
                 text.append(CommonComponents.NEW_LINE);
                 text.append(Component.translatable("place_mats.tooltip.press_for_info", PlaceMatEmiPlugin.getUsesKeyName()));
             }
-            tooltip.add(1, text);
+            tooltip.add(text);
         }
 
         // Texture Bundles
         if (stack.is(PlaceMatTags.Items.TEXTURE_BUNDLES)) {
             MutableComponent text = Component.translatable("place_mats.tooltip.texture_bundles");
-            tooltip.add(1, text);
+            tooltip.add(text);
         }
     }
 
