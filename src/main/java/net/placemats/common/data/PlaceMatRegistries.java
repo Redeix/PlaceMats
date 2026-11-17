@@ -1,6 +1,7 @@
 package net.placemats.common.data;
 
 import com.tterrag.registrate.providers.ProviderType;
+import net.placemats.client.PlaceMatKeyMappings;
 
 public class PlaceMatRegistries {
     public static final PlaceMatRegistrate REGISTRATE = PlaceMatRegistrate.create("place_mats");
@@ -17,23 +18,40 @@ public class PlaceMatRegistries {
             prov.add("block_type.place_mats.ornate_double_shelf", "%s Ornate Double Shelf");
             prov.add("block_type.place_mats.floating_shelf", "%s Floating Shelf");
             prov.add("place_mats.creative_tab.place_mats", "Place Mats");
-            prov.add("place_mats.tooltip.placemat.placing", "Hold an item and §3RMB§r to display.");
+
+            prov.add("place_mats.hud.controls.title", "Placement Controls");
+            prov.add("place_mats.hud.interaction.title", "Item Interaction Controls");
             prov.add("place_mats.tooltip.placemat.hold_alt_for_nutrition_info", "Hold (Alt) for Detailed Info");
-            prov.add("place_mats.tooltip.placemat.pitch", "§3Shift+Ctrl+Scroll§r for Tilt. ");
-            prov.add("place_mats.tooltip.placemat.yaw", "§3Shift+Scroll§r for Yaw. ");
-            prov.add("place_mats.tooltip.placemat.interacting", "§3RMB§r to remove. §3Shift+RMB§r to remove stack. §3LMB§r to use.");
+            prov.add("place_mats.tooltip.placemat.roll", "%s to §cRoll ⟳§r");
+            prov.add("place_mats.tooltip.placemat.pitch", "%s to §3Pitch ⟳§r");
+            prov.add("place_mats.tooltip.placemat.raise", "%s to §3Raise ▲§r");
+            prov.add("place_mats.tooltip.placemat.lower", "%s to §cLower ▼§r");
+            prov.add("place_mats.tooltip.placemat.place", "%s to §ePlace ✔§r");
+            prov.add("place_mats.tooltip.placemat.place_stack", "%s to §ePlace Stack ✔✔§r");
+            prov.add("place_mats.tooltip.placemat.remove", "%s to §cRemove ✘§r");
+            prov.add("place_mats.tooltip.placemat.remove_stack", "%s to §cRemove Stack ✘✘§r");
+            prov.add("place_mats.tooltip.placemat.use", "%s to §aUse/Interact ☆§r");
+            prov.add("place_mats.tooltip.placemat.key", PlaceMatKeyMappings.mouseRMBIconCode + " to Lock/Unlock \uD83D\uDD12");
+            prov.add("place_mats.tooltip.placemat.sit", PlaceMatKeyMappings.mouseRMBIconCode + " to Sit ⚓");
+            prov.add("place_mats.tooltip.placemat.kick", PlaceMatKeyMappings.mouseRMBIconCode + " to Kick-Out ⏏");
+            prov.add("place_mats.tooltip.placemat.full", "§l§c⚠ Container Full!§r§r Max Stacks:§6 %s§r");
+
+            prov.add("place_mats.faux_key.shift", "Shift");
+            prov.add("place_mats.faux_key.ctrl", "Ctrl");
+            prov.add("place_mats.faux_key.alt", "Alt");
+            prov.add("place_mats.faux_key.lmb", PlaceMatKeyMappings.mouseLMBIconCode);
+            prov.add("place_mats.faux_key.rmb", PlaceMatKeyMappings.mouseRMBIconCode);
+            prov.add("place_mats.faux_key.mouse", PlaceMatKeyMappings.mouseIconCode);
+            prov.add("place_mats.faux_key.mmb", PlaceMatKeyMappings.mouseScrollIconCode);
+            prov.add("place_mats.faux_key.space", PlaceMatKeyMappings.spaceBarIconCode);
+
             prov.add("emi.category.place_mats.place_mat", "Place Mat Interaction");
-            prov.add("place_mats.tooltip.placemat.elevation", "§3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
-            prov.add("place_mats.tooltip.placemat.roll", "§3Shift+Alt+Scroll§r for Roll. ");
-            prov.add("place_mats.tooltip.placemat.instructions", "§3Shift+Scroll§r for Yaw. §3Shift+Ctrl+Scroll§r for Tilt. §3Shift+Space§r to Raise. §3Shift+Ctrl+Space§r to Lower. ");
             prov.add("key.categories.place_mats", "Place Mats");
-            prov.add("key.place_mats.y_rot", "Y-Rotation");
-            prov.add("key.place_mats.x_rot", "X-Rotation");
+            prov.add("key.place_mats.y_rot", "Y-Rotation (Pitch)");
+            prov.add("key.place_mats.x_rot", "X-Rotation (Roll)");
             prov.add("key.place_mats.up", "Raise Elevation");
             prov.add("key.place_mats.down", "Lower Elevation");
             prov.add("config.jade.plugin_place_mats.placemat.title", "Place Mat");
-            prov.add("place_mats.tooltip.placemat.full", "§l§c⚠ Container Full!§r§r Max Stacks:§6 %s§r");
-            prov.add("place_mats.tooltip.placemat.key", "§3RMB§r to lock/unlock.");
             prov.add("place_mats.tooltip.placemat.locked", "§cLocked \uD83D\uDD12");
             prov.add("place_mats.tooltip.key.explain", "§3RMB§r to lock/unlock Place Mats. Preventing item insertion and extraction.");
             prov.add("place_mats.tooltip.key.joke", "Doesn't taste as good as bread...");
@@ -68,8 +86,6 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.dynamic_materials", "§3This block has dynamic materials support!§r Use a §oCabinetmaker's Table§r to customize it's textures and tinting.");
             prov.add("place_mats.tooltip.press_for_info", "§6Press [%s§6]§r for more information.");
             prov.add("place_mats.tooltip.texture_bundles", "This item is intended as a source of textures for the §oCabinetmaker's Table§r. Simply §6drag and drop§r it into a material slot and tint away!");
-            prov.add("place_mats.tooltip.placemat.sit", "§3LMB§r to sit.");
-            prov.add("place_mats.tooltip.placemat.kick", "§3SHIFT+LMB§r to kick-out.");
         });
     }
 }

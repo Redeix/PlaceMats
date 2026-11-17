@@ -3,8 +3,8 @@ package net.placemats.client;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.client.settings.KeyConflictContext;
 
+@SuppressWarnings("unused")
 public final class PlaceMatKeyMappings {
     public static final String CATEGORY = "key.categories.place_mats";
 
@@ -40,4 +40,12 @@ public final class PlaceMatKeyMappings {
         event.register(KEY_UP);
         event.register(KEY_DOWN);
     }
+
+    // =========================== Key Helpers ===============================
+
+    public static final String mouseIconCode = "\uE803";
+    public static final String mouseLMBIconCode = "\uE800";
+    public static final String mouseRMBIconCode = "\uE801";
+    public static final String mouseScrollIconCode = "\uE802";
+    public static final String spaceBarIconCode = "\uE804";
 }

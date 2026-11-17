@@ -5,9 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-
 import com.mojang.math.Axis;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.LightTexture;
@@ -16,8 +14,6 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.InteractionHand;
@@ -35,7 +31,6 @@ import net.minecraft.world.phys.Vec2;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.MovementInputUpdateEvent;
-import net.minecraftforge.client.event.RenderGuiEvent;
 import net.minecraftforge.client.event.RenderLevelStageEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
@@ -52,13 +47,12 @@ import net.placemats.common.event.PlaceMatInteractions;
 import net.placemats.common.blockentity.PlaceMatBlockEntity;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.resource.DefinitionManager;
+import net.placemats.config.PlaceMatConfig;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.PlaceMatPacket;
 
 @SuppressWarnings("DuplicateExpressions")
 public class ClientHandler {
-    private static boolean wasLookingAtPlacemat = false;
-
     public static final TextureAtlasSprite LOCKED_OVERLAY = PlaceMatRenderer.getBlockAtlasSprite(
             ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/renders/key_render_locked")
     );
@@ -419,90 +413,8 @@ public class ClientHandler {
         }
     }
 
-    @SubscribeEvent
-    public static void onRenderGui(RenderGuiEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        Player player = mc.player;
-        if (player == null || mc.level == null) return;
-
-        if (!(mc.hitResult instanceof BlockHitResult blockHit) || blockHit.getType() != HitResult.Type.BLOCK) {
-            handleOutsideLook(player);
-            return;
-        }
-
-        BlockPos pos = blockHit.getBlockPos();
-        BlockEntity blockEntity = mc.level.getBlockEntity(pos);
-        if (!(blockEntity instanceof PlaceMatBlockEntity foodPlacer) || !(blockEntity.getBlockState().getBlock() instanceof PlaceMatBlock pmb) || pmb.getPlacementRanges(blockEntity.getBlockState()).isEmpty()) {
-            handleOutsideLook(player);
-            return;
-        }
-
-        wasLookingAtPlacemat = true;
-        BlockState state = blockEntity.getBlockState();
-        ItemStack held = player.getMainHandItem();
-
-        boolean isLocked = PlaceMatBlock.preventsInteraction(state);
-        boolean holdingKey = held.is(PlaceMatTags.Items.KEY);
-
-        if (isLocked && !holdingKey) return;
-        if (held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST) && !holdingKey) return;
-
-        Vec3 eyePos = player.getEyePosition(1.0f);
-        Vec3 lookVec = player.getViewVector(1.0f);
-        Vec3 localHit = blockHit.getLocation().subtract(pos.getX(), pos.getY(), pos.getZ());
-
-        PlaceMatBlockEntity.PlacedItem targetedItem = foodPlacer.getTargetedItem(eyePos, lookVec, pos);
-        PlacementRange targetedRange = (targetedItem != null)
-                ? foodPlacer.getRangeForItem(targetedItem)
-                : pmb.getTargetedPlacementRange(state, localHit);
-
-        if (holdingKey) {
-            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.key").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-        } else if (targetedItem != null) {
-            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.interacting").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-        } else if (targetedRange != null && targetedRange.chair()) {
-            // Chair
-            if (!targetedRange.hasEntity(mc.level, pos, state)) {
-                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.sit").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-            } else if (targetedRange.hasEntity(mc.level, pos, state) && !(targetedRange.getEntity(mc.level, pos, state) instanceof Player)) {
-                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.kick").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-            }
-        } else if (!held.isEmpty() && !held.is(PlaceMatTags.Items.PLACE_MAT_BLACKLIST)) {
-
-            int maxCapacity = pmb.getContainerSize();
-            if (foodPlacer.getPlacedItems().size() >= maxCapacity) {
-                player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.full", maxCapacity).withStyle(ChatFormatting.ITALIC, ChatFormatting.RED), true);
-            } else {
-                TagKey<Item> whitelist = targetedRange != null ? targetedRange.whitelistTag() : null;
-
-                if (whitelist != null && !held.is(whitelist)) {
-                    player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.placing").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                } else {
-                    MutableComponent instructions = Component.empty();
-                    if (targetedRange == null || !targetedRange.yawDisabled())
-                        instructions.append(Component.translatable("place_mats.tooltip.placemat.yaw"));
-                    if (targetedRange == null || !targetedRange.pitchDisabled())
-                        instructions.append(Component.translatable("place_mats.tooltip.placemat.pitch"));
-                    if (targetedRange == null || !targetedRange.elevationDisabled())
-                        instructions.append(Component.translatable("place_mats.tooltip.placemat.elevation"));
-
-                    player.displayClientMessage(instructions.withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-                }
-            }
-        } else {
-            player.displayClientMessage(Component.translatable("place_mats.tooltip.placemat.instructions").withStyle(ChatFormatting.ITALIC, ChatFormatting.WHITE), true);
-        }
-    }
-
-    private static void handleOutsideLook(Player player) {
-        if (wasLookingAtPlacemat) {
-            player.displayClientMessage(Component.empty(), true);
-            wasLookingAtPlacemat = false;
-        }
-    }
-
     /**
-     * Handles disabling jump when holding shift and looking at a placemat.
+     * Handles disabling jump when holding shift or ctrl and looking at a placemat.
      * `onClientTick` Does not continuously suppress the jump input while modifying height.
      */
     @SubscribeEvent
@@ -511,11 +423,14 @@ public class ClientHandler {
         Player player = mc.player;
 
         if (player != null && event.getAction() == 1 && mc.options.keyJump.matches(event.getKey(), event.getScanCode())) {
-            if (Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+            if ((Screen.hasShiftDown() || Screen.hasControlDown()) && !player.getMainHandItem().isEmpty()) {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                     assert mc.level != null;
                     if (mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
+                        if (PlaceMatConfig.CLIENT.disableCombinationBasedElevationControls.get()) {
+                            return;
+                        }
                         if (pmbe.getBlockState().getBlock() instanceof PlaceMatBlock pmb && pmb.getPlacementRanges(pmbe.getBlockState()).isEmpty()) {
                             return;
                         }
@@ -586,13 +501,16 @@ public class ClientHandler {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
 
-        if (player != null && mc.options.keyJump.isDown()) {
-            if (Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+        if (player != null && (Screen.hasShiftDown() || Screen.hasControlDown()) && mc.options.keyJump.isDown()) {
+            if (!player.getMainHandItem().isEmpty()) {
                 HitResult hit = mc.hitResult;
                 if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                     assert mc.level != null;
                     BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
                     if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
+                        if (PlaceMatConfig.CLIENT.disableCombinationBasedElevationControls.get()) {
+                            return;
+                        }
                         if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                             if (pmb.getPlacementRanges(pmbe.getBlockState()).isEmpty()) {
                                 return;
@@ -606,12 +524,14 @@ public class ClientHandler {
                         float height = pmbe.getCurrentHeight();
                         if (Screen.hasControlDown()) {
                             height = Math.max(0, height - 0.015625f);
-                        } else {
+                        } else if (Screen.hasShiftDown()) {
                             height = Math.min(1.0f, height + 0.015625f);
                         }
                         pmbe.setCurrentHeight(height);
 
-                        mc.options.keyJump.setDown(false);
+                        if (Screen.hasShiftDown() || Screen.hasControlDown()) {
+                            mc.options.keyJump.setDown(false);
+                        }
                     }
                 }
             }
@@ -623,10 +543,13 @@ public class ClientHandler {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
 
-        if (player != null && Screen.hasShiftDown() && !player.getMainHandItem().isEmpty()) {
+        if (player != null && (Screen.hasShiftDown() || Screen.hasControlDown()) && !player.getMainHandItem().isEmpty()) {
             HitResult hit = mc.hitResult;
             if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                 if (mc.level != null && mc.level.getBlockEntity(blockHit.getBlockPos()) instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
+                    if (PlaceMatConfig.CLIENT.disableCombinationBasedElevationControls.get()) {
+                        return;
+                    }
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock pmb) {
                         if (pmb.getPlacementRanges(pmbe.getBlockState()).isEmpty()) {
                             return;
@@ -646,12 +569,15 @@ public class ClientHandler {
     public static void onMouseScroll(InputEvent.MouseScrollingEvent event) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player != null && Screen.hasShiftDown() && !mc.player.getMainHandItem().isEmpty()) {
+        if (player != null && (Screen.hasShiftDown() || Screen.hasControlDown()) && !mc.player.getMainHandItem().isEmpty()) {
             HitResult hit = mc.hitResult;
             if (hit instanceof BlockHitResult blockHit && blockHit.getType() == HitResult.Type.BLOCK) {
                 assert mc.level != null;
                 BlockEntity be = mc.level.getBlockEntity(blockHit.getBlockPos());
                 if (be instanceof PlaceMatBlockEntity pmbe && !PlaceMatBlock.preventsInteraction(pmbe.getBlockState())) {
+                    if (PlaceMatConfig.CLIENT.disableCombinationBasedRotationControls.get()) {
+                        return;
+                    }
                     PlaceMatBlock pmb;
                     PlacementRange targetedRange = null;
                     if (mc.level.getBlockState(blockHit.getBlockPos()).getBlock() instanceof PlaceMatBlock block) {
@@ -670,7 +596,7 @@ public class ClientHandler {
                         if (pitch < 0)
                             pitch += 360f;
                         pmbe.setCurrentPitch(pitch);
-                    } else {
+                    } else if (Screen.hasShiftDown()) {
                         if (targetedRange != null && targetedRange.yawDisabled())
                             return;
                         float rotation = pmbe.getCurrentRotation();

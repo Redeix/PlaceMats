@@ -1,0 +1,37 @@
+{"providers": [
+    {
+        "file": "place_mats:font/rot_icon.png",
+        "ascent": 7,
+        "type": "bitmap",
+        "chars": ["⟳"],
+        "height": 8
+    },
+    {
+        "file": "place_mats:font/mouse_icon_0.png",
+        "ascent": 7,
+        "type": "bitmap",
+        "chars": [""],
+        "height": 8
+    },
+    {
+        "file": "place_mats:font/mouse_icon_1.png",
+        "ascent": 7,
+        "type": "bitmap",
+        "chars": [""],
+        "height": 8
+    },
+    {
+        "file": "place_mats:font/mouse_icon_2.png",
+        "ascent": 7,
+        "type": "bitmap",
+        "chars": [""],
+        "height": 8
+    },
+    {
+        "file": "place_mats:font/space_icon.png",
+        "ascent": 7,
+        "type": "bitmap",
+        "chars": [""],
+        "height": 8
+    }
+]}

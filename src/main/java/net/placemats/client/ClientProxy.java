@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.placemats.PlaceMatMain;
 import net.placemats.client.gui.CabinetMakerTableScreen;
+import net.placemats.client.gui.overlay.PlaceMatHudOverlay;
 import net.placemats.client.renderer.CyclicLayerBakedModel;
 import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
@@ -49,6 +50,7 @@ public class ClientProxy extends CommonProxy {
         IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
 
         MinecraftForge.EVENT_BUS.register(ClientHandler.class);
+        MinecraftForge.EVENT_BUS.register(PlaceMatHudOverlay.class);
         bus.addListener(this::clientSetup);
         bus.addListener(this::registerClientReloadListeners);
         bus.addListener(this::registerSpecialModels);
