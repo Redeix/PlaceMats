@@ -41,7 +41,7 @@ public class PlaceMatTallTableBlock extends PlaceMatTableBlock {
     }
 
     public PlaceMatTallTableBlock(Properties properties) {
-        this(properties, PlaceMatBlocks.TALL_TABLE_TOP);
+        this(properties, PlaceMatBlocks.INVIS_PLACE_MAT);
     }
 
     public Block getTopBlock() {
@@ -122,7 +122,7 @@ public class PlaceMatTallTableBlock extends PlaceMatTableBlock {
     }
 
     public static InteractionResult handleKeyInteraction(Level level, BlockPos pos, BlockState state, Player player, @Nullable BlockEntity be) {
-        Supplier<? extends Block> supplier = state.getBlock() instanceof PlaceMatTallTableBlock tallTable ? tallTable::getTopBlock : PlaceMatBlocks.TALL_TABLE_TOP;
+        Supplier<? extends Block> supplier = state.getBlock() instanceof PlaceMatTallTableBlock tallTable ? tallTable::getTopBlock : PlaceMatBlocks.INVIS_PLACE_MAT;
         return handleKeyInteraction(level, pos, state, player, be, supplier);
     }
 

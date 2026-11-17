@@ -1,7 +1,6 @@
 package net.placemats.common.data;
 
 import com.tterrag.registrate.util.entry.BlockEntityEntry;
-import com.tterrag.registrate.util.entry.BlockEntry;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 
@@ -24,7 +23,7 @@ public class PlaceMatBlockEntities {
         .validBlock(PlaceMatBlocks.COFFEE_TABLE_FLUTED)
         .validBlock(PlaceMatBlocks.COFFEE_TABLE_MODERN)
         .validBlock(PlaceMatBlocks.COFFEE_TABLE_APRON)
-        .validBlock(PlaceMatBlocks.TALL_TABLE_TOP)
+        .validBlock(PlaceMatBlocks.INVIS_PLACE_MAT)
         .validBlock(PlaceMatBlocks.DINING_TABLE_APRON)
         /*
         TODO: I'll have to figure out what I want to do with wood variants later.

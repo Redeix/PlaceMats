@@ -311,7 +311,7 @@ public final class PlaceMatBlocks {
             .register();
 
     // Invisible Placement Range
-    public static final BlockEntry<InvisibleMatBlock> TALL_TABLE_TOP = PlaceMatRegistries.REGISTRATE.invisibleMat("tall_table_top")
+    public static final BlockEntry<InvisibleMatBlock> INVIS_PLACE_MAT = PlaceMatRegistries.REGISTRATE.invisibleMat("place_mat")
             .properties(p -> p.sound(PlaceMatSoundTypes.SILENT).pushReaction(PushReaction.BLOCK).noParticlesOnBreak().strength(Integer.MAX_VALUE, Integer.MAX_VALUE).noOcclusion().isViewBlocking((state, level, pos) -> false).noLootTable())
             .onRegister(block -> {
                 block.containerSize(12);

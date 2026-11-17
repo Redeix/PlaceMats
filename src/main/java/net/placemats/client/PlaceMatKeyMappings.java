@@ -10,29 +10,25 @@ public final class PlaceMatKeyMappings {
 
     public static final KeyMapping KEY_Y_ROT = new KeyMapping(
             "key.place_mats.y_rot",
-            KeyConflictContext.IN_GAME,
-            InputConstants.UNKNOWN,
+            InputConstants.KEY_LEFT,
             CATEGORY
     );
 
     public static final KeyMapping KEY_X_ROT = new KeyMapping(
             "key.place_mats.x_rot",
-            KeyConflictContext.IN_GAME,
-            InputConstants.UNKNOWN,
+            InputConstants.KEY_RIGHT,
             CATEGORY
     );
 
     public static final KeyMapping KEY_UP = new KeyMapping(
             "key.place_mats.up",
-            KeyConflictContext.IN_GAME,
-            InputConstants.UNKNOWN,
+            InputConstants.KEY_UP,
             CATEGORY
     );
 
     public static final KeyMapping KEY_DOWN = new KeyMapping(
             "key.place_mats.down",
-            KeyConflictContext.IN_GAME,
-            InputConstants.UNKNOWN,
+            InputConstants.KEY_DOWN,
             CATEGORY
     );
 
