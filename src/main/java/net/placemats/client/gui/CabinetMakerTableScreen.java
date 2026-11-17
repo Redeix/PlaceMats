@@ -48,6 +48,7 @@ import net.placemats.client.renderer.DynamicTexturedBakedModel;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.inventory.CabinetMakerTableContainer;
+import net.placemats.config.PlaceMatConfig;
 import net.placemats.network.PlaceMatsNetworkHandler;
 import net.placemats.network.packet.ApplyCabinetMakerCraftPacket;
 import net.placemats.network.packet.SetCabinetMakerGhostSlotPacket;
@@ -477,6 +478,9 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     }
 
     public boolean setGhostMaterial(int keyIndex, ItemStack stack) {
+        if (PlaceMatConfig.SERVER.consumeCabinetMakerMaterials.get()) {
+            return false;
+        }
         if (keyIndex < 0 || keyIndex >= this.menu.getDynamicKeyCount()) {
             return false;
         }
@@ -494,6 +498,9 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
     }
 
     public void renderGhostDropTargets(GuiGraphics graphics, int mouseX, int mouseY) {
+        if (PlaceMatConfig.SERVER.consumeCabinetMakerMaterials.get()) {
+            return;
+        }
         int keyCount = this.menu.getDynamicKeyCount();
         if (keyCount <= 0) {
             return;

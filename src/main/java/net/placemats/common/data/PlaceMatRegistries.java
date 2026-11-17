@@ -48,7 +48,7 @@ public class PlaceMatRegistries {
             // EMI Tooltips
             prov.add("emi.category.place_mats.cabinetmaker_table", "Cabinetmaker's Table");
             prov.add("emi.category.place_mats.place_mat", "Place-Mat Interaction");
-            prov.add("place_mats.emi.cabinet_maker.desc1", "⏵ A Cabinetmaker's Table allows you to customize certain dynamic blocks using extracted textures from any block or item.");
+            prov.add("place_mats.emi.cabinet_maker.desc1", "⏵ A Cabinetmaker's Table allows you to customize dynamic blocks using extracted textures from any block or item.");
             prov.add("place_mats.emi.cabinet_maker.desc2", "⏵ Each material layer can be individually §ct§6i§en§at§3e§9d§r using the built in color picker tab.");
             prov.add("place_mats.emi.cabinet_maker.desc3", "⏵ Once you are happy with your customization, click the apply button to craft. §7(Shift-Click to apply for a full stack)§r");
             prov.add("place_mats.emi.crafting.clear_dynamic_color.desc", "⏵ Craft any customized dynamic block by itself to clear all dynamic textures & tinting.");

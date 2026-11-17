@@ -10,6 +10,7 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 import net.placemats.common.block.IDynamicTexturedBlock;
 import net.placemats.common.data.RecipeSerializers;
+import net.placemats.config.PlaceMatConfig;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -23,6 +24,10 @@ public class CopyDynamicColorRecipe extends CustomRecipe {
 
     @Override
     public boolean matches(@NotNull CraftingContainer container, @NotNull Level level) {
+        if (PlaceMatConfig.SERVER.consumeCabinetMakerMaterials.get()) {
+            return false;
+        }
+
         ItemStack firstStack = ItemStack.EMPTY;
         ItemStack secondStack = ItemStack.EMPTY;
 
@@ -55,6 +60,10 @@ public class CopyDynamicColorRecipe extends CustomRecipe {
 
     @Override
     public @NotNull ItemStack assemble(@NotNull CraftingContainer container, @NotNull RegistryAccess registryAccess) {
+        if (PlaceMatConfig.SERVER.consumeCabinetMakerMaterials.get()) {
+            return ItemStack.EMPTY;
+        }
+
         ItemStack firstStack = ItemStack.EMPTY;
         ItemStack secondStack = ItemStack.EMPTY;
 

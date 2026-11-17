@@ -29,6 +29,7 @@ import net.placemats.common.data.PlaceMatRecipeTypes;
 import net.placemats.common.data.PlaceMatTags;
 import net.placemats.common.data.PlaceMatBlocks;
 import net.placemats.common.recipe.PlaceMatRecipe;
+import net.placemats.config.PlaceMatConfig;
 
 // TODO: Remake EMI compat.
 @SuppressWarnings("unused")
@@ -63,7 +64,9 @@ public class PlaceMatEmiPlugin implements EmiPlugin {
             EmiIngredient hiddenMaterialTextures = ClearDynamicColorEmiRecipe.createMaterialIngredient();
             for (Item item : itemTags.getTag(PlaceMatTags.Items.DYNAMIC_MATERIALS)) {
                 emiRegistry.addRecipe(new ClearDynamicColorEmiRecipe(item, hiddenMaterialTextures));
-                emiRegistry.addRecipe(new CopyDynamicColorEmiRecipe(item, hiddenMaterialTextures));
+                if (!PlaceMatConfig.SERVER.consumeCabinetMakerMaterials.get()) {
+                    emiRegistry.addRecipe(new CopyDynamicColorEmiRecipe(item, hiddenMaterialTextures));
+                }
             }
         }
 
