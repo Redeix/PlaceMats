@@ -181,6 +181,22 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
     }
 
     @Override
+    public @NotNull List<BakedModel> getRenderPasses(@NotNull ItemStack itemStack, boolean fabulous) {
+        List<BakedModel> originalPasses = this.originalModel.getRenderPasses(itemStack, fabulous);
+        if (originalPasses.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (originalPasses.size() == 1 && originalPasses.get(0) == this.originalModel) {
+            return Collections.singletonList(this);
+        }
+        List<BakedModel> wrappedPasses = new ArrayList<>(originalPasses.size());
+        for (BakedModel pass : originalPasses) {
+            wrappedPasses.add(pass == this.originalModel ? this : new DynamicTexturedBakedModel(pass, this.dynamicBlock));
+        }
+        return wrappedPasses;
+    }
+
+    @Override
     public @NotNull ItemOverrides getOverrides() {
         return itemOverrides;
     }
@@ -1002,7 +1018,29 @@ public class DynamicTexturedBakedModel extends BakedModelWrapper<BakedModel> {
 
         @Override
         public @NotNull List<BakedModel> getRenderPasses(@NotNull ItemStack itemStack, boolean fabulous) {
-            return Collections.singletonList(this);
+            List<BakedModel> originalPasses = this.originalModel.getRenderPasses(itemStack, fabulous);
+            if (originalPasses.isEmpty()) {
+                return Collections.emptyList();
+            }
+            if (originalPasses.size() == 1 && originalPasses.get(0) == this.originalModel) {
+                return Collections.singletonList(this);
+            }
+            List<BakedModel> wrappedPasses = new ArrayList<>(originalPasses.size());
+            for (BakedModel pass : originalPasses) {
+                if (pass == this.originalModel) {
+                    wrappedPasses.add(this);
+                } else {
+                    wrappedPasses.add(new DynamicTexturedItemBakedModel(
+                        new DynamicTexturedBakedModel(pass, this.parent.getDynamicBlock()),
+                        this.blockState,
+                        this.materialState,
+                        this.customTextures,
+                        this.customColors,
+                        this.customEmissives
+                    ));
+                }
+            }
+            return wrappedPasses;
         }
     }
 }

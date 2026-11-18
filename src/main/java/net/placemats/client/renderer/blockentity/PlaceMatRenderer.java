@@ -2,6 +2,7 @@ package net.placemats.client.renderer.blockentity;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -595,7 +596,18 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
 
             @Override
             public @NotNull List<BakedModel> getRenderPasses(@NotNull ItemStack itemStack, boolean fabulous) {
-                return List.of(this);
+                List<BakedModel> originalPasses = this.originalModel.getRenderPasses(itemStack, fabulous);
+                if (originalPasses.isEmpty()) {
+                    return Collections.emptyList();
+                }
+                if (originalPasses.size() == 1 && originalPasses.get(0) == this.originalModel) {
+                    return Collections.singletonList(this);
+                }
+                List<BakedModel> wrappedPasses = new ArrayList<>(originalPasses.size());
+                for (BakedModel pass : originalPasses) {
+                    wrappedPasses.add(pass == this.originalModel ? this : getTransformedModel(pass, def, stack));
+                }
+                return wrappedPasses;
             }
         };
     }

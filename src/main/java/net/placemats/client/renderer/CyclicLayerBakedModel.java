@@ -23,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Item model that cycles through texture layers 0-4.
  */
+@SuppressWarnings("deprecation")
 public class CyclicLayerBakedModel extends BakedModelWrapper<BakedModel> {
 
     private static final int TICKS_PER_FRAME = 20;
@@ -40,8 +41,16 @@ public class CyclicLayerBakedModel extends BakedModelWrapper<BakedModel> {
         return this.originalModel;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    private boolean isTextureProvider() {
+        return item != null && item.builtInRegistryHolder().is(PlaceMatTags.Items.TEXTURE_PROVIDERS);
+    }
+
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand) {
+        if (!isTextureProvider()) {
+            return this.originalModel.getQuads(state, side, rand);
+        }
         List<BakedQuad> allQuads = super.getQuads(state, side, rand);
         return filterQuads(allQuads);
     }
@@ -49,13 +58,15 @@ public class CyclicLayerBakedModel extends BakedModelWrapper<BakedModel> {
     @Override
     public @NotNull List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, @NotNull RandomSource rand,
                                              @NotNull ModelData extraData, @Nullable RenderType renderType) {
+        if (!isTextureProvider()) {
+            return this.originalModel.getQuads(state, side, rand, extraData, renderType);
+        }
         List<BakedQuad> allQuads = super.getQuads(state, side, rand, extraData, renderType);
         return filterQuads(allQuads);
     }
 
-    @SuppressWarnings("deprecation")
     private List<BakedQuad> filterQuads(List<BakedQuad> allQuads) {
-        if (!item.builtInRegistryHolder().is(PlaceMatTags.Items.TEXTURE_PROVIDERS)) {
+        if (!isTextureProvider()) {
             return allQuads;
         }
 
@@ -76,11 +87,28 @@ public class CyclicLayerBakedModel extends BakedModelWrapper<BakedModel> {
     @Override
     public @NotNull BakedModel applyTransform(@NotNull ItemDisplayContext cameraTransformType, @NotNull PoseStack poseStack, boolean applyLeftHandTransform) {
         BakedModel model = this.originalModel.applyTransform(cameraTransformType, poseStack, applyLeftHandTransform);
+        if (!isTextureProvider()) {
+            return model;
+        }
         return model == this.originalModel ? this : new CyclicLayerBakedModel(model, this.item);
     }
 
     @Override
     public @NotNull List<BakedModel> getRenderPasses(@NotNull ItemStack itemStack, boolean fabulous) {
-        return Collections.singletonList(this);
+        if (!isTextureProvider()) {
+            return this.originalModel.getRenderPasses(itemStack, fabulous);
+        }
+        List<BakedModel> originalPasses = this.originalModel.getRenderPasses(itemStack, fabulous);
+        if (originalPasses.isEmpty()) {
+            return Collections.emptyList();
+        }
+        if (originalPasses.size() == 1 && originalPasses.get(0) == this.originalModel) {
+            return Collections.singletonList(this);
+        }
+        List<BakedModel> wrappedPasses = new ArrayList<>(originalPasses.size());
+        for (BakedModel pass : originalPasses) {
+            wrappedPasses.add(pass == this.originalModel ? this : new CyclicLayerBakedModel(pass, this.item));
+        }
+        return wrappedPasses;
     }
 }
