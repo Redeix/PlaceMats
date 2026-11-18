@@ -32,6 +32,12 @@ public final class PlaceMatKeyMappings {
             CATEGORY
     );
 
+    public static final KeyMapping KEY_RESET = new KeyMapping(
+            "key.place_mats.reset",
+            InputConstants.KEY_R,
+            CATEGORY
+    );
+
     private PlaceMatKeyMappings() {}
 
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
@@ -39,6 +45,7 @@ public final class PlaceMatKeyMappings {
         event.register(KEY_X_ROT);
         event.register(KEY_UP);
         event.register(KEY_DOWN);
+        event.register(KEY_RESET);
     }
 
     // =========================== Key Helpers ===============================

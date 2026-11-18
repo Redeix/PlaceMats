@@ -16,6 +16,7 @@ public class PlaceMatRegistries {
             prov.add("place_mats.tooltip.placemat.hold_alt_for_nutrition_info", "Hold (Alt) for Detailed Info");
             prov.add("place_mats.tooltip.placemat.roll", "%s to §cRoll ⟳§r");
             prov.add("place_mats.tooltip.placemat.pitch", "%s to §3Pitch ⟳§r");
+            prov.add("place_mats.tooltip.placemat.reset_rotation", "%s to §6Reset Rotations ⇄§r");
             prov.add("place_mats.tooltip.placemat.raise", "%s to §3Raise ▲§r");
             prov.add("place_mats.tooltip.placemat.lower", "%s to §cLower ▼§r");
             prov.add("place_mats.tooltip.placemat.place", "%s to §ePlace ✔§r");
@@ -34,6 +35,7 @@ public class PlaceMatRegistries {
             prov.add("key.place_mats.x_rot", "X-Rotation (Roll)");
             prov.add("key.place_mats.up", "Raise Elevation");
             prov.add("key.place_mats.down", "Lower Elevation");
+            prov.add("key.place_mats.reset", "Reset Rotations");
 
             // Faux Keys
             prov.add("place_mats.faux_key.shift", "Shift");

@@ -39,6 +39,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import net.placemats.PlaceMatMain;
 import net.placemats.client.renderer.blockentity.PlaceMatRenderer;
+import net.placemats.client.util.RotationHelper;
 import net.placemats.common.block.LockType;
 import net.placemats.common.block.PlaceMatBlock;
 import net.placemats.common.block.PlaceMatCardinalBlock;
@@ -459,19 +460,19 @@ public class ClientHandler {
                     if (PlaceMatKeyMappings.KEY_Y_ROT.matches(event.getKey(), event.getScanCode())) {
                         if (targetedRange != null && targetedRange.yawDisabled())
                             return;
-                        float rotation = pmbe.getCurrentRotation();
-                        rotation = (rotation + (Screen.hasControlDown() ? -15f : 15f)) % 360f;
-                        if (rotation < 0)
-                            rotation += 360f;
-                        pmbe.setCurrentRotation(rotation);
+                        float delta = Screen.hasControlDown() ? -15f : 15f;
+                        RotationHelper.Rotations rot = RotationHelper.rotateY(pmbe.getCurrentPitch(), pmbe.getCurrentRoll(), pmbe.getCurrentRotation(), delta);
+                        pmbe.setCurrentPitch(rot.pitch());
+                        pmbe.setCurrentRoll(rot.roll());
+                        pmbe.setCurrentRotation(rot.yaw());
                     } else if (PlaceMatKeyMappings.KEY_X_ROT.matches(event.getKey(), event.getScanCode())) {
                         if (targetedRange != null && targetedRange.pitchDisabled())
                             return;
-                        float pitch = pmbe.getCurrentPitch();
-                        pitch = (pitch + (Screen.hasControlDown() ? -15f : 15f)) % 360f;
-                        if (pitch < 0)
-                            pitch += 360f;
-                        pmbe.setCurrentPitch(pitch);
+                        float delta = Screen.hasControlDown() ? -15f : 15f;
+                        RotationHelper.Rotations rot = RotationHelper.rotateX(pmbe.getCurrentPitch(), pmbe.getCurrentRoll(), pmbe.getCurrentRotation(), delta);
+                        pmbe.setCurrentPitch(rot.pitch());
+                        pmbe.setCurrentRoll(rot.roll());
+                        pmbe.setCurrentRotation(rot.yaw());
                     } else if (PlaceMatKeyMappings.KEY_UP.matches(event.getKey(), event.getScanCode())) {
                         if (targetedRange != null && (targetedRange.elevationDisabled() || targetedRange.restricted()))
                             return;
@@ -484,6 +485,12 @@ public class ClientHandler {
                         float height = pmbe.getCurrentHeight();
                         height = Math.max(0, height - 0.015625f);
                         pmbe.setCurrentHeight(height);
+                    } else if (PlaceMatKeyMappings.KEY_RESET.matches(event.getKey(), event.getScanCode())) {
+                        if (targetedRange != null && targetedRange.yawDisabled() && targetedRange.pitchDisabled())
+                            return;
+                        pmbe.setCurrentPitch(0f);
+                        pmbe.setCurrentRoll(0f);
+                        pmbe.setCurrentRotation(0f);
                     }
                 }
             }
@@ -591,19 +598,19 @@ public class ClientHandler {
                     if (Screen.hasControlDown()) {
                         if (targetedRange != null && targetedRange.pitchDisabled())
                             return;
-                        float pitch = pmbe.getCurrentPitch();
-                        pitch = (pitch + (float) event.getScrollDelta() * 15f) % 360f;
-                        if (pitch < 0)
-                            pitch += 360f;
-                        pmbe.setCurrentPitch(pitch);
+                        float delta = (float) event.getScrollDelta() * 15f;
+                        RotationHelper.Rotations rot = RotationHelper.rotateX(pmbe.getCurrentPitch(), pmbe.getCurrentRoll(), pmbe.getCurrentRotation(), delta);
+                        pmbe.setCurrentPitch(rot.pitch());
+                        pmbe.setCurrentRoll(rot.roll());
+                        pmbe.setCurrentRotation(rot.yaw());
                     } else if (Screen.hasShiftDown()) {
                         if (targetedRange != null && targetedRange.yawDisabled())
                             return;
-                        float rotation = pmbe.getCurrentRotation();
-                        rotation = (rotation + (float) event.getScrollDelta() * 15f) % 360f;
-                        if (rotation < 0)
-                            rotation += 360f;
-                        pmbe.setCurrentRotation(rotation);
+                        float delta = (float) event.getScrollDelta() * 15f;
+                        RotationHelper.Rotations rot = RotationHelper.rotateY(pmbe.getCurrentPitch(), pmbe.getCurrentRoll(), pmbe.getCurrentRotation(), delta);
+                        pmbe.setCurrentPitch(rot.pitch());
+                        pmbe.setCurrentRoll(rot.roll());
+                        pmbe.setCurrentRotation(rot.yaw());
                     }
                     event.setCanceled(true);
                 }

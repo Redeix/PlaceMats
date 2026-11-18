@@ -210,6 +210,15 @@ public class PlaceMatHudOverlay {
                 }
                 entries.add(Component.translatable("place_mats.tooltip.placemat.roll", yawControl));
             }
+            // Reset Controls
+            MutableComponent resetControl;
+            if (PlaceMatKeyMappings.KEY_RESET.isUnbound()) {
+                resetControl = Component.translatable("key.keyboard.unknown").withStyle(ChatFormatting.DARK_RED);
+            } else {
+                resetControl = Component.keybind(PlaceMatKeyMappings.KEY_RESET.getName());
+            }
+            entries.add(Component.translatable("place_mats.tooltip.placemat.reset_rotation",resetControl));
+
             entries.add(Component.empty());
         }
 

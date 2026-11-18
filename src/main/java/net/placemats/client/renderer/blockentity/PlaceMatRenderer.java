@@ -113,9 +113,9 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
             }
 
             float itemHalfHeight = (def.getItemHeight() * multiplier) / 2.0f;
-            float collisionCenterX = (float) placed.pos.x + (def.size().x * multiplier) / 2.0f;
-            float collisionCenterY = (float) (placed.baseHeight + placed.getVisualHeight() + elevation) + itemHalfHeight;
-            float collisionCenterZ = (float) placed.pos.y + (def.size().y * multiplier) / 2.0f;
+            float collisionCenterX = placed.pos.x + (def.size().x * multiplier) / 2.0f;
+            float collisionCenterY = placed.baseHeight + placed.getVisualHeight() + elevation + itemHalfHeight;
+            float collisionCenterZ = placed.pos.y + (def.size().y * multiplier) / 2.0f;
 
             // Transform to 3D centerpoint of item collision shape.
             poseStack.translate(collisionCenterX, collisionCenterY, collisionCenterZ);
@@ -214,9 +214,9 @@ public class PlaceMatRenderer implements BlockEntityRenderer<PlaceMatBlockEntity
         }
 
         float itemHalfHeight = (def.getItemHeight() * multiplier) / 2.0f;
-        float collisionCenterX = (float) pos.x + (size.x * multiplier) / 2.0f;
+        float collisionCenterX = pos.x + (size.x * multiplier) / 2.0f;
         float collisionCenterY = (float) (yMin + height + elevation) + itemHalfHeight;
-        float collisionCenterZ = (float) pos.y + (size.y * multiplier) / 2.0f;
+        float collisionCenterZ = pos.y + (size.y * multiplier) / 2.0f;
 
         // Transform to 3D centerpoint of item collision shape.
         poseStack.translate(collisionCenterX, collisionCenterY, collisionCenterZ);
