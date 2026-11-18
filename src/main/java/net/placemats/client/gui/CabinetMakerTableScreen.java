@@ -21,9 +21,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.Sheets;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
@@ -796,7 +793,6 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
             this.lastShiftDown = shiftDown;
             updateConfirmTooltip();
         }
-        super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderBackground(guiGraphics);
         super.render(guiGraphics, mouseX, mouseY, partialTick);
         this.renderTooltip(guiGraphics, mouseX, mouseY);
@@ -969,6 +965,8 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
 
         float yOffset = dynamicBlock != null ? dynamicBlock.getPreviewYOffset() : 0.0f;
 
+        guiGraphics.flush();
+
         PoseStack poseStack = guiGraphics.pose();
         poseStack.pushPose();
 
@@ -978,29 +976,23 @@ public class CabinetMakerTableScreen extends AbstractContainerScreen<CabinetMake
         poseStack.mulPose(Axis.XP.rotationDegrees(25.0f));
         poseStack.mulPose(Axis.YP.rotationDegrees(rotationY));
 
-        MultiBufferSource.BufferSource bufferSource = mc.renderBuffers().bufferSource();
-
         Lighting.setupForFlatItems();
+
         mc.getItemRenderer().render(
             inputStack,
             ItemDisplayContext.NONE,
             false,
             poseStack,
-            bufferSource,
+            guiGraphics.bufferSource(),
             LightTexture.FULL_BLOCK,
             OverlayTexture.NO_OVERLAY,
             modelToRender
         );
 
-        bufferSource.endBatch(Sheets.translucentItemSheet());
-        bufferSource.endBatch(Sheets.translucentCullBlockSheet());
-        bufferSource.endBatch(Sheets.cutoutBlockSheet());
-        bufferSource.endBatch(RenderType.translucent());
-        bufferSource.endBatch(RenderType.cutout());
-        bufferSource.endBatch(RenderType.cutoutMipped());
-        bufferSource.endBatch();
+        guiGraphics.flush();
 
         Lighting.setupFor3DItems();
+
         poseStack.popPose();
     }
 }

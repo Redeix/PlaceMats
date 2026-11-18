@@ -219,7 +219,7 @@ public final class PlaceMatBlocks {
                         Map.of(
                                 0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
                                 1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
-                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.trim")
                         )
                 );
                 block.previewYOffset(-5.0f);
@@ -296,7 +296,7 @@ public final class PlaceMatBlocks {
                         Map.of(
                                 0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
                                 1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
-                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.trim")
                         )
                 );
                 block.previewYOffset(-5.0f);
@@ -348,7 +348,7 @@ public final class PlaceMatBlocks {
                         Map.of(
                                 0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
                                 1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
-                                2, Component.translatable("gui.place_mats.cabinet_maker.key.gilding")
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.trim")
                         )
                 );
                 block.previewItemModel();
@@ -357,7 +357,84 @@ public final class PlaceMatBlocks {
             .loot(RegistrateBlockLootTables::dropSelf)
             .item()
             .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TALL_TABLES, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
-            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/dining_table_apron")))
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
+
+    // Cloth Dining Table
+    public static final BlockEntry<PlaceMatApronTallTableBlock> DINING_TABLE_CLOTH = PlaceMatRegistries.REGISTRATE.apronTallTable("dining_table_cloth")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Dining Table [Cloth]")
+            .blockstate(apronTableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")),
+                            new TextureConfig("2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1")),
+                            new TextureConfig("3", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_2"))),
+                    "dining_table_cloth"
+            ))
+            .onRegister(block -> {
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 16, 16));
+                block.collisionShape(Block.box(0, 12, 0, 16, 16, 16));
+                block.dynamicBlock(4,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"),
+                                "2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1"),
+                                "3", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_2")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.trim"),
+                                3, Component.translatable("gui.place_mats.cabinet_maker.key.cloth")
+                        )
+                );
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TALL_TABLES, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TALL_TABLES, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
+            .build()
+            .register();
+
+    // Panel Dining Table
+    public static final BlockEntry<PlaceMatApronTallTableBlock> DINING_TABLE_PANEL = PlaceMatRegistries.REGISTRATE.apronTallTable("dining_table_panel")
+            .properties(p -> p.sound(SoundType.STONE).strength(2.0f).noOcclusion().isViewBlocking((state, level, pos) -> false))
+            .lang("Dining Table [Panel]")
+            .blockstate(apronTableBlockState(
+                    List.of(
+                            new TextureConfig("0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base")),
+                            new TextureConfig("1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg")),
+                            new TextureConfig("2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1"))),
+                    "dining_table_panel"
+            ))
+            .onRegister(block -> {
+                block.disableZoneRotation();
+                block.boundingBox(Block.box(0, 0, 0, 16, 16, 16));
+                block.collisionShape(Block.box(0, 12, 0, 16, 16, 16));
+                block.dynamicBlock(3,
+                        Map.of(
+                                "0", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base"),
+                                "1", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_fluted_leg"),
+                                "2", ResourceLocation.fromNamespaceAndPath(PlaceMatMain.MOD_ID, "block/storage_rack_base_1")
+                        ),
+                        Map.of(
+                                0, Component.translatable("gui.place_mats.cabinet_maker.key.base"),
+                                1, Component.translatable("gui.place_mats.cabinet_maker.key.legs"),
+                                2, Component.translatable("gui.place_mats.cabinet_maker.key.trim")
+                        )
+                );
+                block.previewItemModel();
+            })
+            .tag(PlaceMatTags.Blocks.PLACE_MATS, BlockTags.MINEABLE_WITH_PICKAXE, BlockTags.MINEABLE_WITH_AXE, PlaceMatTags.Blocks.TALL_TABLES, PlaceMatTags.Blocks.TABLES, PlaceMatTags.Blocks.DYNAMIC_MATERIALS)
+            .loot(RegistrateBlockLootTables::dropSelf)
+            .item()
+            .tag(PlaceMatTags.Items.PLACE_MATS, PlaceMatTags.Items.TALL_TABLES, PlaceMatTags.Items.TABLES, PlaceMatTags.Items.PLACE_MAT_BLACKLIST, PlaceMatTags.Items.DYNAMIC_MATERIALS)
+            .model((ctx, prov) -> prov.withExistingParent(ctx.getName(), prov.modLoc("block/" + ctx.getName())))
             .build()
             .register();
 

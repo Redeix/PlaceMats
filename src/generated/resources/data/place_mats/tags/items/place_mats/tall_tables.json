@@ -1,5 +1,7 @@
 {
   "values": [
-    "place_mats:dining_table_apron"
+    "place_mats:dining_table_apron",
+    "place_mats:dining_table_cloth",
+    "place_mats:dining_table_panel"
   ]
 }
